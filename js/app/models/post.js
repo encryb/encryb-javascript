@@ -1,11 +1,12 @@
 define([
     'backbone',
     'underscore',
+    'sjcl',
     'app/storage',
     'app/encryption',
     'utils/data-convert',
     'utils/random'
-], function (Backbone, _, Storage, Encryption, DataConvert, Random) {
+], function (Backbone, _, Sjcl, Storage, Encryption, DataConvert, Random) {
 
     var Post = Backbone.Model.extend({
 
@@ -42,6 +43,12 @@ define([
             var model = this;
 
             var password = this.get('password');
+
+            if (!(password instanceof Array)) {
+                password = password._array();
+            }
+            password = Sjcl.codec.bytes.toBits(password);
+
             var deferredText = null;
             var deferredResizedImage = null;
             var deferredFullImage = null;
@@ -81,7 +88,7 @@ define([
             var deferred = $.Deferred();
 
             var id = Random.makeId();
-            var password = Encryption.generateRandomPassword();
+            var password = Sjcl.random.randomWords(8,1);
 
             var text = this.get('textData');
             var encText = null;
@@ -106,7 +113,7 @@ define([
             var model = this;
             $.when(Storage.uploadPost(id, encText, encResizedImage, encImage)).done(function (update) {
 
-                update['password'] = password;
+                update['password'] = Sjcl.codec.bytes.fromBits(password);
                 model.set(update);
                 deferred.resolve();
             });

@@ -64,7 +64,6 @@ define([
         // This is required for user name / image to show up properly in posts
         onProfileSync: function() {
 
-
             var profilePictureUrl = profiles.getFirst().get('pictureUrl');
             var collectionView = new Backbone.CollectionView( {
                 el : $( "ul#content" ),
@@ -74,7 +73,6 @@ define([
                 modelViewOptions: {myPost: true, profilePictureUrl: profilePictureUrl},
                 emptyListCaption: "Empty!"
             } );
-            console.log(myPosts);
 
             collectionView.render();
 

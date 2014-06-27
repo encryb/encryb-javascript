@@ -16,12 +16,12 @@ define([
             sharedDate: null,
             password: null,
             hasText: false,
-            hasImage: false,
+            hasImage: false
 
             // not persisted
-            resizedImageData: null,
-            fullImageData: null,
-            textData: null
+            //resizedImageData: null,
+            //fullImageData: null,
+            //textData: null
         },
 
         nonPersistent: [ "owner", "resizedImageData", "fullImageData", "textData"],
@@ -44,11 +44,6 @@ define([
 
             var password = this.get('password');
 
-            if (!(password instanceof Array)) {
-                password = password._array();
-            }
-            password = Sjcl.codec.bytes.toBits(password);
-
             var deferredText = null;
             var deferredResizedImage = null;
             var deferredFullImage = null;
@@ -64,7 +59,6 @@ define([
                     deferredFullImage = Storage.downloadData(this.get('fullImageUrl'), true, password);
                 }
             }
-
 
             $.when(deferredText, deferredResizedImage, deferredFullImage)
                 .done(function (textResp, resizedImageResp, fullImageResp) {
@@ -100,14 +94,14 @@ define([
             var encImage = null;
             if (image) {
                 var imageDict = DataConvert.dataUriToTypedArray(image);
-                encImage = Encryption.encryptWithPassword(password, imageDict['mimeType'], imageDict['data']);
+                encImage = Encryption.encryptImageWithPassword(password, imageDict['mimeType'], imageDict['data']);
             }
 
             var resizedImage = this.get('resizedImageData');
             var encResizedImage = null;
             if (resizedImage) {
                 var resizedImageDict = DataConvert.dataUriToTypedArray(resizedImage);
-                encResizedImage = Encryption.encryptWithPassword(password, resizedImageDict['mimeType'], resizedImageDict['data']);
+                encResizedImage = Encryption.encryptImageWithPassword(password, resizedImageDict['mimeType'], resizedImageDict['data']);
             }
 
             var model = this;

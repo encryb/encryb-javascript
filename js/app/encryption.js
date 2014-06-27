@@ -10,13 +10,21 @@ define([
 
     exports.encryptWithPassword = function(password, mimeType, data) {
 
-        var encryptedData = Sjcl.encrypt(password, data);
+        var encrypted = Sjcl.json._encrypt(password, data);
+
+        var encryptedData = encode(encrypted);
         encryptedData['mimeType'] = mimeType;
 
         var buf = Encoding.encode(encryptedData);
 
         return buf;
     }
+
+    exports.encryptImageWithPassword = function(password, mimeType, data) {
+        var bits = Sjcl.codec.bytes.toBits(data);
+        return exports.encryptWithPassword(password, mimeType, bits);
+    }
+
 
     /*
     exports.encryptWithPublicKey = function(mimeType, data) {
@@ -59,8 +67,10 @@ define([
     exports.decryptImageData = function(packedData, password) {
         var data = Encoding.decode(packedData);
         var encData = decode(data);
+        var bitPassword = Sjcl.codec.bytes.toBits(password);
 
-        var ct = Sjcl.json._decrypt(password, encData);
+
+        var ct = Sjcl.json._decrypt(bitPassword, encData);
 
         var decrypted = Sjcl.codec.bytes.fromBits(ct);
 
@@ -72,7 +82,10 @@ define([
         var data = Encoding.decode(packedData);
 
         var encData = decode(data);
-        var ct = Sjcl.json._decrypt(password, encData);
+
+        var bitPassword = Sjcl.codec.bytes.toBits(password);
+
+        var ct = Sjcl.json._decrypt(bitPassword, encData);
 
         var decrypted = Sjcl.codec.utf8String.fromBits(ct);
         return decrypted;
@@ -81,9 +94,10 @@ define([
 
     exports.decryptBinaryData = function(packedData, password) {
         var data = Encoding.decode(packedData);
-
         var encData = decode(data);
-        var ct = Sjcl.json._decrypt(password, encData);
+        var bitPassword = Sjcl.codec.bytes.toBits(password);
+
+        var ct = Sjcl.json._decrypt(bitPassword, encData);
 
         var decrypted = fromBitsToTypedArray(ct);
         return decrypted;

@@ -51,7 +51,7 @@ define([
         },
 
         deletePost: function() {
-            this.model.destroy();
+            this.model.deletePost();
         }
     });
     return PostView;

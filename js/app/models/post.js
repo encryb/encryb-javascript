@@ -8,6 +8,8 @@ define([
     'utils/random'
 ], function (Backbone, _, Sjcl, Storage, Encryption, DataConvert, Random) {
 
+    var FOLDER_POSTS = "posts/";
+
     var Post = Backbone.Model.extend({
 
         defaults: {
@@ -17,6 +19,12 @@ define([
             password: null,
             hasText: false,
             hasImage: false
+
+            // no defaults
+            // folderId
+            // textUrl
+            // resizedImageUrl
+            // imageUrl
 
             // not persisted
             //resizedImageData: null,
@@ -81,7 +89,7 @@ define([
 
             var deferred = $.Deferred();
 
-            var id = Random.makeId();
+            var postId = Random.makeId();
             var password = Sjcl.random.randomWords(8,1);
 
             var text = this.get('textData');
@@ -105,13 +113,18 @@ define([
             }
 
             var model = this;
-            $.when(Storage.uploadPost(id, encText, encResizedImage, encImage)).done(function (update) {
+            $.when(Storage.uploadPost(FOLDER_POSTS + postId, encText, encResizedImage, encImage)).done(function (update) {
 
+                update['postId'] = postId;
                 update['password'] = Sjcl.codec.bytes.fromBits(password);
                 model.set(update);
                 deferred.resolve();
             });
             return deferred;
+        },
+        deletePost: function() {
+            Storage.remove(FOLDER_POSTS + this.get('postId'));
+            this.destroy();
         }
     });
     return Post;

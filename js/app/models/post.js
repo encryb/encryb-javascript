@@ -32,7 +32,7 @@ define([
             //textData: null
         },
 
-        nonPersistent: [ "owner", "resizedImageData", "fullImageData", "textData"],
+        nonPersistent: [ "owner", "resizedImageData", "fullImageData", "textData", "profilePictureUrl", "myPost", "owner"],
 
         // Return a copy of the model's `attributes` object.
         toJSON: function(options) {

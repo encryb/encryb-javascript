@@ -13,7 +13,8 @@ require.config({
 		tpl: '../tpl',
 		utils: '../utils',
         dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest',
-        dropboxdatastore: 'backbone.dropboxDatastore'
+        dropboxdatastore: 'backbone.dropboxDatastore',
+        marionette: 'backbone.marionette'
 	},
 
 
@@ -49,6 +50,10 @@ require.config({
         'backbone-forms-bootstrap3' : {
             deps: ["backbone-forms"],
             exports: 'Backbone.Form'
+        },
+        marionette : {
+            deps : ['jquery', 'underscore', 'backbone'],
+            exports : 'Marionette'
         }
 	}
 });

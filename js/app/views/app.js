@@ -3,9 +3,11 @@ define([
     'underscore',
     'backbone',
     'backbone.collectionView',
+    'marionette',
     'msgpack',
     'app/encryption',
     'app/models/post',
+    'app/models/friend',
     'app/collections/myPosts',
     'app/collections/posts',
     'app/collections/friends',
@@ -17,12 +19,21 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, CollectionView, Msgpack, Encryption, Post, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, CollectionView, Marionette, Msgpack, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
     var otherCollection = new PostCollection();
     var profiles = new ProfileCollection();
+
+    var Friends = Marionette.CollectionView.extend({
+        childView: FriendView
+    });
+
+    var Posts = Marionette.CollectionView.extend({
+        childView: PostView
+    });
+
 
     var AppView = Backbone.View.extend({
 
@@ -39,16 +50,20 @@ define([
             this.newPostText = $("#newPostText");
             this.newPostImage = $("#newPostImage");
 
-            var friendsView = new Backbone.CollectionView( {
-                el : $( "ul#otherContent" ),
-                selectable : false,
-                collection : otherCollection,
-                modelView : PostView,
-                modelViewOptions: {myPost: false},
-                emptyListCaption: "Empty!"
-            } );
-            friendsView.render();
+            var friendsList = new Friends({
+                collection: friends
+            });
 
+            friendsList.render();
+            $("#friends").html(friendsList.el);
+
+
+            var myPostList = new Posts({
+                collection: otherCollection
+            });
+
+            myPostList.render();
+            $("#friendsPosts").html(myPostList.el);
         },
 
         el: 'body',
@@ -65,6 +80,16 @@ define([
         onProfileSync: function() {
 
             var profilePictureUrl = profiles.getFirst().get('pictureUrl');
+            var profileName = profiles.getFirst().get('name');
+
+
+            var update = {myPost: true, profilePictureUrl: profilePictureUrl, owner: profileName};
+
+            myPosts.each(function(post) {
+                var  p = new Post(_.extend(post.attributes, update));
+                otherCollection.add(p);
+            }, this);
+/*
             var collectionView = new Backbone.CollectionView( {
                 el : $( "ul#content" ),
                 selectable : false,
@@ -75,13 +100,13 @@ define([
             } );
 
             collectionView.render();
-
+*/
         },
 
         addFriendsPosts: function(friend) {
 
-            var view = new FriendView({ model: friend });
-            $('#friends').prepend( view.render().el );
+            //var view = new FriendView({ model: friend });
+            // $('#friends').prepend( view.render().el );
 
             var friendManifest = friend.get('friendsManifest');
             if (!friendManifest) {
@@ -99,6 +124,7 @@ define([
 
                 for (var i = 0; i < posts.length; i++) {
                     var post = posts[i];
+                    post['myPost'] = false;
                     post['owner'] = decObj['name'];
                     post['profilePictureUrl'] = friend.get('pictureUrl');
                     var postModel = new Post(post);
@@ -145,26 +171,26 @@ define([
             });
         },
 
-        createUser: function(account, url) {
+        createUser: function(account, friendsManifest) {
 
             var deferred = $.Deferred();
 
             var id = RandomUtil.makeId();
-            var changes = {account: account, manifestFile: id, friendsManifest: url};
+            var changes = {account: account, manifestFile: id, friendsManifest: friendsManifest};
 
-            this.saveManifest(id)
+            var newFriend = new Friend(changes);
+            this.saveManifest(newFriend)
                 .then(Storage.shareDropbox)
                 .then(function(url) {
-                    changes['manifestUrl'] = url;
-                    var friend = friends.create(changes);
-                    deferred.resolve(friend);
+                    newFriend.set('manifestUrl', url);
+                    friends.add(newFriend);
+                    newFriend.save();
+                    deferred.resolve(newFriend);
                 });
             return deferred;
         },
 
-        saveManifest: function(path) {
-            var deferred = $.Deferred();
-
+        saveManifest: function(friend) {
             var posts = myPosts.toJSON();
             var manifest = {};
 
@@ -174,20 +200,12 @@ define([
             manifest['name'] = profile.get('name');
             manifest['pictureUrl'] = profile.get('pictureUrl');
 
-            var packedManifest = Msgpack.encode(manifest);
-            var p = new Uint8Array(packedManifest);
-
-            console.log(manifest);
-            var encText = Encryption.encryptImageWithPassword("global",  "plain/text", p);
-
-            Storage.uploadDropbox(path, encText).done(function(stats) {
-                deferred.resolve(stats);
-            });
-            return deferred;
+            var packedManifest = new Uint8Array(Msgpack.encode(manifest));
+            return friend.saveManifest(packedManifest);
         },
         saveManifests: function() {
             friends.each(function(friend) {
-                this.saveManifest(friend.get('manifestFile'));
+                this.saveManifest(friend);
             }, this);
         },
 

@@ -2,7 +2,6 @@ define([
     'jquery',
     'underscore',
     'backbone',
-    'backbone.collectionView',
     'marionette',
     'msgpack',
     'app/encryption',
@@ -19,7 +18,7 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, CollectionView, Marionette, Msgpack, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, Marionette, Msgpack, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
@@ -38,8 +37,7 @@ define([
     var AppView = Backbone.View.extend({
 
         initialize: function() {
-            this.listenTo(profiles, 'sync', function() {myPosts.fetch()});
-            this.listenTo(myPosts, 'sync', this.onProfileSync);
+            this.listenTo(profiles, 'sync', this.onProfileSync);
 
             this.listenTo(friends, 'add', this.addFriendsPosts);
             this.listenTo(myPosts, 'add', function(obo){console.log(obo)});
@@ -82,31 +80,11 @@ define([
             var profilePictureUrl = profiles.getFirst().get('pictureUrl');
             var profileName = profiles.getFirst().get('name');
 
-
-            var update = {myPost: true, profilePictureUrl: profilePictureUrl, owner: profileName};
-
-            myPosts.each(function(post) {
-                var  p = new Post(_.extend(post.attributes, update));
-                otherCollection.add(p);
-            }, this);
-/*
-            var collectionView = new Backbone.CollectionView( {
-                el : $( "ul#content" ),
-                selectable : false,
-                collection : myPosts,
-                modelView : PostView,
-                modelViewOptions: {myPost: true, profilePictureUrl: profilePictureUrl},
-                emptyListCaption: "Empty!"
-            } );
-
-            collectionView.render();
-*/
+            otherCollection.addMyCollection(myPosts, profileName, profilePictureUrl);
+            myPosts.fetch();
         },
 
         addFriendsPosts: function(friend) {
-
-            //var view = new FriendView({ model: friend });
-            // $('#friends').prepend( view.render().el );
 
             var friendManifest = friend.get('friendsManifest');
             if (!friendManifest) {
@@ -122,14 +100,8 @@ define([
                 friend.set('pictureUrl', decObj['pictureUrl'] );
                 friend.save();
 
-                for (var i = 0; i < posts.length; i++) {
-                    var post = posts[i];
-                    post['myPost'] = false;
-                    post['owner'] = decObj['name'];
-                    post['profilePictureUrl'] = friend.get('pictureUrl');
-                    var postModel = new Post(post);
-                    otherCollection.add(postModel);
-                }
+                otherCollection.addCollection(friendManifest, posts, decObj['name'], friend.get('pictureUrl'));
+
             });
 
         },

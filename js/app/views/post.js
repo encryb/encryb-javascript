@@ -41,6 +41,7 @@ define([
         },
 
         deletePost: function() {
+            this.trigger("post:delete");
             this.model.deletePost();
         }
     });

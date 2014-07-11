@@ -28,7 +28,7 @@ define([
 
             var encText = Encryption.encryptImageWithPassword("global",  "plain/text", manifest);
 
-            Storage.uploadDropbox(FOLDER_MANIFESTS + this.get('manifestFile'), encText).done(function(stats) {
+            Storage.uploadDropbox(this.get('manifestFile'), encText).done(function(stats) {
                 deferred.resolve(stats);
             });
             return deferred;

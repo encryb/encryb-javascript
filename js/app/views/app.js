@@ -25,15 +25,6 @@ define([
     var otherCollection = new PostCollection();
     var profiles = new ProfileCollection();
 
-    var Friends = Marionette.CollectionView.extend({
-        childView: FriendView
-    });
-
-    var Posts = Marionette.CollectionView.extend({
-        childView: PostView
-    });
-
-
     var AppView = Backbone.View.extend({
 
         initialize: function() {
@@ -62,6 +53,16 @@ define([
 
             myPostList.render();
             $("#friendsPosts").html(myPostList.el);
+
+            var app = this;
+            myPostList.on("childview:post:delete", function(post){
+                setTimeout(function(){app.saveManifests()}, 100);
+            });
+
+            document.yolo = myPostList;
+
+            // fetch new posts every 5 mins
+            setInterval(this.refreshPosts.bind(this), 5 * 60000);
         },
 
         el: 'body',
@@ -181,6 +182,18 @@ define([
             }, this);
         },
 
+        refreshPosts: function() {
+            console.log("refresh");
+            friends.each(function(friend) {
+                this.addFriendsPosts(friend);
+            }, this);
+        },
+
+        deleteCallback: function (model) {
+            console.log("Deleting " + model);
+            this.saveManifests();
+        },
+
         createPost: function(event) {
             event.preventDefault();
 
@@ -214,6 +227,17 @@ define([
             console.log("Clicked post " + event);
         }
     });
+
+    var Posts = Marionette.CollectionView.extend({
+        childView: PostView,
+    });
+
+
+    var Friends = Marionette.CollectionView.extend({
+        childView: FriendView
+    });
+
+
 
     return AppView;
 });

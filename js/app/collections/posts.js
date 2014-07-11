@@ -41,14 +41,43 @@ var Wall2 = Backbone.Collection.extend({
     },
 
     addCollection: function(manifest, posts, name, pictureUrl) {
-        this.collections['manifest'] = posts;
-        for (var i = 0; i < posts.length; i++) {
-            var post = posts[i];
+        if (this.collections.hasOwnProperty(manifest)) {
+            var remove = this.collections[manifest].slice(0);
+            var add = [];
+            for (var i=0; i < posts.length; i++) {
+                var post = posts[i];
+                var oldIndexId = remove.indexOf(post.id);
+                // new post
+                if (oldIndexId == -1) {
+                    add.push(post);
+                }
+                // existing post
+                else {
+                    remove.splice(oldIndexId, 1);
+                }
+            }
+        }
+        else {
+            var add = posts;
+            var remove =[];
+            this.collections[manifest] = [];
+        }
+
+        for (var i = 0; i < add.length; i++) {
+            var post = add[i];
             var wrapper = new PostWrapper(post);
             wrapper.set('myPost', false);
             wrapper.set('owner', name);
             wrapper.set('profilePictureUrl', pictureUrl);
             this.add(wrapper);
+            this.collections[manifest].push(post.id);
+        }
+        for (var i = 0; i < remove.length; i++) {
+            var post = remove[i];
+            var removePost = this.findWhere({id: post});
+            if (removePost) {
+                this.remove(removePost);
+            }
         }
     },
     setPostModel: function(post) {

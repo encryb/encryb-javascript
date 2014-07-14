@@ -14,7 +14,8 @@ require.config({
 		utils: '../utils',
         dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest',
         dropboxdatastore: 'backbone.dropboxDatastore',
-        marionette: 'backbone.marionette'
+        marionette: 'backbone.marionette',
+        visibility: 'visibility-1.2.1.min'
 	},
 
 
@@ -54,6 +55,9 @@ require.config({
         marionette : {
             deps : ['jquery', 'underscore', 'backbone'],
             exports : 'Marionette'
+        },
+        visibility: {
+            exports: 'Visibility'
         }
 	}
 });

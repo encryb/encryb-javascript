@@ -14,7 +14,6 @@ var Wall2 = Backbone.Collection.extend({
     myPicture: "",
 
     addMyCollection: function(posts, name, pictureUrl) {
-        console.log("addMyCollection");
         this.collections['mine'] = posts;
         this.listenTo(posts, 'add', this.addMyPost);
         this.myName = name;
@@ -31,7 +30,6 @@ var Wall2 = Backbone.Collection.extend({
     },
 
     addMyPost: function(post) {
-        console.log("addMyPost");
         var wrapper = new PostWrapper(post.attributes);
         wrapper.setPostModel(post);
         wrapper.set('myPost', true);

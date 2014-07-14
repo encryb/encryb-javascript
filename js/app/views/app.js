@@ -4,6 +4,7 @@ define([
     'backbone',
     'marionette',
     'msgpack',
+    'visibility',
     'app/encryption',
     'app/models/post',
     'app/models/friend',
@@ -18,7 +19,7 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
@@ -31,7 +32,6 @@ define([
             this.listenTo(profiles, 'sync', this.onProfileSync);
 
             this.listenTo(friends, 'add', this.addFriendsPosts);
-            this.listenTo(myPosts, 'add', function(obo){console.log(obo)});
 
             profiles.fetch();
             friends.fetch();
@@ -59,10 +59,18 @@ define([
                 setTimeout(function(){app.saveManifests()}, 100);
             });
 
-            document.yolo = myPostList;
+            var minute = 60 * 1000;
+            Visibility.every(3 * minute, 15 * minute, function () {
+                var refresh = app.refreshPosts.bind(app);
+                refresh();
+            });
 
-            // fetch new posts every 5 mins
-            setInterval(this.refreshPosts.bind(this), 5 * 60000);
+            Visibility.change(function (e, state) {
+                if (state == "visible") {
+                    var refresh = app.refreshPosts.bind(app);
+                    refresh();
+                }
+            });
         },
 
         el: 'body',
@@ -94,7 +102,6 @@ define([
             Storage.downloadUrl(friendManifest).done(function(data) {
                 var decData = Encryption.decryptBinaryData(data, "global");
                 var decObj = Msgpack.decode(decData.buffer);
-                console.log(decObj);
 
                 var posts = decObj['posts'];
 

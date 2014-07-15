@@ -29,11 +29,19 @@ define([
     var AppView = Backbone.View.extend({
 
         initialize: function() {
-            this.listenTo(profiles, 'sync', this.onProfileSync);
 
             this.listenTo(friends, 'add', this.addFriendsPosts);
 
-            profiles.fetch();
+            // Wait for user profile to sync before displaying user posts
+            // This is required for user name / image to show up properly in posts
+            $.when(profiles.fetch()).done(function() {
+                var profilePictureUrl = profiles.getFirst().get('pictureUrl');
+                var profileName = profiles.getFirst().get('name');
+
+                otherCollection.addMyCollection(myPosts, profileName, profilePictureUrl);
+                myPosts.fetch();
+            });
+
             friends.fetch();
 
             this.newPostText = $("#newPostText");
@@ -80,17 +88,6 @@ define([
             "click #addFriend": 'showAddFriendForm',
             "click #myInfo": 'showMyProfile'
 
-        },
-
-        // Wait for user profile to sync before displaying user posts
-        // This is required for user name / image to show up properly in posts
-        onProfileSync: function() {
-
-            var profilePictureUrl = profiles.getFirst().get('pictureUrl');
-            var profileName = profiles.getFirst().get('name');
-
-            otherCollection.addMyCollection(myPosts, profileName, profilePictureUrl);
-            myPosts.fetch();
         },
 
         addFriendsPosts: function(friend) {

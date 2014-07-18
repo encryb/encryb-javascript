@@ -11,7 +11,9 @@ define([
     'app/collections/myPosts',
     'app/collections/posts',
     'app/collections/friends',
+    'app/collections/permissions',
     'app/collections/profiles',
+    'app/views/newPost',
     'app/views/post',
     'app/views/friend',
     'app/views/modals',
@@ -19,7 +21,7 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, ProfileCollection, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, PermissionCollection, ProfileCollection, NewPostView, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
@@ -30,6 +32,7 @@ define([
 
         initialize: function() {
 
+            var app = this;
             this.listenTo(friends, 'add', this.addFriendsPosts);
 
             // Wait for user profile to sync before displaying user posts
@@ -44,8 +47,20 @@ define([
 
             friends.fetch();
 
-            this.newPostText = $("#newPostText");
-            this.newPostImage = $("#newPostImage");
+            var perms = new PermissionCollection();
+
+            perms.addFriends(friends);
+            var newPostView = new NewPostView({
+                permissions: perms
+            });
+            newPostView.render();
+            $("#newPost").html(newPostView.el);
+
+            newPostView.on("post:submit", function(post){
+                myPosts.add(post);
+                post.save();
+                app.saveManifests();
+            });
 
             var friendsList = new Friends({
                 collection: friends
@@ -62,7 +77,6 @@ define([
             myPostList.render();
             $("#friendsPosts").html(myPostList.el);
 
-            var app = this;
             myPostList.on("childview:post:delete", function(post){
                 setTimeout(function(){app.saveManifests()}, 100);
             });
@@ -84,7 +98,6 @@ define([
         el: 'body',
 
         events: {
-            'submit form': 'createPost',
             "click #addFriend": 'showAddFriendForm',
             "click #myInfo": 'showMyProfile'
 
@@ -196,52 +209,16 @@ define([
         deleteCallback: function (model) {
             console.log("Deleting " + model);
             this.saveManifests();
-        },
-
-        createPost: function(event) {
-            event.preventDefault();
-
-            var post = new Post();
-            var date = new Date().getTime();
-            post.set({owner: "MEEEEEEEE", sharedDate: date, created: date});
-
-            var postText = this.newPostText.val();
-            if (postText && postText.length > 0) {
-                post.set({hasText: true, textData: postText});
-            }
-
-            var imageElement = this.newPostImage.children()[0] ;
-            if (imageElement) {
-                var resizedData = ImageUtil.resize(imageElement, 400, 300);
-                var fullsizeData = imageElement.src;
-                post.set({hasImage: true, resizedImageData: resizedData, fullImageData: fullsizeData });
-            }
-
-            var appView = this;
-            post.uploadPost().done(function() {
-                var form = $("#newPostForm");
-                form.trigger('reset');
-                form.removeClass("in");
-                myPosts.add(post);
-                post.save();
-                appView.saveManifests();
-
-            });
-
-            console.log("Clicked post " + event);
         }
     });
 
     var Posts = Marionette.CollectionView.extend({
-        childView: PostView,
+        childView: PostView
     });
 
 
     var Friends = Marionette.CollectionView.extend({
         childView: FriendView
     });
-
-
-
     return AppView;
 });

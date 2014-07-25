@@ -19,10 +19,9 @@ define([
         },
 
         events: {
-            'submit form': 'createPost'
+            'submit form': 'createPost',
+            'focusin #newPostTrigger' : "expendForm"
         },
-
-
 
         onRender: function(){
             var perms = this.options.permissions.toJSON();
@@ -54,14 +53,13 @@ define([
 
 
         ui: {
+            newPostTrigger: '#newPostTrigger',
             newPostText: '#newPostText',
             newPostImage: '#newPostImage',
             newPostForm: '#newPostForm',
             newPostDiv: '#newPostDiv',
             permissions: "#permissions"
         },
-
-
 
         createPost: function(event) {
             event.preventDefault();
@@ -70,7 +68,7 @@ define([
 
             var post = new Post();
             var date = new Date().getTime();
-            post.set({owner: "MEEEEEEEE", sharedDate: date, created: date, permissions: selectize.getValue()});
+            post.set({sharedDate: date, created: date, permissions: selectize.getValue()});
 
             var postText = this.ui.newPostText.val();
             if (postText && postText.length > 0) {
@@ -88,11 +86,19 @@ define([
             post.uploadPost().done(function() {
                 newPostView.ui.newPostForm.trigger('reset');
                 newPostView.ui.newPostDiv.removeClass("in");
+                newPostView.ui.newPostTrigger.show();
                 newPostView.trigger("post:submit", post);
+
                 selectize.clear();
             });
 
             console.log("Clicked post " + event);
+        },
+
+        expendForm: function() {
+            event.preventDefault();
+            this.ui.newPostDiv.addClass("in");
+            this.ui.newPostTrigger.hide();
         }
     });
     return NewPostView;

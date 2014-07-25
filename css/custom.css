@@ -80,3 +80,42 @@ ul.collection-list li {
 .new_post .form-group {
     margin-bottom: 4px
 }
+
+
+.new_post_input {
+    padding: 10px;
+    border: 1px solid #AAA;
+    border-radius: 4px;
+    margin: 7px;
+    width: 50%;
+}
+
+.typeahead {
+    padding: 6px;
+    border: 1px solid #AAA;
+    border-radius: 4px;   /* may need vendor varients */
+    background: #FFF;
+    color: #999999;
+}
+
+.typeahead:focus {
+    border: 1px solid #0097cf;
+}
+
+.comment {
+    margin-top: 5px;
+    padding-bottom:5px;
+    padding-top: 5px;
+    border-top: 1px solid #808080;
+}
+
+.comment-border {
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin: 10px 0;
+}
+
+.nopadding {
+    padding: 0 !important;
+    margin: 0 !important;
+}

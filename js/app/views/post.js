@@ -3,18 +3,27 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'app/views/comment',
     'app/views/modals',
     'require-text!app/templates/post.html'
 
-], function($, _, Backbone, Marionette, Modals, PostTemplate){
+], function($, _, Backbone, Marionette, CommentView, Modals, PostTemplate){
 
-    var PostView = Marionette.ItemView.extend({
+    var PostView = Marionette.CompositeView.extend({
 
         template: _.template( PostTemplate ),
 
         initialize: function() {
             this.model.fetchPost(false);
+            var comment = new Backbone.Model({owner:"Ogi", sharedDate: 0, textData: "This is just a test"});
+            var comment2 = new Backbone.Model({owner:'Ogi2', sharedDate:100000, textData: "This is more than just a test"});
+            this.collection = new Backbone.Collection();
+            this.collection.add(comment);
+            this.collection.add(comment2);
         },
+
+        childView: CommentView,
+        childViewContainer: "#comments",
 
         serializeModel: function(model){
             var attr = _.clone(model.attributes);

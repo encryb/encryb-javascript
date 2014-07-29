@@ -21,7 +21,9 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection, FriendCollection, PermissionCollection, ProfileCollection, NewPostView, PostView, FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection,
+            FriendCollection, PermissionCollection, ProfileCollection, NewPostView, PostView,
+            FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
@@ -74,12 +76,18 @@ define([
                 collection: otherCollection
             });
 
+            myPostList.on("childview:post:like", function(post, id){
+                otherCollection.toggleUpvote(id);
+            });
+
             myPostList.render();
             $("#friendsPosts").html(myPostList.el);
 
             myPostList.on("childview:post:delete", function(post){
                 setTimeout(function(){app.saveManifests()}, 100);
             });
+
+
 
             var minute = 60 * 1000;
             Visibility.every(3 * minute, 15 * minute, function () {
@@ -115,10 +123,17 @@ define([
 
                 var posts = decObj['posts'];
 
+                var userId = -1;
+                if (decObj.hasOwnProperty('userId')) {
+                    var userId = decObj['userId'];
+                }
+
                 friend.set('pictureUrl', decObj['pictureUrl'] );
+                friend.set('userId', userId);
                 friend.save();
 
-                otherCollection.addCollection(friendManifest, posts, decObj['name'], friend.get('pictureUrl'));
+
+                otherCollection.addCollection(friendManifest, posts, decObj['name'], friend.get('pictureUrl'), friend.get('userId'));
 
             });
 
@@ -201,6 +216,7 @@ define([
             var profile = profiles.getFirst();
             manifest['name'] = profile.get('name');
             manifest['pictureUrl'] = profile.get('pictureUrl');
+            manifest['userId'] = Backbone.DropboxDatastore.client.dropboxUid();
 
             var packedManifest = new Uint8Array(Msgpack.encode(manifest));
             return friend.saveManifest(packedManifest);

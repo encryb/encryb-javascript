@@ -119,3 +119,11 @@ ul.collection-list li {
     padding: 0 !important;
     margin: 0 !important;
 }
+
+.bottom-5 {
+    margin-bottom: 5px;
+}
+
+.top-15 {
+    margin-top: 15px;
+}

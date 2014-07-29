@@ -5,7 +5,19 @@ define([
 
     var PostWrapper = Backbone.Model.extend({
 
+        // not persisted
         sync: function () { return false; },
+
+        getPostId: function() {
+            var userId = this.get('userId');
+            //temp fix
+            if (userId == -1) {
+                userId = "undefined";
+            }
+            var postId = userId + ":" + this.get('id');
+
+            return postId;
+        },
 
         setPostModel: function(postModel) {
             this.postModel = postModel;

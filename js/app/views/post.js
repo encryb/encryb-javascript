@@ -15,11 +15,13 @@ define([
 
         initialize: function() {
             this.model.fetchPost(false);
-            var comment = new Backbone.Model({owner:"Ogi", sharedDate: 0, textData: "This is just a test"});
-            var comment2 = new Backbone.Model({owner:'Ogi2', sharedDate:100000, textData: "This is more than just a test"});
+            /*
+            var comment = new Backbone.Model({owner:"Ogi", created: 0, textData: "This is just a test"});
+            var comment2 = new Backbone.Model({owner:'Ogi2', created:100000, textData: "This is more than just a test"});
             this.collection = new Backbone.Collection();
             this.collection.add(comment);
             this.collection.add(comment2);
+            */
         },
 
         childView: CommentView,
@@ -42,7 +44,8 @@ define([
 
         events: {
             "click #resizedImage": "showImage",
-            "click #deletePost": "deletePost"
+            "click #deletePost": "deletePost",
+            "click #likeButton": "toggleLike"
         },
 
         showImage: function(){
@@ -52,6 +55,11 @@ define([
         deletePost: function() {
             this.trigger("post:delete");
             this.model.deletePost();
+        },
+
+        toggleLike: function() {
+            var id = this.model.getPostId();
+            this.trigger("post:like", id);
         }
     });
     return PostView;

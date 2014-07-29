@@ -15,7 +15,6 @@ define([
         defaults: {
             // persisted
             created: null,
-            sharedDate: null,
             password: null,
             hasText: false,
             hasImage: false

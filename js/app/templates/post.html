@@ -35,11 +35,14 @@
     </div>
     <div class="row">
         <div class="col-lg-12">
-            <div class="thumbnail bottom-5">
-                <% if (typeof resizedImageData !== "undefined" && resizedImageData != "pending") { %>
-                    <img id ="resizedImage" src='<%= resizedImageData %>'>
-                <% } %>
-            </div>
+            <% if (typeof resizedImageData !== "undefined" && resizedImageData != "pending") { %>
+                <div class="thumbnail bottom-5">
+                        <img id ="resizedImage" src='<%= resizedImageData %>'>
+                </div>
+            <% } else { %>
+                <div class="comment-border"></div>
+            <% } %>
+
         </div>
     </div>
     <div class="row">

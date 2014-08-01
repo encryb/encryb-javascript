@@ -1,41 +1,35 @@
 define([
   'backbone',
-  'app/collections/upvotes',
+  'underscore',
   'app/models/post',
-  'app/models/postWrapper'
-], function(Backbone, Upvotes, Post, PostWrapper){
+  'app/models/postWrapper',
+  'app/remoteManifest',
+  'utils/dropbox-client'
+], function(Backbone, _, Post, PostWrapper, RemoteManifest, DropboxClient){
 
 var Wall2 = Backbone.Collection.extend({
     model: PostWrapper,
 
     collections: {},
-
-    myName : "",
-
-    myPicture: "",
-
-    upvotes: new Upvotes(),
+    upvotes: {},
+    friends: {},
 
     myUserId: Backbone.DropboxDatastore.client.dropboxUid(),
-
     idToModel: {},
 
     initialize: function() {
         this.on("add", this.onPostAdded);
         this.on("remove", this.onPostRemoved);
-
-        this.listenTo(this.upvotes, "add", this.onUpvoteAdded);
-        this.listenTo(this.upvotes, "remove", this.onUpvoteRemoved);
-
-
     },
 
     onPostAdded: function(model) {
         var id = model.getPostId();
         this.idToModel[id] = model;
 
-        if (this.upvotes.findWhere({postId:id})) {
+        if (this.myUpvotes.findWhere({postId:id})) {
             model.set('liked', true);
+            var likes = model.get('likes');
+            model.set('likes', likes + 1);
         }
     },
 
@@ -47,7 +41,11 @@ var Wall2 = Backbone.Collection.extend({
         var upvoteId = upvote.get('postId');
         if (this.idToModel.hasOwnProperty(upvoteId)) {
             var model = this.idToModel[upvoteId];
-            model.set('liked', true);
+            if(model) {
+                model.set('liked', true);
+                var likes = model.get('likes');
+                model.set('likes', likes + 1);
+            }
         }
     },
 
@@ -55,22 +53,59 @@ var Wall2 = Backbone.Collection.extend({
         var upvoteId = upvote.get('postId');
         if (this.idToModel.hasOwnProperty(upvoteId)) {
             var model = this.idToModel[upvoteId];
-            model.set('liked', false);
+            if(model) {
+                model.set('liked', false);
+                var likes = model.get('likes');
+                model.set('likes', likes - 1);
+            }
         }
     },
 
     toggleUpvote: function(id) {
-        if (this.upvotes.isUpvoted(id)) {
-            this.upvotes.removeUpvote(id);
+        if (! this.myUpvotes) {
+            return;
+        }
+        if (this.myUpvotes.isUpvoted(id)) {
+            this.myUpvotes.removeUpvote(id);
         }
         else {
-            this.upvotes.addUpvote(id);
+            this.myUpvotes.addUpvote(id);
         }
     },
 
+    addMyUpvotes: function(myUpvotes) {
+        this.myUpvotes = myUpvotes;
+        this.listenTo(myUpvotes, 'add', this.onUpvoteAdded);
+        this.listenTo(myUpvotes, 'remove', this.onUpvoteRemoved);
+
+        myUpvotes.each(function(upvote) {
+            this.onUpvoteAdded(upvote);
+       });
+    },
+
+    addUpvote: function(postId, friend) {
+        var upvotes;
+        if (this.upvotes.hasOwnProperty(postId)) {
+            upvotes = this.upvotes[postId];
+        }
+        else {
+            upvotes = [];
+            this.upvotes['postId'] = upvotes;
+        }
+        upvotes.push(friend);
+    },
+
+    removeMyUpvote: function(postId, friend) {
+        var postId = upvote.get('postId');
+        var upvotes = this.upvotes[postId];
+        var index = upvotes.indexOf(postId);
+        upvotes.splice(index, 1);
+    },
+
     addMyCollection: function(posts, name, pictureUrl) {
-        this.collections['mine'] = posts;
+
         this.listenTo(posts, 'add', this.addMyPost);
+        // remove is handled automatically when model is destoyed
         this.myName = name;
         this.myPicture = pictureUrl;
         var wall2 = this;
@@ -81,7 +116,6 @@ var Wall2 = Backbone.Collection.extend({
             wrapper.set('owner', name);
             wrapper.set('profilePictureUrl', pictureUrl);
             wrapper.set('userId', wall2.myUserId);
-            wrapper.set('liked', false);
             wall2.add(wrapper);
         });
     },
@@ -93,50 +127,53 @@ var Wall2 = Backbone.Collection.extend({
         wrapper.set('owner', this.myName);
         wrapper.set('profilePictureUrl', this.myPicture);
         wrapper.set('userId', this.myUserId);
-        wrapper.set('liked', false);
         this.add(wrapper);
     },
 
-    addCollection: function(manifest, posts, name, pictureUrl, userId) {
-        if (this.collections.hasOwnProperty(manifest)) {
-            var remove = this.collections[manifest].slice(0);
-            var add = [];
-            for (var i=0; i < posts.length; i++) {
-                var post = posts[i];
-                var oldIndexId = remove.indexOf(post.id);
-                // new post
-                if (oldIndexId == -1) {
-                    add.push(post);
-                }
-                // existing post
-                else {
-                    remove.splice(oldIndexId, 1);
-                }
-            }
-        }
-        else {
-            var add = posts;
-            var remove =[];
-            this.collections[manifest] = [];
+    addCollection: function(manifest, friend) {
+
+        var wall2  = this;
+
+        var userId = -1;
+        if (friend.hasOwnProperty('userId')) {
+            userId = friend.userId;
         }
 
-        for (var i = 0; i < add.length; i++) {
-            var post = add[i];
-            var wrapper = new PostWrapper(post);
-            wrapper.set('myPost', false);
-            wrapper.set('owner', name);
-            wrapper.set('profilePictureUrl', pictureUrl);
-            wrapper.set('userId', userId);
-            wrapper.set('liked', false);
-            this.add(wrapper);
-            this.collections[manifest].push(post.id);
+        if (this.friends.hasOwnProperty(manifest)) {
+            var oldFriend = this.friends[manifest];
+
+            RemoteManifest.compare(oldFriend, friend, function(key, action, item) {
+                if (key == "posts") {
+                    if (action == "add") {
+                        wall2.addPost(item, friend.name, friend.pictureUrl, userId);
+                    }
+                    else {
+                        wall2.removePost(item);
+                    }
+                }
+            });
         }
-        for (var i = 0; i < remove.length; i++) {
-            var post = remove[i];
-            var removePost = this.findWhere({id: post});
-            if (removePost) {
-                this.remove(removePost);
+        else {
+            this.friends[manifest] = friend;
+            for (var i=0; i< friend.posts.length; i++) {
+                var post = friend.posts[i];
+                wall2.addPost(post, friend.name, friend.pictureUrl, userId);
             }
+        }
+    },
+    addPost: function(post, name, pictureUrl, userId) {
+        var wrapper = new PostWrapper(post);
+        wrapper.set('myPost', false);
+        wrapper.set('owner', name);
+        wrapper.set('profilePictureUrl', pictureUrl);
+        wrapper.set('userId', userId);
+        this.add(wrapper);
+
+    },
+    removePost: function(post) {
+        var removePost = this.findWhere({id: post.id});
+        if (removePost) {
+            this.remove(removePost);
         }
     },
     setPostModel: function(post) {

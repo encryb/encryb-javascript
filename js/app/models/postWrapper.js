@@ -5,6 +5,11 @@ define([
 
     var PostWrapper = Backbone.Model.extend({
 
+        defaults: {
+            liked: false,
+            likes: 0
+        },
+
         // not persisted
         sync: function () { return false; },
 

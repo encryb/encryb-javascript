@@ -10,7 +10,6 @@ var Upvotes = Backbone.Collection.extend({
     dropboxDatastore: new Backbone.DropboxDatastore('Upvotes_1'),
 
     initialize: function () {
-        this.fetch();
         this.dropboxDatastore.syncCollection(this);
     },
 

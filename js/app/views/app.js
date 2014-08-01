@@ -13,6 +13,7 @@ define([
     'app/collections/friends',
     'app/collections/permissions',
     'app/collections/profiles',
+    'app/collections/upvotes',
     'app/views/newPost',
     'app/views/post',
     'app/views/friend',
@@ -22,13 +23,14 @@ define([
     'utils/image',
     'utils/random'
 ], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection,
-            FriendCollection, PermissionCollection, ProfileCollection, NewPostView, PostView,
+            FriendCollection, PermissionCollection, Profiles, Upvotes, NewPostView, PostView,
             FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
     var otherCollection = new PostCollection();
-    var profiles = new ProfileCollection();
+    var profiles = new Profiles();
+    var upvotes = new Upvotes();
 
     var AppView = Backbone.View.extend({
 
@@ -36,6 +38,9 @@ define([
 
             var app = this;
             this.listenTo(friends, 'add', this.addFriendsPosts);
+
+            upvotes.fetch();
+            otherCollection.addMyUpvotes(upvotes);
 
             // Wait for user profile to sync before displaying user posts
             // This is required for user name / image to show up properly in posts
@@ -133,7 +138,7 @@ define([
                 friend.save();
 
 
-                otherCollection.addCollection(friendManifest, posts, decObj['name'], friend.get('pictureUrl'), friend.get('userId'));
+                otherCollection.addCollection(friendManifest, decObj);
 
             });
 

@@ -5,8 +5,9 @@ define([
     'app/storage',
     'app/encryption',
     'utils/data-convert',
+    'utils/dropbox-client',
     'utils/random'
-], function (Backbone, _, Sjcl, Storage, Encryption, DataConvert, Random) {
+], function (Backbone, _, Sjcl, Storage, Encryption, DataConvert, DropboxClient, Random) {
 
     var FOLDER_POSTS = "posts/";
 
@@ -17,7 +18,9 @@ define([
             created: null,
             password: null,
             hasText: false,
-            hasImage: false
+            hasImage: false,
+            userId: Backbone.DropboxDatastore.client.dropboxUid()
+
 
             // no defaults
             // folderId

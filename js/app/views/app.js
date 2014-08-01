@@ -83,6 +83,7 @@ define([
 
             myPostList.on("childview:post:like", function(post, id){
                 otherCollection.toggleUpvote(id);
+                setTimeout(function(){app.saveManifests()}, 100);
             });
 
             myPostList.render();
@@ -217,6 +218,7 @@ define([
             }
 
             manifest['posts'] = filteredPosts;
+            manifest['upvotes'] = upvotes.toJSON();
 
             var profile = profiles.getFirst();
             manifest['name'] = profile.get('name');

@@ -21,6 +21,9 @@ define([
     }
 
     function updateArray(key, oldObj, newObj, callback) {
+        if (!oldObj.hasOwnProperty(key) || !newObj.hasOwnProperty(key)) {
+            return;
+        }
         var newArray = newObj[key];
         var oldArray = oldObj[key];
 
@@ -58,6 +61,7 @@ define([
         updateField('name', oldManifest, newManifest, callback);
         updateField('pictureUrl', oldManifest, newManifest, callback);
         updateArray('posts', oldManifest, newManifest, callback);
+        updateArray('upvotes', oldManifest, newManifest, callback);
     }
 
     return exports;

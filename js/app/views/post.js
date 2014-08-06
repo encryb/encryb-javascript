@@ -9,7 +9,7 @@ define([
 
 ], function($, _, Backbone, Marionette, CommentView, Modals, PostTemplate){
 
-    var PostView = Marionette.CompositeView.extend({
+    var PostView = Marionette.ItemView.extend({
 
         template: _.template( PostTemplate ),
 
@@ -24,9 +24,11 @@ define([
             */
         },
 
+        /*
         childView: CommentView,
         childViewContainer: "#comments",
-
+*/
+        /*
         serializeModel: function(model){
             var attr = _.clone(model.attributes);
             if('profilePictureUrl' in this.options) {
@@ -36,7 +38,7 @@ define([
                 attr['myPost'] = this.options['myPost'];
             }
             return attr;
-        },
+        },*/
 
         'modelEvents': {
             'change': 'render'
@@ -44,8 +46,10 @@ define([
 
         events: {
             "click #resizedImage": "showImage",
-            "click #deletePost": "deletePost",
+            "click #deletePost": "deletePost"
+            /*
             "click #likeButton": "toggleLike"
+            */
         },
 
         showImage: function(){
@@ -55,11 +59,6 @@ define([
         deletePost: function() {
             this.trigger("post:delete");
             this.model.deletePost();
-        },
-
-        toggleLike: function() {
-            var id = this.model.getPostId();
-            this.trigger("post:like", id);
         }
     });
     return PostView;

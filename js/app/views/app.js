@@ -15,7 +15,7 @@ define([
     'app/collections/profiles',
     'app/collections/upvotes',
     'app/views/newPost',
-    'app/views/post',
+    'app/views/post2',
     'app/views/friend',
     'app/views/modals',
     'app/storage',
@@ -23,7 +23,7 @@ define([
     'utils/image',
     'utils/random'
 ], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection,
-            FriendCollection, PermissionCollection, Profiles, Upvotes, NewPostView, PostView,
+            FriendCollection, PermissionCollection, Profiles, Upvotes, NewPostView, PostView2,
             FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
@@ -248,7 +248,7 @@ define([
     });
 
     var Posts = Marionette.CollectionView.extend({
-        childView: PostView
+        childView: PostView2
     });
 
 

@@ -19,7 +19,6 @@ define([
             password: null,
             hasText: false,
             hasImage: false,
-            userId: Backbone.DropboxDatastore.client.dropboxUid()
 
 
             // no defaults

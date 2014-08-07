@@ -8,12 +8,12 @@ define([
     'app/encryption',
     'app/models/post',
     'app/models/friend',
-    'app/collections/myPosts',
-    'app/collections/posts',
-    'app/collections/friends',
+    'app/collections/persist/myPosts',
+    'app/collections/persist/friends',
+    'app/collections/persist/profiles',
+    'app/collections/persist/upvotes',
     'app/collections/permissions',
-    'app/collections/profiles',
-    'app/collections/upvotes',
+    'app/collections/wall',
     'app/views/newPost',
     'app/views/post2',
     'app/views/friend',
@@ -22,13 +22,13 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts, PostCollection,
-            FriendCollection, PermissionCollection, Profiles, Upvotes, NewPostView, PostView2,
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts,
+            FriendCollection,Profiles, Upvotes,PermissionCollection, Wall, NewPostView, PostView2,
             FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var myPosts = new MyPosts();
     var friends = new FriendCollection();
-    var otherCollection = new PostCollection();
+    var wall = new Wall();
     var profiles = new Profiles();
     var upvotes = new Upvotes();
 
@@ -40,7 +40,7 @@ define([
             this.listenTo(friends, 'add', this.addFriendsPosts);
 
             upvotes.fetch();
-            otherCollection.addMyUpvotes(upvotes);
+            wall.addMyUpvotes(upvotes);
 
             // Wait for user profile to sync before displaying user posts
             // This is required for user name / image to show up properly in posts
@@ -48,7 +48,7 @@ define([
                 var profilePictureUrl = profiles.getFirst().get('pictureUrl');
                 var profileName = profiles.getFirst().get('name');
 
-                otherCollection.addMyCollection(myPosts, profileName, profilePictureUrl);
+                wall.addMyCollection(myPosts, profileName, profilePictureUrl);
                 myPosts.fetch();
             });
 
@@ -78,11 +78,11 @@ define([
 
 
             var myPostList = new Posts({
-                collection: otherCollection
+                collection: wall
             });
 
             myPostList.on("childview:post:like", function(post, id){
-                otherCollection.toggleUpvote(id);
+                wall.toggleUpvote(id);
                 setTimeout(function(){app.saveManifests()}, 100);
             });
 
@@ -139,7 +139,7 @@ define([
                 friend.save();
 
 
-                otherCollection.addCollection(friendManifest, decObj);
+                wall.addCollection(friendManifest, decObj);
 
             });
 

@@ -10,7 +10,7 @@ define([
         },
 
         initialize: function() {
-            var upvotes = new Backbone.Model({upvoted: false, upvoteCount: 0, friendUpvotes: new Backbone.Collection()});
+            var upvotes = new Backbone.Model({upvoted: false, friendUpvotes: new Backbone.Collection()});
             this.set("upvotes", upvotes);
         },
 
@@ -33,19 +33,13 @@ define([
 
         addFriendUpvote: function(name, pictureUrl, userId) {
             var friend = new Backbone.Model({friendId: userId, name: name, pictureUrl: pictureUrl});
-            var upvotes = this.get("upvotes");
-            var friendUpvotes = upvotes.get("friendUpvotes");
-            friendUpvotes.add(friend);
-            upvotes.set("upvoteCount", friendUpvotes.size());
+            var upvotes = this.get("upvotes").get("friendUpvotes").add(friend);
         },
 
         removeFriendUpvote: function(userId) {
-            var upvotes = this.get("upvotes");
-            var friendUpvotes = upvotes.get("friendUpvotes");
+            var friendUpvotes = this.get("upvotes").get("friendUpvotes");
             var friend = friendUpvotes.findWhere({friendId: userId});
             friendUpvotes.remove(friend);
-            upvotes.set("upvoteCount", friendUpvotes.size());
-
         },
 
         setMyPost: function(postModel, name, pictureUrl) {

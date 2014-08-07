@@ -10,14 +10,14 @@ define([
 ], function($, _, Backbone, Marionette, CommentView, UpvoteTemplate, UpvotesTemplate) {
 
   var UpvoteView = Marionette.ItemView.extend({
-      template: _.template( UpvoteTemplate )
+      template: _.template( UpvoteTemplate ),
   });
 
   var UpvotesView = Marionette.CompositeView.extend({
       template: _.template( UpvotesTemplate ),
       templateHelpers: {
           sumUpvotes: function(){
-              var sum = this.upvoteCount;
+              var sum = this.friendUpvotes.length;
               if (this.upvoted) {
                   sum++;
               }
@@ -28,6 +28,16 @@ define([
       childViewContainer: "#upvotes",
       modelEvents: {
           "change": "render"
+      },
+      collectionEvents: {
+          "add": "delayedRender",
+          "remove": "delayedRender"
+      },
+      // we need this because standard render fires before
+      // compositeview adds child to the view, resulting in duplicates
+      delayedRender: function() {
+          var view = this;
+          setTimeout(function(){view.render()}, 0);
       }
 
   });

@@ -127,3 +127,15 @@ ul.collection-list li {
 .top-15 {
     margin-top: 15px;
 }
+
+.upvote-thumbnail {
+    position: relative;
+    float: left;
+    display: inline-block;
+    width: auto;
+    max-height: 38px;
+    padding: 1px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 1px;
+}

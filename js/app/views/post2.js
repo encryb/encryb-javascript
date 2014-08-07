@@ -22,7 +22,7 @@ define([
             var postContentView = new PostView({model: this.model.get('post')});
             this.content.show(postContentView);
             var upvotesModel = this.model.get('upvotes');
-            var upvotesView = new UpvotesView({model: upvotesModel, collection: upvotesModel.others});
+            var upvotesView = new UpvotesView({model: upvotesModel, collection: upvotesModel.get("friendUpvotes")});
             this.upvotes.show(upvotesView);
         },
         events: {

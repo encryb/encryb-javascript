@@ -21,6 +21,11 @@
     right:8px;
 }
 
+.friend_panel {
+    width: 120px;
+    margin-bottom: 10px;
+}
+
 .friend_edit_button {
     position:absolute;
     bottom:0px;
@@ -133,9 +138,9 @@ ul.collection-list li {
     float: left;
     display: inline-block;
     width: auto;
-    max-height: 38px;
+    max-height: 36px;
     padding: 1px;
     background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 1px;
+    border: 2px solid #ddd;
+    border-radius: 2px;
 }

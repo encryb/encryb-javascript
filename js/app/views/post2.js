@@ -3,11 +3,11 @@ define([
     'underscore',
     'backbone',
     'marionette',
-    'app/views/post',
+    'app/views/postContent',
     'app/views/upvotes',
     'require-text!app/templates/post2.html'
 
-], function($, _, Backbone, Marionette, PostView, UpvotesView, PostTemplate) {
+], function($, _, Backbone, Marionette, PostContentView, UpvotesView, PostTemplate) {
     var PostView2 = Marionette.LayoutView.extend({
         template: _.template(PostTemplate),
         regions: {
@@ -19,7 +19,7 @@ define([
             this.setupChildren();
         },
         setupChildren: function () {
-            var postContentView = new PostView({model: this.model.get('post')});
+            var postContentView = new PostContentView({model: this.model.get('post')});
             this.content.show(postContentView);
             var upvotesModel = this.model.get('upvotes');
             var upvotesView = new UpvotesView({model: upvotesModel, collection: upvotesModel.get("friendUpvotes")});

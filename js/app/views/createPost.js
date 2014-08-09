@@ -6,12 +6,12 @@ define([
     'selectize',
     'app/models/post',
     'utils/image',
-    'require-text!app/templates/newPost.html'
+    'require-text!app/templates/createPost.html'
 
-], function($, _, Backbone, Marionette, Selectize, Post, ImageUtil, NewPostTemplate){
+], function($, _, Backbone, Marionette, Selectize, Post, ImageUtil, CreatePostTemplate){
 
     var NewPostView = Marionette.CompositeView.extend({
-        template: _.template( NewPostTemplate ),
+        template: _.template( CreatePostTemplate ),
 
         initialize: function() {
             this.listenTo(this.options.permissions, "add", this.permissionAdded);

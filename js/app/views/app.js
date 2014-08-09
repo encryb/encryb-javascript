@@ -8,13 +8,13 @@ define([
     'app/encryption',
     'app/models/post',
     'app/models/friend',
-    'app/collections/persist/myPosts',
+    'app/collections/persist/posts',
     'app/collections/persist/friends',
     'app/collections/persist/profiles',
     'app/collections/persist/upvotes',
     'app/collections/permissions',
     'app/collections/wall',
-    'app/views/newPost',
+    'app/views/createPost',
     'app/views/post2',
     'app/views/friend',
     'app/views/modals',
@@ -22,15 +22,17 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, Post, Friend, MyPosts,
-            FriendCollection,Profiles, Upvotes,PermissionCollection, Wall, NewPostView, PostView2,
-            FriendView, Modals, Storage, DataConvert, ImageUtil, RandomUtil){
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, PostModel, FriendModel, PostColl,
+            FriendColl, ProfileColl, UpvoteColl, PermissionColl, WallColl,
+            CreatePostView, PostView, FriendView,
+            Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
-    var myPosts = new MyPosts();
-    var friends = new FriendCollection();
-    var wall = new Wall();
-    var profiles = new Profiles();
-    var upvotes = new Upvotes();
+    var wall = new WallColl();
+
+    var posts = new PostColl();
+    var upvotes = new UpvoteColl();
+    var friends = new FriendColl();
+    var profiles = new ProfileColl();
 
     var AppView = Backbone.View.extend({
 
@@ -48,28 +50,28 @@ define([
                 var profilePictureUrl = profiles.getFirst().get('pictureUrl');
                 var profileName = profiles.getFirst().get('name');
 
-                wall.addMyCollection(myPosts, profileName, profilePictureUrl);
-                myPosts.fetch();
+                wall.addMyCollection(posts, profileName, profilePictureUrl);
+                posts.fetch();
             });
 
             friends.fetch();
 
-            var perms = new PermissionCollection();
+            var perms = new PermissionColl();
             perms.addFriends(friends);
 
-            var newPostView = new NewPostView({
+            var createPostView = new CreatePostView({
                 permissions: perms
             });
-            newPostView.render();
-            $("#newPost").html(newPostView.el);
+            createPostView.render();
+            $("#createPost").html(createPostView.el);
 
-            newPostView.on("post:submit", function(post){
-                myPosts.add(post);
+            createPostView.on("post:submit", function(post){
+                posts.add(post);
                 post.save();
                 app.saveManifests();
             });
 
-            var friendsList = new Friends({
+            var friendsList = new FriendsView({
                 collection: friends
             });
 
@@ -77,23 +79,21 @@ define([
             $("#friends").html(friendsList.el);
 
 
-            var myPostList = new Posts({
+            var wallView = new WallView({
                 collection: wall
             });
 
-            myPostList.on("childview:post:like", function(post, id){
+            wallView.on("childview:post:like", function(post, id){
                 wall.toggleUpvote(id);
                 setTimeout(function(){app.saveManifests()}, 100);
             });
 
-            myPostList.render();
-            $("#friendsPosts").html(myPostList.el);
+            wallView.render();
+            $("#wall").html(wallView.el);
 
-            myPostList.on("childview:post:delete", function(post){
+            wallView.on("childview:post:delete", function(post){
                 setTimeout(function(){app.saveManifests()}, 100);
             });
-
-
 
             var minute = 60 * 1000;
             Visibility.every(3 * minute, 15 * minute, function () {
@@ -187,9 +187,9 @@ define([
             var deferred = $.Deferred();
 
             var id = RandomUtil.makeId();
-            var changes = {account: account, manifestFile: id, friendsManifest: friendsManifest};
+            var attrs = {account: account, manifestFile: id, friendsManifest: friendsManifest};
 
-            var newFriend = new Friend(changes);
+            var newFriend = new FriendModel(attrs);
             this.saveManifest(newFriend)
                 .then(Storage.shareDropbox)
                 .then(function(url) {
@@ -202,7 +202,7 @@ define([
         },
 
         saveManifest: function(friend) {
-            var posts = myPosts.toJSON();
+            var posts = posts.toJSON();
             var manifest = {};
 
             var filteredPosts = [];
@@ -247,12 +247,12 @@ define([
         }
     });
 
-    var Posts = Marionette.CollectionView.extend({
-        childView: PostView2
+    var WallView = Marionette.CollectionView.extend({
+        childView: PostView
     });
 
 
-    var Friends = Marionette.CollectionView.extend({
+    var FriendsView = Marionette.CollectionView.extend({
         childView: FriendView
     });
     return AppView;

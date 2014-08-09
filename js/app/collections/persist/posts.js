@@ -4,7 +4,7 @@ define([
   'app/models/post'
 ], function(Backbone, storage, Post){
 
-var MyPosts = Backbone.Collection.extend({
+var Posts = Backbone.Collection.extend({
     model: Post,
 
     dropboxDatastore: new Backbone.DropboxDatastore('Version_10'),
@@ -18,5 +18,5 @@ var MyPosts = Backbone.Collection.extend({
     }
 })
 
-return MyPosts;
+return Posts;
 });

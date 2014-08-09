@@ -5,10 +5,10 @@ define([
     'marionette',
     'app/views/postContent',
     'app/views/upvotes',
-    'require-text!app/templates/post2.html'
+    'require-text!app/templates/post.html'
 
 ], function($, _, Backbone, Marionette, PostContentView, UpvotesView, PostTemplate) {
-    var PostView2 = Marionette.LayoutView.extend({
+    var PostView = Marionette.LayoutView.extend({
         template: _.template(PostTemplate),
         regions: {
             content: "#postContent",
@@ -33,5 +33,5 @@ define([
             this.trigger("post:like", id);
         }
     });
-    return PostView2;
+    return PostView;
 });

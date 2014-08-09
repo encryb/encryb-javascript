@@ -15,7 +15,7 @@ define([
     'app/collections/permissions',
     'app/collections/wall',
     'app/views/createPost',
-    'app/views/post2',
+    'app/views/post',
     'app/views/friend',
     'app/views/modals',
     'app/storage',

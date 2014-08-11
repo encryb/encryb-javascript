@@ -3,11 +3,10 @@ define([
   'underscore',
   'backbone',
   'marionette',
-  'app/views/comment',
   'require-text!app/templates/upvote.html',
   'require-text!app/templates/upvotes.html'
 
-], function($, _, Backbone, Marionette, CommentView, UpvoteTemplate, UpvotesTemplate) {
+], function($, _, Backbone, Marionette, UpvoteTemplate, UpvotesTemplate) {
 
   var UpvoteView = Marionette.ItemView.extend({
       template: _.template( UpvoteTemplate ),

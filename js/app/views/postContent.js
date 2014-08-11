@@ -15,11 +15,7 @@ define([
         initialize: function() {
             this.model.fetchPost(false);
             /*
-            var comment = new Backbone.Model({owner:"Ogi", created: 0, textData: "This is just a test"});
-            var comment2 = new Backbone.Model({owner:'Ogi2', created:100000, textData: "This is more than just a test"});
-            this.collection = new Backbone.Collection();
-            this.collection.add(comment);
-            this.collection.add(comment2);
+
             */
         },
 

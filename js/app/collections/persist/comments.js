@@ -13,9 +13,10 @@ var Comments = Backbone.Collection.extend({
         this.dropboxDatastore.syncCollection(this);
     },
 
-    addComment: function (postId, content) {
-        this.create({postId: postId, content: content});
+    addComment: function (postId, text, date) {
+        this.create({postId: postId, text: text, date: date});
     },
+
     removeComment: function(postId, commentId) {
         var comment = this.findWhere({postId: postId, commentId: commentId});
         if (comment) {
@@ -28,5 +29,5 @@ var Comments = Backbone.Collection.extend({
     }
 });
 
-return Upvotes;
+return Comments;
 });

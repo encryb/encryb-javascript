@@ -31,8 +31,9 @@ define([
                 persist: false,
                 valueField: "id",
                 labelField: "display",
+                searchField: "display",
                 options: perms,
-                create:false
+                create: false
             });
 
         },
@@ -68,7 +69,7 @@ define([
 
             var post = new Post();
             var date = new Date().getTime();
-            post.set({sharedDate: date, created: date, permissions: selectize.getValue()});
+            post.set({created: date, permissions: selectize.getValue()});
 
             var postText = this.ui.newPostText.val();
             if (postText && postText.length > 0) {

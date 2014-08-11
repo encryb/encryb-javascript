@@ -11,6 +11,7 @@ define([
     'app/collections/persist/posts',
     'app/collections/persist/friends',
     'app/collections/persist/profiles',
+    'app/collections/persist/comments',
     'app/collections/persist/upvotes',
     'app/collections/permissions',
     'app/collections/wall',
@@ -23,13 +24,14 @@ define([
     'utils/image',
     'utils/random'
 ], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, PostModel, FriendModel, PostColl,
-            FriendColl, ProfileColl, UpvoteColl, PermissionColl, WallColl,
+            FriendColl, ProfileColl, CommentColl, UpvoteColl, PermissionColl, WallColl,
             CreatePostView, PostView, FriendView,
             Modals, Storage, DataConvert, ImageUtil, RandomUtil){
 
     var wall = new WallColl();
 
     var posts = new PostColl();
+    var comments = new CommentColl();
     var upvotes = new UpvoteColl();
     var friends = new FriendColl();
     var profiles = new ProfileColl();
@@ -44,14 +46,16 @@ define([
             upvotes.fetch();
             wall.addMyUpvotes(upvotes);
 
+
             // Wait for user profile to sync before displaying user posts
             // This is required for user name / image to show up properly in posts
             $.when(profiles.fetch()).done(function() {
                 var profilePictureUrl = profiles.getFirst().get('pictureUrl');
                 var profileName = profiles.getFirst().get('name');
 
-                wall.addMyCollection(posts, profileName, profilePictureUrl);
+                wall.addMyCollection(posts, comments, profileName, profilePictureUrl);
                 posts.fetch();
+                comments.fetch();
             });
 
             friends.fetch();
@@ -83,8 +87,13 @@ define([
                 collection: wall
             });
 
-            wallView.on("childview:post:like", function(post, id){
+            wallView.on("childview:post:like", function(postView, id){
                 wall.toggleUpvote(id);
+                setTimeout(function(){app.saveManifests()}, 100);
+            });
+
+            wallView.on("childview:comment:submit", function(postView, comment) {
+                comments.addComment(comment['postId'], comment['text'], comment['date']);
                 setTimeout(function(){app.saveManifests()}, 100);
             });
 
@@ -202,20 +211,20 @@ define([
         },
 
         saveManifest: function(friend) {
-            var posts = posts.toJSON();
             var manifest = {};
 
             var filteredPosts = [];
 
-            for (var i = 0; i< posts.length; i++) {
-                var post = posts[i];
-                if (!post.hasOwnProperty('permissions') ||
-                    $.inArray("all", post.permissions) > -1 ||
-                    $.inArray(friend.get('id'), post.permissions) > -1
+            posts.each(function(post) {
+                var permissions = post.get("permissions");
+                if (!permissions ||
+                    $.inArray("all", permissions) > -1 ||
+                    $.inArray(friend.get('id'), permissions) > -1
                 ) {
-                    filteredPosts.push(_.omit(post, 'permissions'));
+                    filteredPosts.push(_.omit(post.toJSON(), 'permissions'));
                 }
-            }
+
+            });
 
             manifest['posts'] = filteredPosts;
             manifest['upvotes'] = upvotes.toJSON();

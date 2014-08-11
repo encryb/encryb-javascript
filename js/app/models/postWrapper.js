@@ -12,6 +12,11 @@ define([
         initialize: function() {
             var upvotes = new Backbone.Model({upvoted: false, friendUpvotes: new Backbone.Collection()});
             this.set("upvotes", upvotes);
+
+            var commentsColl = new Backbone.Collection();
+            this.set("comments", commentsColl);
+
+
         },
 
         // not persisted
@@ -23,12 +28,24 @@ define([
         },
 
         addMyUpvote: function() {
-            console.log("Add My Upvote to", this.get("postId"));
             this.get("upvotes").set("upvoted", true);
         },
 
         removeMyUpvote: function() {
             this.get("upvotes").set("upvoted", false);
+        },
+
+        addMyComment: function(commentId, name, text, date) {
+            var comment = new Backbone.Model({commentId: commentId, name: name, text: text, date: date});
+            this.get("comments").add(comment);
+        },
+
+        removeMyComment: function(commentId) {
+            var comments = this.get("comments");
+            var comment = comments.findWhere({commentId: commentId});
+            if (comment) {
+                comment.destroy();
+            }
         },
 
         addFriendUpvote: function(name, pictureUrl, userId) {

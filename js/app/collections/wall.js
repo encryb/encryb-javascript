@@ -28,6 +28,14 @@ var Wall2 = Backbone.Collection.extend({
         if (this.myUpvotes.findWhere({postId:id})) {
             model.addMyUpvote();
         }
+
+        if(this.myComments) {
+            var comments = this.myComments.where({postId: id});
+            for (var i=0; i < comments.length; i++) {
+                var comment = comments[i];
+                this.onMyCommentAdded(comment);
+            }
+        }
     },
 
     onPostRemoved: function(model) {
@@ -41,17 +49,6 @@ var Wall2 = Backbone.Collection.extend({
             model.addMyUpvote();
         }
     },
-
-    onFriendUpvoteAdded: function(upvoteId, name, pictureUrl, userId) {
-        console.log("onFriendUpvoteAdded", upvoteId, name);
-        if (this.idToModel.hasOwnProperty(upvoteId)) {
-            var model = this.idToModel[upvoteId];
-            if(model) {
-                model.addFriendUpvote(name, pictureUrl, userId);
-            }
-        }
-    },
-
     onMyUpvoteRemoved: function(upvote) {
         var upvoteId = upvote.get('postId');
         var model = this.idToModel[upvoteId];
@@ -60,6 +57,16 @@ var Wall2 = Backbone.Collection.extend({
         }
     },
 
+
+
+    onFriendUpvoteAdded: function(upvoteId, name, pictureUrl, userId) {
+        if (this.idToModel.hasOwnProperty(upvoteId)) {
+            var model = this.idToModel[upvoteId];
+            if(model) {
+                model.addFriendUpvote(name, pictureUrl, userId);
+            }
+        }
+    },
     onFriendUpvoteRemoved: function(upvoteId, friend) {
         if (this.idToModel.hasOwnProperty(upvoteId)) {
             var model = this.idToModel[upvoteId];
@@ -87,40 +94,59 @@ var Wall2 = Backbone.Collection.extend({
         this.listenTo(myUpvotes, 'remove', this.onMyUpvoteRemoved);
 
         myUpvotes.each(function(upvote) {
-            this.onUpvoteAdded(upvote);
+            this.onMyUpvoteAdded(upvote);
        });
     },
 
-    addUpvote: function(postId, friend) {
-        var upvotes;
-        if (this.upvotes.hasOwnProperty(postId)) {
-            upvotes = this.upvotes[postId];
+    onCommentAdded: function(name, comment) {
+        var postId = comment.get('postId');
+        var model = this.idToModel[postId];
+        if (model) {
+            model.addMyComment(comment.get('id'), name , comment.get("text"), comment.get("date"));
         }
-        else {
-            upvotes = [];
-            this.upvotes['postId'] = upvotes;
-        }
-        upvotes.push(friend);
     },
 
-    removeMyUpvote: function(postId, friend) {
-        var postId = upvote.get('postId');
-        var upvotes = this.upvotes[postId];
-        var index = upvotes.indexOf(postId);
-        upvotes.splice(index, 1);
+    onMyCommentRemoved: function(comment) {
+        var postId = comment.get('postId');
+        var model = this.idToModel[postId];
+        if (model) {
+            model.removeMyComment(comment.get('id'));
+        }
     },
 
-    addMyCollection: function(posts, name, pictureUrl) {
+    onMyUpvoteAdded: function(upvote) {
+        var upvoteId = upvote.get('postId');
+        var model = this.idToModel[upvoteId];
+        if(model) {
+            model.addMyUpvote();
+        }
+    },
+    onMyUpvoteRemoved: function(upvote) {
+        var upvoteId = upvote.get('postId');
+        var model = this.idToModel[upvoteId];
+        if(model) {
+            model.removeMyUpvote();
+        }
+    },
 
+    addMyCollection: function(posts, comments, name, pictureUrl) {
         this.listenTo(posts, 'add', this.addMyPost);
         // remove is handled automatically when model is destoyed
         this.myName = name;
         this.myPicture = pictureUrl;
-        var wall2 = this;
+        var wall = this;
         posts.each(function(post) {
             var wrapper = new PostWrapper();
             wrapper.setMyPost(post, name, pictureUrl);
-            wall2.add(wrapper);
+            wall.add(wrapper);
+        });
+
+        this.myComments = comments;
+        this.listenTo(comments, 'add', this.onCommentAdded.bind(this, name));
+        //this.listenTo(comments, 'remove', this.onCommentRemoved.bind(this));
+
+        comments.each(function(comment) {
+            wall.onCommentAdded(comment, name);
         });
     },
 
@@ -131,7 +157,6 @@ var Wall2 = Backbone.Collection.extend({
     },
 
     addCollection: function(manifest, friend) {
-
         var wall2  = this;
 
         var userId = "undefined";
@@ -176,8 +201,6 @@ var Wall2 = Backbone.Collection.extend({
         }
     },
     addPost: function(post, name, pictureUrl, userId) {
-        var model = {post: post, owner: name, profilePictureUrl: this.myPicture, model: post};
-
         var wrapper = new PostWrapper();
         wrapper.setFriendsPost(post, name, pictureUrl, userId);
         this.add(wrapper);

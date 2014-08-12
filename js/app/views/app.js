@@ -97,6 +97,14 @@ define([
                 setTimeout(function(){app.saveManifests()}, 100);
             });
 
+            wallView.on("childview:comment:delete", function(postView, commentId) {
+                var comment = comments.findWhere({id:commentId});
+                if (comment) {
+                    comment.destroy();
+                    setTimeout(function(){app.saveManifests()}, 100);
+                }
+            });
+
             wallView.render();
             $("#wall").html(wallView.el);
 

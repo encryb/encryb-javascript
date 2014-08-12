@@ -9,7 +9,7 @@ define([
 ], function($, _, Backbone, Marionette, UpvoteTemplate, UpvotesTemplate) {
 
   var UpvoteView = Marionette.ItemView.extend({
-      template: _.template( UpvoteTemplate ),
+      template: _.template( UpvoteTemplate )
   });
 
   var UpvotesView = Marionette.CompositeView.extend({

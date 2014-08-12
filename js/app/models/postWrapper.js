@@ -36,7 +36,7 @@ define([
         },
 
         addMyComment: function(commentId, name, text, date) {
-            var comment = new Backbone.Model({commentId: commentId, name: name, text: text, date: date});
+            var comment = new Backbone.Model({commentId: commentId, name: name, text: text, date: date, myComment: true});
             this.get("comments").add(comment);
         },
 

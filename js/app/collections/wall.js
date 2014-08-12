@@ -106,7 +106,7 @@ var Wall2 = Backbone.Collection.extend({
         }
     },
 
-    onMyCommentRemoved: function(comment) {
+    onCommentRemoved: function(comment) {
         var postId = comment.get('postId');
         var model = this.idToModel[postId];
         if (model) {
@@ -143,7 +143,7 @@ var Wall2 = Backbone.Collection.extend({
 
         this.myComments = comments;
         this.listenTo(comments, 'add', this.onCommentAdded.bind(this, name));
-        //this.listenTo(comments, 'remove', this.onCommentRemoved.bind(this));
+        this.listenTo(comments, 'remove', this.onCommentRemoved);
 
         comments.each(function(comment) {
             wall.onCommentAdded(comment, name);

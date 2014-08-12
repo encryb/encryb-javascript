@@ -108,10 +108,12 @@ ul.collection-list li {
 }
 
 .comment {
-    margin-top: 5px;
-    padding-bottom:5px;
+    padding-bottom: 5px;
     padding-top: 5px;
-    border-top: 1px solid #808080;
+}
+
+.comment:nth-of-type(even) {
+    background: #F8F8F8;
 }
 
 .comment-border {

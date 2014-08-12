@@ -28,13 +28,17 @@ define([
             this.upvotes.show(upvotesView);
 
             var commentsColl = this.model.get("comments");
-            var commentsView = new CommentsView({collection: commentsColl});
+            var commentsModel = new Backbone.Model({collection: commentsColl});
+            var commentsView = new CommentsView({model: commentsModel, collection: commentsColl});
             this.comments.show(commentsView);
 
             var postView = this;
             commentsView.on("comment:submit", function(attr) {
                 postView.submitComment(attr);
-            })
+            });
+            commentsView.on("childview:comment:delete", function(comment) {
+                postView.trigger("comment:delete", comment.model.get("commentId"));
+            });
         },
         events: {
             "click #upvoteButton": "toggleUpvote"

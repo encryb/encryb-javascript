@@ -1,14 +1,20 @@
+<% if (numHiddenComments()) { %>
+<div class="row">
+    <div class="col-lg-4">
+        <span class="caret"></span>
+        <a href="#" id="expandComments"><%= numHiddenComments() %> More Comment(s)</a>
+    </div>
+</div>
+<% } %>
+
+<% if (hasComments()) { %>
 <div class="row">
     <div class="col-lg-12">
         <div id="comments" class="thumbnail bottom-5"></div>
     </div>
 </div>
-<div class="row">
-    <div class="col-lg-4">
-        <span class="caret"></span>
-        5 More Comments
-    </div>
-</div>
+<% } %>
+
 <div class="row">
     <div class="bottom-5"></div>
     <div class="col-lg-12">

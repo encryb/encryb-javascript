@@ -236,6 +236,7 @@ define([
 
             manifest['posts'] = filteredPosts;
             manifest['upvotes'] = upvotes.toJSON();
+            manifest['comments'] = comments.toJSON();
 
             var profile = profiles.getFirst();
             manifest['name'] = profile.get('name');

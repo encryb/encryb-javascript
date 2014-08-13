@@ -14,9 +14,6 @@ define([
 
         initialize: function() {
             this.model.fetchPost(false);
-            /*
-
-            */
         },
 
         'modelEvents': {
@@ -30,12 +27,8 @@ define([
 
         showImage: function(){
             Modals.showImage(this.model);
-        },
-
-        deletePost: function() {
-            this.trigger("post:delete");
-            this.model.deletePost();
         }
+
     });
     return PostView;
 });

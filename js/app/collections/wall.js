@@ -42,6 +42,7 @@ var Wall2 = Backbone.Collection.extend({
         delete this.idToModel[model.get('postId')];
     },
 
+
     onMyUpvoteAdded: function(upvote) {
         var upvoteId = upvote.get('postId');
         var model = this.idToModel[upvoteId];
@@ -56,8 +57,6 @@ var Wall2 = Backbone.Collection.extend({
             model.removeMyUpvote();
         }
     },
-
-
 
     onFriendUpvoteAdded: function(upvoteId, name, pictureUrl, userId) {
         if (this.idToModel.hasOwnProperty(upvoteId)) {
@@ -98,34 +97,36 @@ var Wall2 = Backbone.Collection.extend({
        });
     },
 
-    onCommentAdded: function(name, comment) {
+    onMyCommentAdded: function(name, comment) {
         var postId = comment.get('postId');
         var model = this.idToModel[postId];
         if (model) {
-            model.addMyComment(comment.get('id'), name , comment.get("text"), comment.get("date"));
+            model.addComment(comment.get('id'), name , comment.get("text"), comment.get("date"), true);
         }
     },
 
-    onCommentRemoved: function(comment) {
+    onMyCommentRemoved: function(comment) {
         var postId = comment.get('postId');
         var model = this.idToModel[postId];
         if (model) {
-            model.removeMyComment(comment.get('id'));
+            model.removeComment(comment.get('id'));
         }
     },
 
-    onMyUpvoteAdded: function(upvote) {
-        var upvoteId = upvote.get('postId');
-        var model = this.idToModel[upvoteId];
-        if(model) {
-            model.addMyUpvote();
+
+    addFriendsComment: function(friend, comment) {
+        var postId = comment.postId;
+        var model = this.idToModel[postId];
+        if (model) {
+            model.addComment(comment.id, friend.name , comment.text, comment.date);
         }
     },
-    onMyUpvoteRemoved: function(upvote) {
-        var upvoteId = upvote.get('postId');
-        var model = this.idToModel[upvoteId];
-        if(model) {
-            model.removeMyUpvote();
+
+    removeFriendsComment: function(comment) {
+        var postId = comment.postId;
+        var model = this.idToModel[postId];
+        if (model) {
+            model.removeComment(comment.get('id'));
         }
     },
 
@@ -142,11 +143,11 @@ var Wall2 = Backbone.Collection.extend({
         });
 
         this.myComments = comments;
-        this.listenTo(comments, 'add', this.onCommentAdded.bind(this, name));
-        this.listenTo(comments, 'remove', this.onCommentRemoved);
+        this.listenTo(comments, 'add', this.onMyCommentAdded.bind(this, name));
+        this.listenTo(comments, 'remove', this.onMyCommentRemoved);
 
         comments.each(function(comment) {
-            wall.onCommentAdded(comment, name);
+            wall.onMyCommentAdded(comment, name);
         });
     },
 
@@ -157,7 +158,7 @@ var Wall2 = Backbone.Collection.extend({
     },
 
     addCollection: function(manifest, friend) {
-        var wall2  = this;
+        var wall  = this;
 
         var userId = "undefined";
         if (friend.hasOwnProperty('userId')) {
@@ -170,18 +171,26 @@ var Wall2 = Backbone.Collection.extend({
             RemoteManifest.compare(oldFriend, friend, function(key, action, item) {
                 if (key == "posts") {
                     if (action == "add") {
-                        wall2.addPost(item, friend.name, friend.pictureUrl, userId);
+                        wall.addPost(item, friend.name, friend.pictureUrl, userId);
                     }
                     else {
-                        wall2.removePost(item);
+                        wall.removePost(item);
                     }
                 }
                 else if (key == "upvotes"){
                     if (action == "add") {
-                        wall2.onFriendUpvoteAdded(item.postId, friend.name, friend.pictureUrl, userId);
+                        wall.onFriendUpvoteAdded(item.postId, friend.name, friend.pictureUrl, userId);
                     }
                     else {
-                        wall2.onFriendUpvoteRemoved(item.postId, userId);
+                        wall.onFriendUpvoteRemoved(item.postId, userId);
+                    }
+                }
+                else if (key == "comments") {
+                    if (action == "add") {
+                        wall.addFriendsComment(item, friend);
+                    }
+                    else {
+                        wall.removeFriendsComment(item);
                     }
                 }
             });
@@ -190,14 +199,21 @@ var Wall2 = Backbone.Collection.extend({
             this.friends[manifest] = friend;
             for (var i=0; i< friend.posts.length; i++) {
                 var post = friend.posts[i];
-                wall2.addPost(post, friend.name, friend.pictureUrl, userId);
+                wall.addPost(post, friend.name, friend.pictureUrl, userId);
             }
             if (friend.hasOwnProperty('upvotes')) {
                 for (var i=0; i< friend.upvotes.length; i++) {
                     var upvote = friend.upvotes[i];
-                    wall2.onFriendUpvoteAdded(upvote.postId, friend.name, friend.pictureUrl, userId);
+                    wall.onFriendUpvoteAdded(upvote.postId, friend.name, friend.pictureUrl, userId);
                 }
             }
+            if (friend.hasOwnProperty('comments')) {
+                for (var i=0; i< friend.comments.length; i++) {
+                    var comment = friend.comments[i];
+                    wall.addFriendsComment(friend, comment);
+                }
+            }
+
         }
     },
     addPost: function(post, name, pictureUrl, userId) {
@@ -222,7 +238,7 @@ var Wall2 = Backbone.Collection.extend({
         this.destroy();
     },
     comparator: function(post) {
-        return -post.get('created');
+        return -post.get('post').get('created');
     }
 
 })

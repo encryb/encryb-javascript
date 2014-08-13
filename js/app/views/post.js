@@ -41,7 +41,9 @@ define([
             });
         },
         events: {
-            "click #upvoteButton": "toggleUpvote"
+            "click #upvoteButton": "toggleUpvote",
+            "click #deletePost": "deletePost"
+
         },
         toggleUpvote: function() {
             var id = this.model.get("postId");
@@ -51,7 +53,12 @@ define([
             var id = this.model.get("postId");
             attr['postId'] = id;
             this.trigger("comment:submit", attr);
+        },
 
+        deletePost: function() {
+            // check the order here
+            this.trigger("post:delete");
+            this.model.deletePost();
         }
 
     });

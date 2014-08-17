@@ -16,7 +16,6 @@ define([
     var ImageModalView = Backbone.View.extend({
         template: _.template( ImageModalTemplate ),
         initialize: function() {
-
             this.listenTo(this.model, 'change', this.render);
             this.model.fetchPost(true);
         },

@@ -8,13 +8,13 @@ define([
     'app/encryption',
     'app/models/post',
     'app/models/friend',
+    'app/collections/gather/state',
     'app/collections/persist/posts',
     'app/collections/persist/friends',
     'app/collections/persist/profiles',
     'app/collections/persist/comments',
     'app/collections/persist/upvotes',
     'app/collections/permissions',
-    'app/collections/wall',
     'app/views/createPost',
     'app/views/post',
     'app/views/friend',
@@ -23,12 +23,10 @@ define([
     'utils/data-convert',
     'utils/image',
     'utils/random'
-], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, PostModel, FriendModel, PostColl,
-            FriendColl, ProfileColl, CommentColl, UpvoteColl, PermissionColl, WallColl,
+], function($, _, Backbone, Marionette, Msgpack, Visibility, Encryption, PostModel, FriendModel,
+            State, PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl, PermissionColl,
             CreatePostView, PostView, FriendView,
             Modals, Storage, DataConvert, ImageUtil, RandomUtil){
-
-    var wall = new WallColl();
 
     var posts = new PostColl();
     var comments = new CommentColl();
@@ -41,11 +39,7 @@ define([
         initialize: function() {
 
             var app = this;
-            this.listenTo(friends, 'add', this.addFriendsPosts);
-
-            upvotes.fetch();
-            wall.addMyUpvotes(upvotes);
-
+            app.listenTo(friends, 'add', app.addFriendsPosts);
 
             // Wait for user profile to sync before displaying user posts
             // This is required for user name / image to show up properly in posts
@@ -53,12 +47,51 @@ define([
                 var profilePictureUrl = profiles.getFirst().get('pictureUrl');
                 var profileName = profiles.getFirst().get('name');
 
-                wall.addMyCollection(posts, comments, profileName, profilePictureUrl);
+                //wall.addMyCollection(posts, comments, profileName, profilePictureUrl);
+                //wall.addMyUpvotes(upvotes);
+
+
+                app.state = new State({posts: posts, comments: comments, upvotes: upvotes, name: profileName, pictureUrl: profilePictureUrl});
+
                 posts.fetch();
                 comments.fetch();
-            });
+                upvotes.fetch();
 
-            friends.fetch();
+                friends.fetch();
+
+
+                var wallView = new WallView({
+                    collection: app.state.posts
+                });
+
+                wallView.on("childview:post:delete", function(post){
+                    setTimeout(function(){app.saveManifests()}, 100);
+                });
+
+
+                wallView.on("childview:post:like", function(postView, id){
+                    upvotes.toggleUpvote(id);
+                    app.saveManifests();
+                });
+
+                wallView.on("childview:comment:submit", function(postView, comment) {
+                    comments.addComment(comment['postId'], comment['text'], comment['date']);
+                    app.saveManifests();
+                });
+
+                wallView.on("childview:comment:delete", function(postView, commentId) {
+                    var comment = comments.findWhere({id:commentId});
+                    if (comment) {
+                        comment.destroy();
+                        setTimeout(function(){app.saveManifests()}, 100);
+                    }
+                });
+
+                wallView.render();
+                $("#wall").html(wallView.el);
+
+
+            });
 
             var perms = new PermissionColl();
             perms.addFriends(friends);
@@ -83,34 +116,7 @@ define([
             $("#friends").html(friendsList.el);
 
 
-            var wallView = new WallView({
-                collection: wall
-            });
 
-            wallView.on("childview:post:like", function(postView, id){
-                wall.toggleUpvote(id);
-                setTimeout(function(){app.saveManifests()}, 100);
-            });
-
-            wallView.on("childview:comment:submit", function(postView, comment) {
-                comments.addComment(comment['postId'], comment['text'], comment['date']);
-                setTimeout(function(){app.saveManifests()}, 100);
-            });
-
-            wallView.on("childview:comment:delete", function(postView, commentId) {
-                var comment = comments.findWhere({id:commentId});
-                if (comment) {
-                    comment.destroy();
-                    setTimeout(function(){app.saveManifests()}, 100);
-                }
-            });
-
-            wallView.render();
-            $("#wall").html(wallView.el);
-
-            wallView.on("childview:post:delete", function(post){
-                setTimeout(function(){app.saveManifests()}, 100);
-            });
 
             var minute = 60 * 1000;
             Visibility.every(3 * minute, 15 * minute, function () {
@@ -136,15 +142,16 @@ define([
 
         addFriendsPosts: function(friend) {
 
+            var app = this;
             var friendManifest = friend.get('friendsManifest');
             if (!friendManifest) {
                 return;
             }
+
             Storage.downloadUrl(friendManifest).done(function(data) {
+
                 var decData = Encryption.decryptBinaryData(data, "global");
                 var decObj = Msgpack.decode(decData.buffer);
-
-                var posts = decObj['posts'];
 
                 var userId = -1;
                 if (decObj.hasOwnProperty('userId')) {
@@ -155,9 +162,7 @@ define([
                 friend.set('userId', userId);
                 friend.save();
 
-
-                wall.addCollection(friendManifest, decObj);
-
+                app.state.addCollection(friendManifest, decObj);
             });
 
         },

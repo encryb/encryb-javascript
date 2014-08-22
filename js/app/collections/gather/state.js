@@ -55,13 +55,13 @@ define([
             this.listenTo(this.upvotes, "remove", this.dispatchUpvoteRemove);
 
             this.myPosts.on("add", this.onMyPostAdded.bind(this));
-            this.myPosts.on("removed", this.onMyPostRemoved.bind(this));
+            this.myPosts.on("remove", this.onMyPostRemoved.bind(this));
 
             this.myComments.on("add", this.onMyCommentAdded.bind(this));
-            this.myComments.on("removed", this.onMyCommentRemoved.bind(this));
+            this.myComments.on("remove", this.onMyCommentRemoved.bind(this));
 
             this.myUpvotes.on("add", this.onMyUpvoteAdded.bind(this));
-            this.myUpvotes.on("removed", this.onMyUpvoteRemoved.bind(this));
+            this.myUpvotes.on("remove", this.onMyUpvoteRemoved.bind(this));
 
             this.myFriends.on("add", this.onMyFriendAdded.bind(this));
 
@@ -94,7 +94,7 @@ define([
             this.comments.add(model);
         },
         onMyCommentRemoved: function(comment) {
-            var model = this.comments.findWhere({id: comment.get("id"), owenerId: this.myId});
+            var model = this.comments.findWhere({postId: comment.get("postId")});
             model.destroy();
         },
         onMyUpvoteAdded: function(upvote) {
@@ -103,7 +103,7 @@ define([
             this.upvotes.add(model);
         },
         onMyUpvoteRemoved: function(upvote) {
-            var model = this.upvotes.findWhere({id: upvote.get("id"), owenerId: this.myId});
+            var model = this.upvotes.findWhere({postId: upvote.get("postId")});
             model.destroy();
         },
 

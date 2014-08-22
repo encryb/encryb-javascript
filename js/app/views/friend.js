@@ -11,7 +11,6 @@ define([
 
   var FriendView = Marionette.ItemView.extend({
 
-    // Cache the template function for a single item.
     template: _.template( FriendTemplate ),
 
     initialize: function() {

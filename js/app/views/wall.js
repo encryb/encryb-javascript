@@ -4,6 +4,7 @@ define([
     'backbone',
     'marionette',
     'visibility',
+    'app/app',
     'app/models/post',
     'app/models/friend',
     'app/views/modals',
@@ -12,7 +13,7 @@ define([
     'utils/image',
     'utils/random',
     'require-text!app/templates/wall.html'
-], function($, _, Backbone, Marionette, Visibility, PostModel, FriendModel,
+], function($, _, Backbone, Marionette, Visibility, App, PostModel, FriendModel,
             Modals, Storage, DataConvert, ImageUtil, RandomUtil,
             WallTemplate
     ){
@@ -97,8 +98,7 @@ define([
                 .then(Storage.shareDropbox)
                 .then(function(url) {
                     newFriend.set('manifestUrl', url);
-                    // FIX THIS
-                    friends.add(newFriend);
+                    App.state.myFriends.add(newFriend);
                     newFriend.save();
                     deferred.resolve(newFriend);
                 });

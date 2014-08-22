@@ -5,11 +5,9 @@ define([
     'backbone.bootstrap-modal',
     'backbone-forms-bootstrap3',
     'app/models/profile',
-    'utils/data-convert',
-    'app/storage',
     'require-text!app/templates/imageModal.html',
     'require-text!app/templates/profile.html'
-], function($, _, Backbone, BackboneModal, BackboneForm, ProfileModel, DataConvert, Storage, ImageModalTemplate, MyInfoTemplate){
+], function($, _, Backbone, BackboneModal, BackboneForm, ProfileModel, ImageModalTemplate, MyInfoTemplate){
 
     var modals = {};
 
@@ -86,7 +84,9 @@ define([
             cancelText: false,
             fullscreen: true,
             content: new ImageModalView({model: model})
-        }).open();
+        });
+
+        modal.open();
 
         return modal;
 

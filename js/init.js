@@ -25,7 +25,7 @@ require.config({
 			exports: '_'
 		},
 		backbone: {
-			deps: ['underscore', 'jquery'],
+			deps: ['jquery', 'underscore'],
 			exports: 'Backbone'
 		},
         dropboxdatastore: {
@@ -47,6 +47,9 @@ require.config({
         'backbone-forms-bootstrap3' : {
             deps: ["backbone-forms"],
             exports: 'Backbone.Form'
+        },
+        'backbone.bootstrap-modal' : {
+            deps: ["bootstrap"]
         },
         marionette : {
             deps : ['jquery', 'underscore', 'backbone'],

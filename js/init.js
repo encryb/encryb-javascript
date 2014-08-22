@@ -2,7 +2,6 @@
 'use strict';
 
 
-// Require.js allows us to configure shortcut alias
 require.config({
 	waitSeconds : 15,
 
@@ -18,9 +17,6 @@ require.config({
         visibility: 'visibility-1.2.1.min'
 	},
 
-
-	// The shim config allows us to configure dependencies for
-	// scripts that do not call define() to register a module
 	shim: {
 		jquery: {
 			exports: '$'
@@ -64,9 +60,21 @@ require.config({
 
 require([
     'backbone',
-    'app/router'
+    'marionette',
+    'app/app',
+    'app/controllers/wall',
 ],
-function (Backbone, AppRouter) {
-    new AppRouter();
-    Backbone.history.start();
+function (Backbone, Marionette, App, WallContr) {
+
+    var AppRouter = Marionette.AppRouter.extend({
+        appRoutes: {
+            '': 'showWall'
+        }
+    });
+
+    new AppRouter({
+        controller: new WallContr()
+    });
+
+    App.start();
 });

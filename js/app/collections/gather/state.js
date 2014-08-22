@@ -2,31 +2,57 @@ define([
     'backbone',
     'marionette',
     'underscore',
+    'msgpack',
+    'app/collections/persist/posts',
+    'app/collections/persist/friends',
+    'app/collections/persist/profiles',
+    'app/collections/persist/comments',
+    'app/collections/persist/upvotes',
     'app/models/postWrapper',
+    'app/encryption',
+    'app/storage',
     'app/remoteManifest',
     'utils/dropbox-client'
-], function(Backbone, Marionette, _, PostWrapper, RemoteManifest, DropboxClient) {
+], function(Backbone, Marionette, _, Msgpack,
+            PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl,
+            PostWrapper, Encryption, Storage, RemoteManifest, DropboxClient) {
+
     var State = Marionette.Object.extend({
 
         initialize: function(options) {
-            this.friends = {};
 
             this.myId = Backbone.DropboxDatastore.client.dropboxUid();
+
+            this.myPosts = new PostColl();
+            this.myComments = new CommentColl();
+            this.myUpvotes = new UpvoteColl();
+            this.myFriends = new FriendColl();
+            this.myProfiles = new ProfileColl();
+
+            $.when(this.myProfiles.fetch()).done(function() {
+                this.profilePictureUrl = this.myProfiles.getFirst().get('pictureUrl');
+                this.name = this.myProfiles.getFirst().get('name');
+
+                this.myPosts.fetch();
+                this.myComments.fetch();
+                this.myUpvotes.fetch();
+                this.myFriends.fetch();
+            }.bind(this));
+
+            this.friends = {};
 
             this.posts = new Backbone.Collection();
             this.posts.comparator = function(post) {
                 return -post.get('post').get('created');
             };
+
             this.comments = new Backbone.Collection();
             this.listenTo(this.comments, "add", this.dispatchCommentAdd);
             this.listenTo(this.comments, "remove", this.dispatchCommentRemove);
+
             this.upvotes = new Backbone.Collection();
             this.listenTo(this.upvotes, "add", this.dispatchUpvoteAdd);
             this.listenTo(this.upvotes, "remove", this.dispatchUpvoteRemove);
-
-            this.myPosts = options.posts;
-            this.myComments = options.comments;
-            this.myUpvotes = options.upvotes;
 
             this.myPosts.on("add", this.onMyPostAdded.bind(this));
             this.myPosts.on("removed", this.onMyPostRemoved.bind(this));
@@ -37,12 +63,12 @@ define([
             this.myUpvotes.on("add", this.onMyUpvoteAdded.bind(this));
             this.myUpvotes.on("removed", this.onMyUpvoteRemoved.bind(this));
 
-            this.name = options.name;
-            this.profilePictureUrl = options.pictureUrl;
+            this.myFriends.on("add", this.onMyFriendAdded.bind(this));
 
         },
 
         onMyPostAdded: function(post) {
+            console.log("add my post");
             var wrapper = new PostWrapper();
             wrapper.setMyPost(post, this.name, this.profilePictureUrl);
             this.posts.add(wrapper);
@@ -79,6 +105,32 @@ define([
         onMyUpvoteRemoved: function(upvote) {
             var model = this.upvotes.findWhere({id: upvote.get("id"), owenerId: this.myId});
             model.destroy();
+        },
+
+        onMyFriendAdded: function(friend) {
+
+            var state = this;
+            var friendManifest = friend.get('friendsManifest');
+            if (!friendManifest) {
+                return;
+            }
+
+            Storage.downloadUrl(friendManifest).done(function (data) {
+
+                var decData = Encryption.decryptBinaryData(data, "global");
+                var decObj = Msgpack.decode(decData.buffer);
+
+                var userId = -1;
+                if (decObj.hasOwnProperty('userId')) {
+                    var userId = decObj['userId'];
+                }
+
+                friend.set('pictureUrl', decObj['pictureUrl']);
+                friend.set('userId', userId);
+                friend.save();
+
+                state.addCollection(friendManifest, decObj);
+            });
         },
 
         addCollection: function(manifest, friend) {
@@ -220,6 +272,48 @@ define([
             else {
                 model.removeFriendsUpvote(upvote.get('userId'));
             }
+        },
+
+        saveManifest: function(friend) {
+            var manifest = {};
+
+            var filteredPosts = [];
+
+            this.myPosts.each(function(post) {
+                var permissions = post.get("permissions");
+                if (!permissions ||
+                    $.inArray("all", permissions) > -1 ||
+                    $.inArray(friend.get('id'), permissions) > -1
+                    ) {
+                    filteredPosts.push(_.omit(post.toJSON(), 'permissions'));
+                }
+
+            });
+
+            manifest['posts'] = filteredPosts;
+            manifest['upvotes'] = this.myUpvotes.toJSON();
+            manifest['comments'] = this.myComments.toJSON();
+
+            var profile = this.myProfiles.getFirst();
+            manifest['name'] = profile.get('name');
+            manifest['pictureUrl'] = profile.get('pictureUrl');
+            manifest['userId'] = Backbone.DropboxDatastore.client.dropboxUid();
+
+            var packedManifest = new Uint8Array(Msgpack.encode(manifest));
+            return friend.saveManifest(packedManifest);
+        },
+
+        saveManifests: function() {
+            this.myFriends.each(function(friend) {
+                this.saveManifest(friend);
+            }, this);
+        },
+
+        refreshPosts: function() {
+            console.log("refresh");
+            this.myFriends.each(function(friend) {
+                this.onMyFriendAdded(friend);
+            }, this);
         }
 
     });

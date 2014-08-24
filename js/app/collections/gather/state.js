@@ -69,7 +69,6 @@ define([
         },
 
         onMyPostAdded: function(post) {
-            console.log("add my post");
             var wrapper = new PostWrapper();
             wrapper.setMyPost(post, this.name, this.profilePictureUrl);
             this.posts.add(wrapper);
@@ -90,7 +89,6 @@ define([
             model.destroy();
         },
         onMyCommentAdded: function(comment) {
-            console.log("Add Comment", comment.get("postId"));
             var attr = _.extend(_.clone(comment.attributes), {owenerId: this.myId, owner: this.name, myComment: true});
             var model = new Backbone.Model(attr);
             this.comments.add(model);

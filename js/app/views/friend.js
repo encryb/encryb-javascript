@@ -1,39 +1,42 @@
 define([
-  'jquery',
-  'underscore',
-  'backbone',
-  'marionette',
-  'app/views/modals',
-  'require-text!app/templates/friend.html'
+    'jquery',
+    'underscore',
+    'backbone',
+    'marionette',
+    'app/views/modals',
+    'require-text!app/templates/friend.html'
 
-], function($, _, Backbone, Marionette, Modals, FriendTemplate) {
+], function ($, _, Backbone, Marionette, Modals, FriendTemplate) {
 
+    var FriendView = Marionette.ItemView.extend({
 
-  var FriendView = Marionette.ItemView.extend({
+        template: _.template(FriendTemplate),
 
-    template: _.template( FriendTemplate ),
+        initialize: function () {
+            this.listenTo(this.model, 'change', this.render);
+        },
 
-    initialize: function() {
-      this.listenTo(this.model, 'change', this.render);
-    },
+        events: {
+            "click #editFriend": "editFriend",
+            "click #filterFriend": "filterFriend",
+            "click #removeFriend": "removeFriend"
+        },
 
-    events: {
-      "click #editFriend": "editFriend",
-      "click #filterFriend": "filterFriend",
-      "click #removeFriend": "removeFriend"
-    },
+        filterFriend: function () {
+            console.log("Filter");
+        },
 
-    filterFriend: function(){
-        console.log("Filter");
-    },
+        editFriend: function () {
+            Modals.showFriend(this.model);
+        },
 
-    editFriend: function() {
-        Modals.showFriend(this.model);
-    },
+        removeFriend: function () {
+            this.model.destroy();
+        }
+    });
 
-    removeFriend: function() {
-        this.model.destroy();
-    }
-  });
-  return FriendView;
+    var FriendsView = Marionette.CollectionView.extend({
+        childView: FriendView
+    });
+    return FriendsView;
 });

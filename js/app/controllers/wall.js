@@ -6,41 +6,12 @@ define([
     'app/collections/permissions',
     'app/views/wall',
     'app/views/createPost',
-    'app/views/post',
+    'app/views/posts',
     'app/views/friend'
 ],
-function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostView, FriendView) {
+function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView) {
 
-    var PostsView = Marionette.CollectionView.extend({
-        childView: PostView,
-        initialize: function() {
-            this.on("childview:post:delete", function(post){
-                setTimeout(function(){App.state.saveManifests()}, 100);
-            });
 
-            this.on("childview:post:like", function(postView, id){
-                App.state.myUpvotes.toggleUpvote(id);
-                App.state.saveManifests();
-            });
-
-            this.on("childview:comment:submit", function(postView, comment) {
-                App.state.myComments.addComment(comment['postId'], comment['text'], comment['date']);
-                App.state.saveManifests();
-            });
-
-            this.on("childview:comment:delete", function(postView, commentId) {
-                var comment = App.state.myComments.findWhere({id:commentId});
-                if (comment) {
-                    comment.destroy();
-                    setTimeout(function(){App.state.saveManifests()}, 100);
-                }
-            });
-        }
-    });
-
-    var FriendsView = Marionette.CollectionView.extend({
-        childView: FriendView
-    });
 
     var WallController = Marionette.Controller.extend({
         showWall: function () {

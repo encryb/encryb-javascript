@@ -3,12 +3,13 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'app/app',
     'app/views/comments',
     'app/views/postContent',
     'app/views/upvotes',
     'require-text!app/templates/post.html'
 
-], function($, _, Backbone, Marionette, CommentsView, PostContentView, UpvotesView, PostTemplate) {
+], function($, _, Backbone, Marionette, App, CommentsView, PostContentView, UpvotesView, PostTemplate) {
     var PostView = Marionette.LayoutView.extend({
         template: _.template(PostTemplate),
         regions: {
@@ -62,5 +63,32 @@ define([
         }
 
     });
-    return PostView;
+
+    var PostsView = Marionette.CollectionView.extend({
+        childView: PostView,
+        initialize: function() {
+            this.on("childview:post:delete", function(post){
+                setTimeout(function(){App.state.saveManifests()}, 100);
+            });
+
+            this.on("childview:post:like", function(postView, id){
+                App.state.myUpvotes.toggleUpvote(id);
+                App.state.saveManifests();
+            });
+
+            this.on("childview:comment:submit", function(postView, comment) {
+                App.state.myComments.addComment(comment['postId'], comment['text'], comment['date']);
+                App.state.saveManifests();
+            });
+
+            this.on("childview:comment:delete", function(postView, commentId) {
+                var comment = App.state.myComments.findWhere({id:commentId});
+                if (comment) {
+                    comment.destroy();
+                    setTimeout(function(){App.state.saveManifests()}, 100);
+                }
+            });
+        }
+    });
+    return PostsView;
 });

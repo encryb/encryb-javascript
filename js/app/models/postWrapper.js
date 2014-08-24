@@ -35,14 +35,14 @@ define([
             this.get("upvotes").set("upvoted", false);
         },
 
-        addComment: function(commentId, name, text, date, myComment) {
-            var comment = new Backbone.Model({commentId: commentId, name: name, text: text, date: date, myComment: myComment});
+        addComment: function(model) {
+            var comment = new Backbone.Model(model.attributes);
             this.get("comments").add(comment);
         },
 
-        removeComment: function(commentId) {
+        removeComment: function(id) {
             var comments = this.get("comments");
-            var comment = comments.findWhere({commentId: commentId});
+            var comment = comments.findWhere({id: id});
             if (comment) {
                 comment.destroy();
             }

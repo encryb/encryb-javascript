@@ -20,8 +20,7 @@ define([
             this.listenTo(this.options.permissions, "remove", this.permissionRemoved);
 
             this.on("post:submit", function(post){
-                App.state.myPosts.add(post);
-                post.save();
+                App.state.myPosts.create(post, {wait:true});
                 App.state.saveManifests();
             });
         },

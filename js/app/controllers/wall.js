@@ -7,14 +7,20 @@ define([
     'app/views/wall',
     'app/views/createPost',
     'app/views/posts',
-    'app/views/friend'
+    'app/views/friend',
+    'app/views/setup'
 ],
-function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView) {
-
+function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView, SetupView) {
 
 
     var WallController = Marionette.Controller.extend({
+
         showWall: function () {
+
+            if (1 == 1) {
+                Backbone.history.navigate("settings");
+                return;
+            }
 
             App.state = new State();
 
@@ -38,6 +44,11 @@ function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePost
             });
             wall.friends.show(friendsView);
 
+        },
+
+        settings: function() {
+            var setupView = new SetupView();
+            App.main.show(setupView);
         }
     });
 

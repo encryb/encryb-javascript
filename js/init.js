@@ -71,7 +71,8 @@ function (Backbone, Marionette, App, WallContr) {
 
     var AppRouter = Marionette.AppRouter.extend({
         appRoutes: {
-            '': 'showWall'
+            '': 'showWall',
+            'settings': 'settings'
         }
     });
 

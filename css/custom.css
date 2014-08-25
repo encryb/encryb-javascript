@@ -157,24 +157,21 @@ ul.collection-list li {
 
 .border-warning {
     border: 3px solid #ff0000;
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 5px;
 }
 
-.statola {
+.status-icon {
     font-size: 35px;
     padding: 20px;
 }
 
-
-.statolo {
-    font-size: 35px;
-}
-
-.text-stato {
+.password-icon {
     border: 2px solid #ddd;
     border-radius: 10px;
     padding: 20px;
     background-color: #FFFFFF;
+}
 
+.password-icon > span {
+    font-size: 35px;
 }

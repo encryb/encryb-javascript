@@ -76,7 +76,7 @@ function (Backbone, Marionette, App, WallContr) {
         }
     });
 
-    new AppRouter({
+    App.appRouter = new AppRouter({
         controller: new WallContr()
     });
 

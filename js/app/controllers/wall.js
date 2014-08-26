@@ -8,17 +8,18 @@ define([
     'app/views/createPost',
     'app/views/posts',
     'app/views/friend',
-    'app/views/setup'
+    'app/views/setup',
+    'utils/dropbox-client'
 ],
-function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView, SetupView) {
+function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView, SetupView, DropboxClient) {
 
 
     var WallController = Marionette.Controller.extend({
 
         showWall: function () {
 
-            if (1 == 1) {
-                Backbone.history.navigate("settings");
+            if (1 != 1) {
+                App.appRouter.navigate("settings", {trigger: true});
                 return;
             }
 
@@ -47,8 +48,29 @@ function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePost
         },
 
         settings: function() {
-            var setupView = new SetupView();
+            var model = new Backbone.Model();
+            model.set("dropboxEnabled", DropboxClient.isAuthenticated());
+            model.set("keysLoaded", true);
+            var setupView = new SetupView({model:model});
             App.main.show(setupView);
+
+            setupView.on("dropbox:login", function() {
+                DropboxClient.authenticate({}, function(error, client) {
+                   if (error) {
+                       console.log("Dropbox Authentication Error", error);
+                   }
+                   else {
+                       model.set("dropboxEnabled", true);
+                   }
+                });
+
+            });
+            setupView.on("dropbox:logout", function() {
+                DropboxClient.signOut({}, function(){
+                    window.location.href = "https://www.dropbox.com/logout";
+                    model.set("dropboxEnabled", false);
+                })
+            });
         }
     });
 

@@ -66,8 +66,9 @@ require([
     'marionette',
     'app/app',
     'app/controllers/wall',
+    'utils/dropbox-client'
 ],
-function (Backbone, Marionette, App, WallContr) {
+function (Backbone, Marionette, App, WallContr, DropboxClient) {
 
     var AppRouter = Marionette.AppRouter.extend({
         appRoutes: {
@@ -80,5 +81,13 @@ function (Backbone, Marionette, App, WallContr) {
         controller: new WallContr()
     });
 
-    App.start();
+    if (DropboxClient.isAuthenticated()) {
+        App.start();
+    }
+    else {
+        DropboxClient.authenticate({interactive: false}, function() {
+            App.start();
+        });
+    }
+    //App.start();
 });

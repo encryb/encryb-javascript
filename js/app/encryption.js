@@ -38,31 +38,44 @@ define([
         return base64Data;
     }
 
+     */
+
+    exports.createKeys = function() {
+        var keys = Sjcl.ecc.elGamal.generateKeys(384);
+
+        var publicKey = keys.pub.get();
+        var secretKey = keys.sec.get();
+
+        var publicKeyEncoded = Sjcl.codec.hex.fromBits(publicKey.x) + Sjcl.codec.hex.fromBits(publicKey.y);
+        var secretKeyEncoded = Sjcl.codec.hex.fromBits(secretKey);
+        exports.saveKeys(secretKeyEncoded, publicKeyEncoded);
+    }
+
+    exports.saveKeys = function(secretKeyEncoded, publicKeyEncoded) {
+        localStorage.setItem("secretKey", secretKeyEncoded);
+        localStorage.setItem("publicKey", publicKeyEncoded);
+
+    }
 
     exports.getKeys = function() {
         var secretKeyEncoded= localStorage.getItem("secretKey");
         var publicKeyEncoded = localStorage.getItem("publicKey");
-        if (secretKeyEncoded && publicKeyEncoded) {
-            var secretKey = Sjcl.ecc.deserialize(JSON.parse(secretKeyEncoded));
-            var publicKey = Sjcl.ecc.deserialize(JSON.parse(publicKeyEncoded));
-            return {
-                publicKey: publicKey,
-                secretKey: secretKey
-            };
+
+        if (secretKeyEncoded === null || publicKeyEncoded === null ) {
+            return null;
         }
 
-        var key = Sjcl.ecc.elGamal.generateKeys(384,10);
+        var publicKeyBits = Sjcl.codec.hex.toBits(publicKeyEncoded);
+        var publicKey = new Sjcl.ecc.elGamal.publicKey(Sjcl.ecc.curves.c384, publicKeyBits);
 
-        localStorage.setItem("publicKey", JSON.stringify(key.pub.serialize()));
-        localStorage.setItem("secretKey", JSON.stringify(key.sec.serialize()));
+        var secretKeyBits = new Sjcl.bn(secretKeyEncoded);
+        var secretKey = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
 
         return {
-            publicKey: key.pub,
-            secretKey: key.sec
+            publicKey: publicKey,
+            secretKey: secretKey
         };
     }
-    */
-
 
     function decrypt(data, password) {
 

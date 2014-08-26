@@ -9,16 +9,17 @@ define([
     'app/views/posts',
     'app/views/friend',
     'app/views/setup',
+    'app/encryption',
     'utils/dropbox-client'
 ],
-function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView, SetupView, DropboxClient) {
+function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePostView, PostsView, FriendsView, SetupView, Encryption, DropboxClient) {
 
 
     var WallController = Marionette.Controller.extend({
 
         showWall: function () {
 
-            if (1 != 1) {
+            if (1 == 1) {
                 App.appRouter.navigate("settings", {trigger: true});
                 return;
             }
@@ -49,8 +50,9 @@ function (Backbone, Marionette, App, State, PermissionColl, WallView, CreatePost
 
         settings: function() {
             var model = new Backbone.Model();
+
             model.set("dropboxEnabled", DropboxClient.isAuthenticated());
-            model.set("keysLoaded", true);
+            model.set("keysLoaded", (Encryption.getKeys() != null));
             var setupView = new SetupView({model:model});
             App.main.show(setupView);
 

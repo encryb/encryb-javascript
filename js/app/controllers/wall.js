@@ -30,7 +30,10 @@ function (Backbone, Marionette, App, State, PermissionColl,
 
         showWall: function () {
 
-            if (1 == 1) {
+            var keysLoaded = (Encryption.getKeys() != null);
+            var dropboxAuthenticated = DropboxClient.isAuthenticated();
+
+            if (!keysLoaded || !dropboxAuthenticated) {
                 App.appRouter.navigate("settings", {trigger: true});
                 return;
             }
@@ -108,6 +111,10 @@ function (Backbone, Marionette, App, State, PermissionColl,
             setupView.on("keys:saveToDropbox", function() {
                 var keys = Encryption.getEncodedKeys();
                 Storage.uploadDropbox("encryb.keys", JSON.stringify(keys));
+            });
+
+            setupView.on("continue", function() {
+                App.appRouter.navigate("", {trigger: true});
             });
         }
     });

@@ -32,11 +32,13 @@
         <% } %>
     </div>
     <div class="col-xs-2">
-        <% if (dropboxEnabled) { %>
-            <button type="button" id="dropboxLogout" class="btn btn-default">Logout</button>
-        <% } else { %>
-            <button type="button" id="dropboxLogin" class="btn btn-default">Login / Authorize</button>
-        <% } %>
+        <div class="btn-group-vertical pull-right">
+            <% if (dropboxEnabled) { %>
+                <button type="button" id="dropboxLogout" class="btn btn-default">Logout</button>
+            <% } else { %>
+                <button type="button" id="dropboxLogin" class="btn btn-default">Login / Authorize</button>
+            <% } %>
+        </div>
     </div>
 </div>
 
@@ -61,7 +63,7 @@
         <% } %>
     </div>
     <div class="col-xs-2">
-        <div class="btn-group-vertical">
+        <div class="btn-group-vertical pull-right">
             <% if (!keysLoaded) { %>
                 <button type="button" id="createNewKeysButton" class="btn btn-default">Create New Keys</button>
                 <span class="btn btn-default btn-file">Upload Keys<input id="uploadKeysInput" type="file" /></span>
@@ -74,4 +76,12 @@
             <% } %>
         </div>
     </div>
+</div>
+<% if (dropboxEnabled && keysLoaded) { %>
+<div class="row top-15">
+    <div class="col-lg-9 col-md-11 col-xs-12">
+        <button id="continueButton" class="btn btn-success btn-lg">Continue</button>
+    </div>
+</div>
+<% } %>
 </div>

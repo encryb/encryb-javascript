@@ -24,7 +24,8 @@ define([
             "click #dropboxLogin": "dropbox:login",
             "click #loadKeysFromGoogleButton" : "keys:loadFromGoogle",
             "click #downloadKeysButton": "keys:download",
-            "click #saveKeysToGoogleButton": "keys:saveKeysToGoogleButton"
+            "click #saveKeysToGoogleButton": "keys:saveKeysToGoogleButton",
+            "click #continueButton": "continue"
         },
 
         initialize: function () {
@@ -59,7 +60,7 @@ define([
                 inputOptions : [
                     { text : 'Save to your computer (Safest option)', value: 'keys:download', name: 'file'},
                     { text : 'Save to Dropbox (Simplest option, but encryption key is stored next to the encrypted data)', value: 'keys:saveToDropbox', name: 'dropbox'},
-                    { text : 'Save to Google Drive (Compromise option, the most clever one)', value: 'googledrive', name: 'googledrive'},
+                    { text : 'Save to Google Drive (Compromise option, the most clever one)', value: 'googledrive', name: 'googledrive'}
                 ],
                 callback : function(values) {
                     view.trigger("keys:create");

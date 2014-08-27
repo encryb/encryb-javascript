@@ -11,7 +11,7 @@ require.config({
 		app: '../app',
 		tpl: '../tpl',
 		utils: '../utils',
-        dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest',
+        dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.1-latest',
         dropboxdatastore: 'backbone.dropboxDatastore',
         marionette: 'backbone.marionette',
         visibility: 'visibility-1.2.1.min'

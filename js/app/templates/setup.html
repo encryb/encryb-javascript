@@ -40,8 +40,7 @@
     </div>
 </div>
 
-
-<div class="row bottom-5 border">
+<div class="row bottom-5 border <% if (!dropboxEnabled && !keysLoaded) { %> hide <% } %>">
     <div class="col-lg-4 col-md-5 col-xs-6">
         <div class="well well-sm <% if (!keysLoaded) { %>border-warning<% } %> clearfix">
             <div class="pull-left">
@@ -65,7 +64,8 @@
         <div class="btn-group-vertical">
             <% if (!keysLoaded) { %>
                 <button type="button" id="createNewKeysButton" class="btn btn-default">Create New Keys</button>
-                <button type="button" id="uploadKeysButton" class="btn btn-default">Upload Keys</button>
+                <span class="btn btn-default btn-file">Upload Keys<input id="uploadKeysInput" type="file" /></span>
+                <button type="button" id="loadKeysFromDropboxButton" class="btn btn-default">Load from Dropbox</button>
                 <button type="button" id="loadKeysFromGoogleButton" class="btn btn-default">Load from Google</button>
             <% } else { %>
                 <button type="button" id="removeKeysButton" class="btn btn-default">Remove Keys</button>

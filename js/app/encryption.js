@@ -54,11 +54,16 @@ define([
     exports.saveKeys = function(secretKeyEncoded, publicKeyEncoded) {
         localStorage.setItem("secretKey", secretKeyEncoded);
         localStorage.setItem("publicKey", publicKeyEncoded);
+    }
 
+
+    exports.removeKeys = function() {
+        localStorage.removeItem("secretKey");
+        localStorage.removeItem("publicKey");
     }
 
     exports.getKeys = function() {
-        var secretKeyEncoded= localStorage.getItem("secretKey");
+        var secretKeyEncoded = localStorage.getItem("secretKey");
         var publicKeyEncoded = localStorage.getItem("publicKey");
 
         if (secretKeyEncoded === null || publicKeyEncoded === null ) {
@@ -75,6 +80,16 @@ define([
             publicKey: publicKey,
             secretKey: secretKey
         };
+    }
+
+    exports.getEncodedKeys = function() {
+        var secretKeyEncoded = localStorage.getItem("secretKey");
+        var publicKeyEncoded = localStorage.getItem("publicKey");
+        return {
+            publicKey: publicKeyEncoded,
+            secretKey: secretKeyEncoded
+        };
+
     }
 
     function decrypt(data, password) {

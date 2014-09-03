@@ -21,6 +21,10 @@ require.config({
 		jquery: {
 			exports: '$'
 		},
+        jcrop: {
+            deps: ['jquery'],
+            exports: 'jQuery.fn.Jcrop'
+        },
 		underscore: {
 			exports: '_'
 		},
@@ -42,7 +46,7 @@ require.config({
             deps: ["jquery"]
         },
         'jasny-bootstrap': {
-        	deps: ["bootstrap"]
+        	deps: ['jquery', "bootstrap"]
         },
         'backbone-forms-bootstrap3' : {
             deps: ["backbone-forms"],
@@ -57,7 +61,7 @@ require.config({
         },
         visibility: {
             exports: 'Visibility'
-        }
+        },
 	}
 });
 
@@ -73,7 +77,8 @@ function (Backbone, Marionette, App, WallContr, DropboxClient) {
     var AppRouter = Marionette.AppRouter.extend({
         appRoutes: {
             '': 'showWall',
-            'settings': 'settings'
+            'settings': 'settings',
+            'profile': 'profile'
         }
     });
 

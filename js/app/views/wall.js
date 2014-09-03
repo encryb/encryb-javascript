@@ -2,6 +2,8 @@ define([
     'jquery',
     'underscore',
     'backbone',
+    'jcrop',
+    'jasny-bootstrap',
     'marionette',
     'visibility',
     'app/app',
@@ -13,7 +15,7 @@ define([
     'utils/image',
     'utils/random',
     'require-text!app/templates/wall.html'
-], function($, _, Backbone, Marionette, Visibility, App, PostModel, FriendModel,
+], function($, _, Backbone, Jcrop, Jasny, Marionette, Visibility, App, PostModel, FriendModel,
             Modals, Storage, DataConvert, ImageUtil, RandomUtil,
             WallTemplate
     ){
@@ -46,8 +48,37 @@ define([
              */
         events: {
             "click #addFriend": 'showAddFriendForm',
-            "click #myInfo": 'showMyProfile'
+            "click #myInfo": 'showMyProfile',
+            "change.bs.fileinput #profileFile": "pictureChange",
+            "click #profileFile #cancelButton": "cancelButton",
+            "click #profileFile #applyButton": "applyButton"
 
+        },
+
+        cancelButton: function() {
+            event.preventDefault();
+            $("#profileFile").fileinput("reset");
+        },
+        applyButton: function(event) {
+            event.preventDefault();
+            var select = this.jcrop_profile.tellSelect();
+            var image = $("#profilePicture img")[0];
+
+            var resized = ImageUtil.cropAndResize(image, 360, 300, select.x, select.y, select.w, select.h);
+            $("#bob").attr('src', resized);
+            $("#profileFile").fileinput("reset");
+        },
+        pictureChange: function(){
+            var wall = this;
+            var image = $("#profilePicture img");
+            var size = ImageUtil.getNaturalSize(image);
+            image.Jcrop({
+                aspectRatio: 1.2,
+                setSelect: [0, 0, 360, 300],
+                trueSize: [size.width, size.height]
+            },function(){
+                wall.jcrop_profile = this;
+            });
         },
 
         showAddFriendForm: function() {
@@ -59,7 +90,7 @@ define([
         },
 
         showMyProfile: function() {
-            var profile = profiles.getFirst();
+            var profile = App.state.myProfiles.getFirst();
             var changes = {};
 
             var modal = Modals.showMyProfile(profile, changes);

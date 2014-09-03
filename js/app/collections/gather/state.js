@@ -56,16 +56,24 @@ define([
 
             this.myFriends.on("add", this.onMyFriendAdded.bind(this));
 
-            $.when(this.myProfiles.fetch()).done(function() {
+        },
+
+        fetchAll: function() {
+            $.when(this.myProfiles.fetch()).done(function () {
                 this.profilePictureUrl = this.myProfiles.getFirst().get('pictureUrl');
                 this.name = this.myProfiles.getFirst().get('name');
 
-                this.myPosts.fetch();
-                this.myComments.fetch();
-                this.myUpvotes.fetch();
-                this.myFriends.fetch();
+                var state = this;
+                state.trigger("synced:profile");
+                $.when(
+                    this.myPosts.fetch(),
+                    this.myComments.fetch(),
+                    this.myUpvotes.fetch(),
+                    this.myFriends.fetch()
+                ).done(function() {
+                        state.trigger("synced:full");
+                    });
             }.bind(this));
-
         },
 
         onMyPostAdded: function(post) {

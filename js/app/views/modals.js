@@ -4,10 +4,8 @@ define([
     'backbone',
     'backbone.bootstrap-modal',
     'backbone-forms-bootstrap3',
-    'app/models/profile',
-    'require-text!app/templates/imageModal.html',
-    'require-text!app/templates/profile.html'
-], function($, _, Backbone, BackboneModal, BackboneForm, ProfileModel, ImageModalTemplate, MyInfoTemplate){
+    'require-text!app/templates/imageModal.html'
+], function($, _, Backbone, BackboneModal, BackboneForm, ImageModalTemplate){
 
     var modals = {};
 
@@ -23,7 +21,7 @@ define([
         }
     });
 
-
+/*
     var MyInfoModalView = Backbone.View.extend({
         template: _.template( MyInfoTemplate ),
         render: function() {
@@ -47,12 +45,13 @@ define([
             if(!file) {
                 return;
             }
+            console.log(event.target);
             console.log(file);
             console.log(file.result);
             this.options.changes['picture'] = file.result;
         }
     });
-
+*/
     modals.showFriend = function(model) {
         var form = new BackboneForm({model: model});
         var modal = new BackboneModal({

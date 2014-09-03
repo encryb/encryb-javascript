@@ -7,10 +7,14 @@ define([
 
     var exports = {};
 
+    var _OLD_KEY = "global";
 
-    exports.encryptWithPassword = function(password, mimeType, data) {
 
-        var encrypted = Sjcl.json._encrypt(password, data);
+    exports.encrypt = function(key, mimeType, data, isBinary) {
+        if (isBinary) {
+            data = Sjcl.codec.bytes.toBits(data);
+        }
+        var encrypted = Sjcl.json._encrypt(key, data);
 
         var encryptedData = encode(encrypted);
         encryptedData['mimeType'] = mimeType;
@@ -18,27 +22,17 @@ define([
         var buf = Encoding.encode(encryptedData);
 
         return buf;
-    }
+    };
 
-    exports.encryptImageWithPassword = function(password, mimeType, data) {
-        var bits = Sjcl.codec.bytes.toBits(data);
-        return exports.encryptWithPassword(password, mimeType, bits);
-    }
-
-
-    /*
-    exports.encryptWithPublicKey = function(mimeType, data) {
-
-        var key = exports.getKeys().publicKey;
-
-        var encryptedData = Sjcl.encrypt(key, data);
-        encryptedData['mimeType'] = mimeType;
-        var serializedData = Msgpack.encode(encryptedData);
-        var base64Data = DataConvert.arrayToBase64(serializedData);
-        return base64Data;
-    }
-
-     */
+    exports.encryptWithEcc = function(keyString, mimeType, data, isBinary) {
+        if(keyString) {
+            var key = exports.publicHexToKey(keyString);
+        }
+        else {
+            var key = _OLD_KEY;
+        }
+        return exports.encrypt(key, mimeType, data, isBinary);
+    };
 
     exports.createKeys = function() {
         var keys = Sjcl.ecc.elGamal.generateKeys(384);
@@ -60,7 +54,22 @@ define([
     exports.removeKeys = function() {
         localStorage.removeItem("secretKey");
         localStorage.removeItem("publicKey");
-    }
+    },
+
+    exports.publicHexToKey = function(publicKeyEncoded) {
+
+        var publicKeyBits = Sjcl.codec.hex.toBits(publicKeyEncoded);
+        var publicKey = new Sjcl.ecc.elGamal.publicKey(Sjcl.ecc.curves.c384, publicKeyBits);
+
+        return publicKey;
+    },
+
+    exports.secretHexToKey = function(secretKeyEncoded) {
+        var secretKeyBits = new Sjcl.bn(secretKeyEncoded);
+        var secretKey = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
+        return secretKey;
+
+    },
 
     exports.getKeys = function() {
         var secretKeyEncoded = localStorage.getItem("secretKey");
@@ -70,15 +79,9 @@ define([
             return null;
         }
 
-        var publicKeyBits = Sjcl.codec.hex.toBits(publicKeyEncoded);
-        var publicKey = new Sjcl.ecc.elGamal.publicKey(Sjcl.ecc.curves.c384, publicKeyBits);
-
-        var secretKeyBits = new Sjcl.bn(secretKeyEncoded);
-        var secretKey = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
-
         return {
-            publicKey: publicKey,
-            secretKey: secretKey
+            publicKey: exports.publicHexToKey(publicKeyEncoded),
+            secretKey: exports.secretHexToKey(secretKeyEncoded)
         };
     }
 
@@ -119,25 +122,18 @@ define([
     }
 
 
-    exports.decryptBinaryData = function(packedData, password) {
+    exports.decryptManifestData = function(packedData) {
         var data = Encoding.decode(packedData);
+        if (data.hasOwnProperty('kemtag')) {
+            var password = exports.getKeys().secretKey;
+        }
+        else {
+            var password = _OLD_KEY;
+        }
         var ct = decrypt(data, password);
         var decrypted = fromBitsToTypedArray(ct);
         return decrypted;
     }
-
-    /*
-    if (returnBytes == 55) {
-        return sjcl.codec.bytes.fromBitsToTypedArray(ct);
-    }
-
-    if (returnBytes == true) {
-        return sjcl.codec.bytes.fromBits(ct);
-    }
-    return sjcl.codec.utf8String.fromBits(ct);
-
-     */
-
 
     function encode(obj) {
         var result = {};

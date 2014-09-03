@@ -70,6 +70,10 @@ function (Backbone, Marionette, App, State, PermissionColl,
             var wall = new WallView();
             App.main.show(wall);
 
+            wall.on("manifests:save", function() {
+                App.state.saveManifests();
+            });
+
             var postsView = new PostsView({
                 collection: App.state.posts
             });

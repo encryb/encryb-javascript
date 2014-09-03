@@ -48,37 +48,10 @@ define([
              */
         events: {
             "click #addFriend": 'showAddFriendForm',
-            "click #myInfo": 'showMyProfile',
-            "change.bs.fileinput #profileFile": "pictureChange",
-            "click #profileFile #cancelButton": "cancelButton",
-            "click #profileFile #applyButton": "applyButton"
-
+            "click #myInfo": 'showMyProfile'
         },
-
-        cancelButton: function() {
-            event.preventDefault();
-            $("#profileFile").fileinput("reset");
-        },
-        applyButton: function(event) {
-            event.preventDefault();
-            var select = this.jcrop_profile.tellSelect();
-            var image = $("#profilePicture img")[0];
-
-            var resized = ImageUtil.cropAndResize(image, 360, 300, select.x, select.y, select.w, select.h);
-            $("#bob").attr('src', resized);
-            $("#profileFile").fileinput("reset");
-        },
-        pictureChange: function(){
-            var wall = this;
-            var image = $("#profilePicture img");
-            var size = ImageUtil.getNaturalSize(image);
-            image.Jcrop({
-                aspectRatio: 1.2,
-                setSelect: [0, 0, 360, 300],
-                trueSize: [size.width, size.height]
-            },function(){
-                wall.jcrop_profile = this;
-            });
+        triggers: {
+            "click #saveManifests": 'manifests:save'
         },
 
         showAddFriendForm: function() {
@@ -86,34 +59,6 @@ define([
             var app = this;
             Modals.addFriend().done(function(model) {
                 app.createUser(model.get('account'), model.get('friendManifest'));
-            });
-        },
-
-        showMyProfile: function() {
-            var profile = App.state.myProfiles.getFirst();
-            var changes = {};
-
-            var modal = Modals.showMyProfile(profile, changes);
-
-            modal.on('ok', function() {
-                if ('name' in changes) {
-                    profile.set('name', changes['name']);
-                    profile.save();
-                }
-                if('picture' in changes) {
-
-                    var img = new Image();
-                    img.src = changes['picture'];
-
-                    var resized = ImageUtil.resize(img, 300, 200);
-
-                    var picture = DataConvert.dataUriToTypedArray(resized);
-                    Storage.uploadDropbox("profilePic",  picture['data']).then(Storage.shareDropbox).done(function(url) {
-                        profile.set('pictureFile', "profilePic");
-                        profile.set('pictureUrl', url);
-                        profile.save();
-                    });
-                }
             });
         },
 

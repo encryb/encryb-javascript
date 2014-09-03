@@ -125,12 +125,19 @@ define([
 
             Storage.downloadUrl(friendManifest).done(function (data) {
 
-                var decData = Encryption.decryptBinaryData(data, "global");
+                var decData = Encryption.decryptManifestData(data);
                 var decObj = Msgpack.decode(decData.buffer);
 
                 var userId = -1;
                 if (decObj.hasOwnProperty('userId')) {
                     var userId = decObj['userId'];
+                }
+
+                var currentKey = friend.get('publicKey');
+                var newKey = decObj['publicKey'];
+                if (currentKey != newKey) {
+                    console.log("Private key changed from ", currentKey, newKey);
+                    friend.set('publicKey', newKey);
                 }
 
                 friend.set('pictureUrl', decObj['pictureUrl']);
@@ -287,6 +294,8 @@ define([
 
             var filteredPosts = [];
 
+            var myKey = Encryption.getEncodedKeys().publicKey;
+
             this.myPosts.each(function(post) {
                 var permissions = post.get("permissions");
                 if (!permissions ||
@@ -306,6 +315,7 @@ define([
             manifest['name'] = profile.get('name');
             manifest['pictureUrl'] = profile.get('pictureUrl');
             manifest['userId'] = Backbone.DropboxDatastore.client.dropboxUid();
+            manifest['publicKey'] = myKey;
 
             var packedManifest = new Uint8Array(Msgpack.encode(manifest));
             return friend.saveManifest(packedManifest);

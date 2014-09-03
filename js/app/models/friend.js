@@ -24,10 +24,12 @@ define([
 
 
         saveManifest: function(manifest) {
+
+
             var deferred = $.Deferred();
 
-            var encText = Encryption.encryptImageWithPassword("global",  "plain/text", manifest);
 
+            var encText = Encryption.encryptWithEcc(this.get('publicKey'),  "plain/text", manifest, true);
             Storage.uploadDropbox(this.get('manifestFile'), encText).done(function(stats) {
                 deferred.resolve(stats);
             });

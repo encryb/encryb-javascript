@@ -36,7 +36,12 @@ require.config({
             deps: ['backbone'],
             exports: 'Backbone'
         },
-		sjcl: {
+        'backbone-filtered-collection': {
+            deps: ['backbone'],
+            exports: 'Backbone.FilteredCollection'
+        },
+
+        sjcl: {
 			exports: 'sjcl'
 		},
         dropbox: {

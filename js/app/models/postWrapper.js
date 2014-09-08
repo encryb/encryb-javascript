@@ -67,7 +67,7 @@ define([
             var model = new PostContent(attr);
             this.set("post", model);
             this.setPostId(userId, postModel.get("id"));
-
+            this.set('userId', userId);
         },
 
         setFriendsPost: function(post, name, pictureUrl, userId) {
@@ -75,6 +75,7 @@ define([
             var model = new PostContent(attr);
             this.set("post", model);
             this.setPostId(userId, post.id);
+            this.set('userId', userId);
         },
 
         deletePost: function() {

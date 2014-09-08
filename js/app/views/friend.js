@@ -3,10 +3,11 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'app/app',
     'app/views/modals',
     'require-text!app/templates/friend.html'
 
-], function ($, _, Backbone, Marionette, Modals, FriendTemplate) {
+], function ($, _, Backbone, Marionette, App, Modals, FriendTemplate) {
 
     var FriendView = Marionette.ItemView.extend({
 
@@ -17,22 +18,13 @@ define([
         },
 
         events: {
-            "click #editFriend": "editFriend",
-            "click #filterFriend": "filterFriend",
-            "click #removeFriend": "removeFriend"
+            "click #friendImg": "imgClick"
         },
 
-        filterFriend: function () {
-            console.log("Filter");
-        },
-
-        editFriend: function () {
-            Modals.showFriend(this.model);
-        },
-
-        removeFriend: function () {
-            this.model.destroy();
+        imgClick: function() {
+            App.vent.trigger("friend:selected", this.model);
         }
+
     });
 
     var FriendsView = Marionette.CollectionView.extend({

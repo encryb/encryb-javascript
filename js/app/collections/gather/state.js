@@ -3,6 +3,8 @@ define([
     'marionette',
     'underscore',
     'msgpack',
+    'backbone-filtered-collection',
+    'app/app',
     'app/collections/persist/posts',
     'app/collections/persist/friends',
     'app/collections/persist/profiles',
@@ -13,7 +15,7 @@ define([
     'app/storage',
     'app/remoteManifest',
     'utils/dropbox-client'
-], function(Backbone, Marionette, _, Msgpack,
+], function(Backbone, Marionette, _, Msgpack, FilteredCollection, App,
             PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl,
             PostWrapper, Encryption, Storage, RemoteManifest, DropboxClient) {
 
@@ -37,6 +39,8 @@ define([
                 return -post.get('post').get('created');
             };
 
+            this.filteredPosts = new FilteredCollection (null, {collection: this.posts});
+
             this.comments = new Backbone.Collection();
             this.listenTo(this.comments, "add", this.dispatchCommentAdd);
             this.listenTo(this.comments, "remove", this.dispatchCommentRemove);
@@ -56,6 +60,9 @@ define([
 
             this.myFriends.on("add", this.onMyFriendAdded.bind(this));
 
+            App.vent.on("friend:selected", function(friendModel){
+                App.state.filterByUser(friendModel.get('userId'));
+            });
         },
 
         fetchAll: function() {
@@ -140,7 +147,10 @@ define([
                     friend.set('publicKey', newKey);
                 }
 
+                friend.set('name', decObj['name']);
+                friend.set('intro', decObj['intro']);
                 friend.set('pictureUrl', decObj['pictureUrl']);
+                friend.set('intro', decObj['intro']);
                 friend.set('userId', userId);
                 friend.save();
 
@@ -313,6 +323,7 @@ define([
 
             var profile = this.myProfiles.getFirst();
             manifest['name'] = profile.get('name');
+            manifest['intro'] = profile.get('intro');
             manifest['pictureUrl'] = profile.get('pictureUrl');
             manifest['userId'] = Backbone.DropboxDatastore.client.dropboxUid();
             manifest['publicKey'] = myKey;
@@ -332,7 +343,15 @@ define([
             this.myFriends.each(function(friend) {
                 this.onMyFriendAdded(friend);
             }, this);
+        },
+
+        filterByUser: function(userId) {
+            this.filteredPosts.setFilter(function(post) { return post.get('userId') == userId});
+        },
+        unsetFilter: function() {
+            this.filteredPosts.setFilter(false);
         }
+
 
     });
     return State;

@@ -24,6 +24,7 @@ define([
         template: _.template( WallTemplate ),
         regions: {
             posts: "#posts",
+            friendsDetails: "#friendsDetails",
             createPost: "#createPost",
             friends: "#friends"
         },

@@ -4,8 +4,6 @@ define([
     'app/storage'
 ], function (Backbone, Encryption, Storage) {
 
-    var FOLDER_MANIFESTS = "manifests/";
-
 
     var Friend = Backbone.Model.extend({
 
@@ -14,7 +12,8 @@ define([
             manifestFile: "",
             manifestUrl: "",
             friendsManifest: "",
-            pictureUrl: "img/nopic.gif"
+            pictureUrl: "img/nopic.gif",
+            intro: ""
         },
         schema: {
             account:      'Text',

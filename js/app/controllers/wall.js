@@ -42,7 +42,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
         _loadState: function(callback) {
 
             if(!this._checkSettings()) {
-                this.settings();
+                this.settings(true);
                 return;
             }
             if (App.state) {
@@ -75,7 +75,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
             });
 
             var postsView = new PostsView({
-                collection: App.state.posts
+                collection: App.state.filteredPosts
             });
             wall.posts.show(postsView);
 
@@ -91,15 +91,24 @@ function (Backbone, Marionette, App, State, PermissionColl,
             });
             wall.friends.show(friendsView);
 
+            App.vent.on("friend:selected", function(friendModel) {
+                require(["app/views/friendsDetails"], function (FriendsDetailsView) {
+
+                    var details = new FriendsDetailsView({model: friendModel});
+                    wall.friendsDetails.show(details);
+                });
+            });
         },
 
-        settings: function() {
+        settings: function(displayAbout) {
+            displayAbout = displayAbout || false;
             var controller = this;
             var model = new Backbone.Model();
 
             var keysLoaded = (Encryption.getKeys() != null);
             model.set("dropboxEnabled", DropboxClient.isAuthenticated());
             model.set("keysLoaded", keysLoaded);
+            model.set("displayAbout", displayAbout);
 
             require(["app/views/setup"], function(SetupView) {
 
@@ -163,7 +172,6 @@ function (Backbone, Marionette, App, State, PermissionColl,
             var controller = this;
 
             var model = App.state.myProfiles.getFirst();
-            console.log("MODEL", model);
             require(["app/views/profile"], function (ProfileView) {
                 var profileView = new ProfileView({model: model});
                 App.main.show(profileView);

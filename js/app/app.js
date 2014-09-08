@@ -8,7 +8,7 @@ define([
         var App = new Marionette.Application();
 
         App.addRegions({
-            main: '#ninjaturtle'
+            main: '#main'
         });
 
         App.on("start", function(options){

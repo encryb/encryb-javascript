@@ -1,19 +1,22 @@
+<% if (displayAbout) { %>
 <div class="row">
     <div class="col-lg-9 col-md-11 col-xs-12">
-        <div class="jumbotron">
+        <div id="about" class="jumbotron clearfix">
             <h1>
                 Welcome to Encryb!
             </h1>
-            <p>
+            <img src="img/crib-lg.png" class="pull-left">
+            <p class="top-15">
                 Encryb is a private social network built on public cloud storage. All data is encrypted so that only you and your friends can view it
                 and is not examined for advertising or any other purposes. Encryb is an open source project. For source code, please visit https://github.com/encryb.
             </p>
-            <p>
+            <div class="pull-right top-15">
                 <a class="btn btn-primary btn-large" href="#">Learn more</a>
-            </p>
+            </div>
         </div>
     </div>
 </div>
+<% } %>
 
 <div class="row bottom-5">
     <div class="col-lg-4 col-md-5 col-xs-6">
@@ -78,7 +81,7 @@
     </div>
 </div>
 <% if (dropboxEnabled && keysLoaded) { %>
-<div class="row top-15">
+<div class="row bottom-5">
     <div class="col-lg-9 col-md-11 col-xs-12">
         <button id="continueButton" class="btn btn-success btn-lg">Continue</button>
     </div>

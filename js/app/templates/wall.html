@@ -1,14 +1,38 @@
 
 <div class="row">
-    <div class="pull-right"><a href="#" id="myInfo" class="btn btn-default" role="button">My Info</a></div>
+    <!--
     <div class="pull-right"><a href="#" id="saveManifests" class="btn btn-default" role="button">Save Manifests</a></div>
-    <div class="col-xs-3 col-sm-2">
+    -->
+    <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2">
         <div class="panel-group" id="accordion">
             <div class="panel panel-default">
                 <div class="panel-heading padding-5">
-                    <h4 class="panel-title">
+                    <h4 class="panel-title text-center">
+                        <a href="#settings">
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-12 col-md-11 col-lg-6 vcenter">
+                                    <span style="font-size: 30px; padding: 8px 0px;" class="glyphicon glyphicon-wrench"></span>
+                                </div><!--
+                                --><div class="hidden-xs hidden-sm col-md-11 col-lg-6 vcenter">
+                                    Settings
+                                </div>
+                            </div>
+                        </a>
+                    </h4>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading padding-5">
+                    <h4 class="panel-title text-center">
                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseCribs">
-                            <h5 class="nopadding"><img src="img/cribs.png"> / Cribs</h5>
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-12 col-md-11 col-lg-6 vcenter">
+                                   <img class="img-responsive center-block" src="img/cribs.png">
+                                </div><!--
+                                --><div class="hidden-xs hidden-sm col-md-11 col-lg-6 vcenter">
+                                    Cribs
+                                </div>
+                            </div>
                         </a>
                     </h4>
                 </div>
@@ -20,13 +44,20 @@
             </div>
             <div class="panel panel-default">
                 <div class="panel-heading padding-5">
-                    <h4 class="panel-title">
+                    <h4 class="panel-title text-center">
                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseFriends">
-                            <h5 class="nopadding"><img src="img/friends.png"> / Friends</h5>
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-12 col-md-11 col-lg-6 vcenter">
+                                    <img class="img-responsive center-block" src="img/friends.png">
+                                </div><!--
+                                --><div class="hidden-xs hidden-sm col-md-11 col-lg-6 vcenter">
+                                    Friends
+                                </div>
+                            </div>
                         </a>
                     </h4>
                 </div>
-                <div id="collapseFriends" class="panel-collapse collapse in">
+                <div id="collapseFriends" class="panel-collapse collapse">
                     <div class="panel-body padding-5">
                         <div id="friends"></div>
                     </div>
@@ -37,7 +68,7 @@
         <img src="img/friends.png">Friends <a href="#" id="addFriend" class="btn btn-default" role="button">Add</a>
 -->
     </div>
-    <div class="col-xs-9 col-sm-7">
+    <div class="col-xs-9 col-sm-9 col-md-8 col-lg-7">
         <div class="row">
             <div id="friendsDetails"></div>
         </div>

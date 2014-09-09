@@ -49,7 +49,6 @@ define([
              */
         events: {
             "click #addFriend": 'showAddFriendForm',
-            "click #myInfo": 'showMyProfile'
         },
         triggers: {
             "click #saveManifests": 'manifests:save'

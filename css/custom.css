@@ -74,8 +74,8 @@ ul.collection-list li {
     margin-bottom: 7px;
     padding: 10px;
     border: 1px solid #AAA;
-    border-radius: 4px;   /* may need vendor varients */
-    background: #FAFAFA;
+    border-radius: 4px;
+    background: #F5F5F5;
 }
 
 .fileinput {
@@ -193,4 +193,11 @@ ul.collection-list li {
 
 .password-icon > span {
     font-size: 35px;
+}
+
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
 }

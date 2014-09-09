@@ -21,37 +21,6 @@ define([
         }
     });
 
-/*
-    var MyInfoModalView = Backbone.View.extend({
-        template: _.template( MyInfoTemplate ),
-        render: function() {
-            this.$el.html( this.template( this.model.toJSON({full:true}) ) );
-            return this;
-        },
-
-
-
-        events: {
-            "change #name": "nameChange",
-            "change.bs.fileinput #profileFile": "pictureChange"
-        },
-
-        nameChange: function(event){
-            this.options.changes['name'] = event.target.value;
-        },
-
-        pictureChange: function(event, file) {
-            //$BUG : event is being fired twice, once without file
-            if(!file) {
-                return;
-            }
-            console.log(event.target);
-            console.log(file);
-            console.log(file.result);
-            this.options.changes['picture'] = file.result;
-        }
-    });
-*/
     modals.showFriend = function(model) {
         var form = new BackboneForm({model: model});
         var modal = new BackboneModal({

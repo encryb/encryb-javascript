@@ -1,12 +1,12 @@
 <div class="row">
-    <div class="col-xs-3 col-sm-2">
-        <div class="" style="margin-bottom: 10px">
+    <div class="col-xs-5 col-sm-2">
+        <div class="bottom-5">
             <img class="img-responsive" src="<%= profilePictureUrl %>" style="width: 78px; height: 65px;   border: 1px solid #999; border-radius: 2px">
         </div>
     </div>
-    <div class="col-xs-7 col-sm-8">
+    <div class="col-xs-5 col-sm-8">
         <strong><%= owner %></strong>
-        <span class="small"><%= new Date(created).toLocaleString() %></span>
+        <div class="small"><%= new Date(created).toLocaleString() %></div>
     </div>
     <div class="pull-right col-xs-1">
         <% if (myPost == true) { %>
@@ -25,16 +25,15 @@
 
 <div class="row">
     <div class="col-xs-12 clearfix">
-
         <% if (typeof resizedImageData !== "undefined" && resizedImageData != "pending") { %>
-            <div class="pull-left margin-right-15">
+            <div class="pull-left bottom-5 margin-right-15">
                     <img id ="resizedImage" src='<%= resizedImageData %>' class="img-responsive img-thumbnail">
             </div>
         <% } %>
         <% if (typeof textData !== "undefined") { %>
             <div>
                 <%= textData %>
-          </div>
+            </div>
         <% } %>
     </div>
 </div>

@@ -195,6 +195,11 @@ ul.collection-list li {
     font-size: 35px;
 }
 
+.add-icon {
+    padding: 5px;
+    font-size: 24px;
+    color: #AAA;
+}
 
 .vcenter {
     display: inline-block;

@@ -16,7 +16,7 @@ define([
         },
 
 
-        deleteComment: function() {
+        deleteComment: function(event) {
             event.preventDefault();
             this.trigger("comment:delete");
         }
@@ -59,7 +59,6 @@ define([
             }
         },
         expandCommentForm: function() {
-            event.preventDefault();
             this.ui.createCommentDiv.addClass("in");
             this.ui.createCommentTrigger.hide();
             this.ui.createCommentText.focus();
@@ -70,7 +69,6 @@ define([
             this.ui.createCommentTrigger.show();
         },
         expandComments: function() {
-            event.preventDefault();
             this.model.set("expanded", true);
             this.render();
         },

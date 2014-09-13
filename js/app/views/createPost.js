@@ -27,7 +27,7 @@ define([
 
         events: {
             'submit form': 'createPost',
-            'focusin #newPostTrigger' : "expendForm"
+            'focus #newPostTrigger' : "expendForm"
         },
 
         onRender: function(){
@@ -104,7 +104,6 @@ define([
         },
 
         expendForm: function() {
-            event.preventDefault();
             this.ui.newPostDiv.addClass("in");
             this.ui.newPostTrigger.hide();
         }

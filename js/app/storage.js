@@ -152,8 +152,8 @@ exports.downloadUrl = function(downloadUrl) {
     var deferred = $.Deferred();
 
     var xhr = new XMLHttpRequest();
-    xhr.responseType = 'arraybuffer';
     xhr.open('GET', downloadUrl);
+    xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
         var ecnryptedData = xhr.response;
         deferred.resolve(ecnryptedData);
@@ -171,8 +171,8 @@ exports.downloadData = function(downloadUrl, isImage, password) {
     var deferred = $.Deferred();
 
     var xhr = new XMLHttpRequest();
-    xhr.responseType = 'arraybuffer';
     xhr.open('GET', downloadUrl);
+    xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
         var ecnryptedData = xhr.response;
         var data;

@@ -27,12 +27,12 @@
     <div class="col-xs-12 clearfix">
         <% if (typeof resizedImageData !== "undefined" && resizedImageData != "pending") { %>
             <div class="pull-left bottom-5 margin-right-15">
-                    <img id ="resizedImage" src='<%= resizedImageData %>' class="img-responsive img-thumbnail">
+                    <img id ="resizedImage" src='<%- resizedImageData %>' class="img-responsive img-thumbnail">
             </div>
         <% } %>
         <% if (typeof textData !== "undefined") { %>
             <div>
-                <%= textData %>
+                <%- textData %>
             </div>
         <% } %>
     </div>

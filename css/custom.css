@@ -64,7 +64,7 @@ ul.collection-list {
 ul.collection-list li {
     margin: 7px;
     padding: 10px;
-    border: 1px solid #AAA;
+    border: 1px solid #DDD;
     border-radius: 4px;   /* may need vendor varients */
     background: #FAFAFA;
 }
@@ -73,7 +73,7 @@ ul.collection-list li {
 .post {
     margin-bottom: 7px;
     padding: 10px;
-    border: 1px solid #AAA;
+    border: 1px solid #DDD;
     border-radius: 4px;
     background: #F5F5F5;
 }
@@ -93,21 +93,21 @@ ul.collection-list li {
 
 .new_post_input {
     padding: 10px;
-    border: 1px solid #AAA;
+    border: 1px solid #DDD;
     background: #FFF;
     border-radius: 4px;
 }
 
 .new_comment_input {
     padding: 5px;
-    border: 1px solid #AAA;
+    border: 1px solid #DDD;
     background: #FFF;
     border-radius: 4px;
 }
 
 .typeahead {
     padding: 6px;
-    border: 1px solid #AAA;
+    border: 1px solid #DDD;
     border-radius: 4px;   /* may need vendor varients */
     background: #FFF;
     color: #999999;

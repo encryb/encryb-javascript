@@ -1,9 +1,8 @@
 define([
-    'msgpack',
     'sjcl',
     'utils/data-convert',
     'utils/encoding'
-], function(Msgpack, Sjcl, DataConvert, Encoding){
+], function(Sjcl, DataConvert, Encoding){
 
     var exports = {};
 
@@ -174,33 +173,6 @@ define([
         }
         return out;
     }
-
-
-    /*
-    exports.test = function() {
-
-        var key = Sjcl.ecc.elGamal.generateKeys(384,10);
-        var encodedPub = Msgpack.encode(key.pub.serialize());
-        var encodedSec = Msgpack.encode(key.sec.serialize());
-
-        var base64Pub = DataConvert.arrayToBase64(encodedPub);
-        var base64Sec = DataConvert.arrayToBase64(encodedSec);
-
-        var pubKey = Sjcl.ecc.deserialize(Msgpack.decode(encodedPub));
-        var secKey = Sjcl.ecc.deserialize(Msgpack.decode(encodedSec));
-
-        var array = [0,1,2,3,4];
-
-
-        var enc = Sjcl.encrypt(pubKey, array);
-
-        var dec = Sjcl.decrypt(secKey, enc);
-
-
-        console.log(dec);
-
-    }
-    */
 
     return exports;
 });

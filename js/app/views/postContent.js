@@ -4,13 +4,19 @@ define([
     'backbone',
     'marionette',
     'app/views/modals',
+    'utils/misc',
     'require-text!app/templates/postContent.html'
 
-], function($, _, Backbone, Marionette, Modals, PostContentTemplate){
+], function($, _, Backbone, Marionette, Modals, MiscUtils, PostContentTemplate){
 
     var PostContentView = Marionette.ItemView.extend({
 
         template: _.template( PostContentTemplate ),
+        templateHelpers: {
+            prettyTime: function() {
+                return MiscUtils.formatTime(this.created);
+            }
+        },
 
         initialize: function() {
             this.model.fetchPost(false);

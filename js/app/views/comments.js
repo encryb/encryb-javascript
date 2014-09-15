@@ -3,12 +3,19 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'utils/misc',
     'require-text!app/templates/comment.html',
     'require-text!app/templates/comments.html'
 
-], function($, _, Backbone, Marionette, CommentTemplate, CommmentsTemplate) {
+], function($, _, Backbone, Marionette, MiscUtils, CommentTemplate, CommmentsTemplate) {
     var CommentView = Marionette.ItemView.extend({
         template: _.template( CommentTemplate ),
+        templateHelpers: {
+            prettyTime: function() {
+                return MiscUtils.formatTime(this.date);
+            }
+        },
+
         className: "comment",
 
         events: {

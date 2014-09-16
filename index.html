@@ -20,6 +20,10 @@
     </div>
     <div id="main"></div>
 </div>
+<script>
+    if (window.location.protocol != "https:")
+        window.location.href = "https:" + window.location.href.substring(window.location.protocol.length);
+</script>
 <script data-main="js/init" src="require.js"></script>
 </body>
 </html>

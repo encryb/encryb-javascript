@@ -94,7 +94,8 @@ function (Backbone, Marionette, App, State, PermissionColl,
             App.vent.on("friend:selected", function(friendModel) {
                 require(["app/views/friendsDetails"], function (FriendsDetailsView) {
 
-                    var details = new FriendsDetailsView({model: friendModel});
+                    var friendsOfFriend = App.state.getFriendsOfFriend(friendModel);
+                    var details = new FriendsDetailsView({model: friendModel, collection: friendsOfFriend});
                     wall.friendsDetails.show(details);
                 });
             });

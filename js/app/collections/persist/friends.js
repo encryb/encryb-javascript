@@ -11,6 +11,18 @@ var FriendCollection = Backbone.Collection.extend({
 
     initialize: function() {
         this.dropboxDatastore.syncCollection(this);
+    },
+
+    toManifest: function(excludeFriend) {
+
+        var friends = [];
+        this.each(function(friend) {
+            if (friend.get('userId') == excludeFriend.get('userId')){
+                return;
+            };
+            friends.push(_.pick(friend.attributes, "name", "userId", "pictureUrl", "intro"));
+        }, this);
+        return friends;
     }
 })
 

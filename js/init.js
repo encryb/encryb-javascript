@@ -25,7 +25,12 @@ require.config({
             deps: ['jquery'],
             exports: 'jQuery.fn.Jcrop'
         },
-		underscore: {
+        "jquery.swipebox": {
+            deps: ['jquery'],
+            exports: 'jQuery.fn.swipebox'
+        },
+
+        underscore: {
 			exports: '_'
 		},
 		backbone: {

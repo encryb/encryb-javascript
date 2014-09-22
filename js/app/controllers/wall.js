@@ -28,6 +28,53 @@ function (Backbone, Marionette, App, State, PermissionColl,
 
     var WallController = Marionette.Controller.extend({
 
+        initialize: function() {
+            var controller = this;
+            App.vent.on("encryption:updated", function(publicKey) {
+                controller.saveToYellowPages(null, publicKey);
+            });
+            App.vent.on("profile:updated", function(profile) {
+                controller.saveToYellowPages(profile, null);
+            })
+        },
+
+        checkInvites: function() {
+            require(["appengine!encrybuser"], function (AppEngine) {
+                var args = {id: Backbone.DropboxDatastore.client.dropboxUid()};
+                AppEngine.getInvites(args).execute(function(resp) {
+                    console.log("Invites", resp);
+                });
+            });
+        },
+        saveToYellowPages: function(profile, publicKey) {
+            require(["appengine!encrybuser"], function (AppEngine) {
+                if (!profile) {
+                    profile = App.state.myProfiles.getFirst();
+                }
+                if (!publicKey) {
+                    publicKey = Encryption.getEncodedKeys().publicKey;
+                }
+
+                // $TODO this logic needs to be improved
+                if (profile.get('name').length < 1 || !publicKey) {
+                    return;
+                }
+
+
+                var args = {id: Backbone.DropboxDatastore.client.dropboxUid(),
+                            name: profile.get('name'),
+                            intro: profile.get('intro'),
+                            pictureUrl: profile.get('pictureUrl'),
+                            publicKey: publicKey};
+                console.log("Calling set profile", args);
+                AppEngine.setProfile(args).execute(function(resp) {
+                    console.log("AppEngine", resp);
+                });
+
+            });
+
+        },
+
         _checkSettings: function() {
             var keysLoaded = (Encryption.getKeys() != null);
             var dropboxAuthenticated = DropboxClient.isAuthenticated();
@@ -99,6 +146,10 @@ function (Backbone, Marionette, App, State, PermissionColl,
                     wall.friendsDetails.show(details);
                 });
             });
+
+            this.checkInvites();
+
+
         },
 
         settings: function(displayAbout) {
@@ -160,7 +211,6 @@ function (Backbone, Marionette, App, State, PermissionColl,
                 setupView.on("continue", function () {
                     App.appRouter.navigate("");
                     controller.showWall();
-
                 });
             });
         },
@@ -202,7 +252,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
                         model.save();
                         controller.showWall();
                         App.appRouter.navigate("");
-
+                        App.vent.trigger("profile:updated", model);
                     });
                 });
             });

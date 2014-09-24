@@ -9,14 +9,13 @@ define([
     'app/app',
     'app/models/post',
     'app/models/friend',
-    'app/views/modals',
     'app/storage',
     'utils/data-convert',
     'utils/image',
     'utils/random',
     'require-text!app/templates/wall.html'
 ], function($, _, Backbone, Jcrop, Jasny, Marionette, Visibility, App, PostModel, FriendModel,
-            Modals, Storage, DataConvert, ImageUtil, RandomUtil,
+            Storage, DataConvert, ImageUtil, RandomUtil,
             WallTemplate
     ){
 
@@ -67,11 +66,12 @@ define([
         },
 
         showAddFriendForm: function() {
-
+/*
             var app = this;
             Modals.addFriend().done(function(model) {
                 app.createUser(model.get('account'), model.get('friendManifest'));
             });
+            */
         },
 
         createUser: function(account, friendsManifest) {

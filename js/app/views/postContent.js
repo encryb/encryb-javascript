@@ -3,9 +3,11 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'jquery.swipebox',
     'utils/misc',
     'require-text!app/templates/postContent.html'
 
+], function($, _, Backbone, Marionette, Swipebox, MiscUtils, PostContentTemplate){
 
     var PostContentView = Marionette.ItemView.extend({
 
@@ -39,6 +41,22 @@ define([
         },
 
         showImage: function(){
+            var view = this;
+            $.swipebox(
+                [
+                    { href: "img/swipebox/loader.gif", title: view.model.get('textData') }
+                ] );
+
+            $.when(this.model.fetchPost(true)).done(function(){
+                if ($.swipebox.isOpen) {
+                    $.swipebox.close();
+                    $.swipebox(
+                        [
+                            { href: view.model.get('fullImageData'), title: view.model.get('textData') }
+                        ]);
+                }
+
+            });
         }
 
     });

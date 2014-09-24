@@ -17,7 +17,7 @@ define([
                 return MiscUtils.formatTime(this.created);
             },
             permissionsIcon: function() {
-                if (this.permissions.length == 0) {
+                if (!this.permissions || this.permissions.length == 0) {
                     return "img/sharedNot.png";
                 }
                 if (this.permissions.indexOf("all") >= 0) {

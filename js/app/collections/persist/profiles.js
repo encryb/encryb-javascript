@@ -9,7 +9,7 @@ define([
             intro: "",
             pictureFile: "",
             pictureUrl: "img/nopic.gif",
-            updated: false
+            dropboxId: Backbone.DropboxDatastore.client.dropboxUid()
         }
     });
 

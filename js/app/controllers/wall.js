@@ -8,13 +8,14 @@ define([
     'app/views/createPost',
     'app/views/posts',
     'app/views/friend',
+    'app/views/headerPanel',
     'app/encryption',
     'app/storage',
     'utils/dropbox-client',
     'utils/data-convert'
     ],
 function (Backbone, Marionette, App, State, PermissionColl,
-          WallView, CreatePostView, PostsView, FriendsView,
+          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView,
           Encryption, Storage, DropboxClient, DataConvert) {
 
 
@@ -113,6 +114,9 @@ function (Backbone, Marionette, App, State, PermissionColl,
                 this._profile();
                 return;
             }
+
+            var headerPanel = new HeaderPanelView({model: model});
+            App.headerPanel.show(headerPanel);
 
             var wall = new WallView();
             App.main.show(wall);

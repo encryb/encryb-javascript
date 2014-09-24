@@ -1,0 +1,14 @@
+<% if (typeof(name) != "undefined") { %>
+
+    <div class="hidden-xs pull-right" style="padding-left:10px">
+        <div><%- name %></div>
+        <div class="text-center"><code><%- dropboxId %></code></div>
+    </div>
+    <a href="#profile">
+        <img class="img-responsive pull-right" src="<%- pictureUrl %>"
+             style="max-height: 48px; padding: 1px; margin-left:10px; border: 1px solid #ddd; border-radius: 3px">
+    </a>
+    <a href="#settings">
+        <img class="img-responsive pull-right" style="border: 1px solid #ddd; border-radius: 3px" src="img/settings2.png">
+    </a>
+<% } %>

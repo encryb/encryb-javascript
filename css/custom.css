@@ -173,9 +173,7 @@ ul.collection-list li {
     border-radius: 10px;
     padding: 1rem;
     background-color: #FFFFFF;
-}
-
-.password-icon > span {
+    text-align: center;
     font-size: 3rem;
 }
 

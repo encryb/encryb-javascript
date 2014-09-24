@@ -13,6 +13,15 @@ define([
         templateHelpers: {
             prettyTime: function() {
                 return MiscUtils.formatTime(this.created);
+            },
+            permissionsIcon: function() {
+                if (this.permissions.length == 0) {
+                    return "img/sharedNot.png";
+                }
+                if (this.permissions.indexOf("all") >= 0) {
+                    return "img/sharedAll.png";
+                }
+                return "img/sharedSome.png"
             }
         },
 

@@ -198,3 +198,15 @@ ul.collection-list li {
     color: #999;
     font-size: 1.8rem;
 }
+
+.header-icon {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.header-profile {
+    max-height: 50px;
+    max-width: 90px;
+    padding: 1px;
+    margin-left:10px;
+}

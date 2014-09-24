@@ -100,7 +100,6 @@ define([
                 selectize.clear();
             });
 
-            console.log("Clicked post " + event);
         },
 
         expendForm: function() {

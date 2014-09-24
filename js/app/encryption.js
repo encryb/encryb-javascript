@@ -16,7 +16,7 @@ define([
         }
         var encrypted = Sjcl.json._encrypt(key, data);
 
-        var encryptedData = encode(encrypted);
+        var encryptedData = convertFromBits(encrypted);
         encryptedData['mimeType'] = mimeType;
 
         var buf = Encoding.encode(encryptedData);
@@ -140,7 +140,7 @@ define([
         return decrypted;
     }
 
-    function encode(obj) {
+    function convertFromBits(obj) {
         var result = {};
         if (obj.kemtag) {
             result['kemtag'] = fromBitsToTypedArray(obj.kemtag);

@@ -5,9 +5,6 @@
 </div>
 
 <div class="row">
-    <!--
-    <div class="pull-right"><a href="#" id="saveManifests" class="btn btn-default" role="button">Save Manifests</a></div>
-    -->
     <div id="settingsColumn" class="hidden-xs col-xs-4 col-sm-2 col-md-2 col-lg-2">
         <div class="panel-group" id="accordion">
            <!-- Invites -->
@@ -20,8 +17,8 @@
                                     <img class="img-responsive center-block" src="img/invites.png">
                                 </div><!--
                                 --><div class="hidden-xs hidden-sm col-md-11 col-lg-6 vcenter">
-                                Invites
-                            </div>
+                                    Invites
+                                </div>
                             </div>
                         </a>
                     </h4>
@@ -50,10 +47,28 @@
                 </div>
                 <div id="collapseFriends" class="panel-collapse collapse">
                     <div class="panel-body padding-5">
-                        <div class="bottom-5 text-center add-icon" id="addFriend">
-                            <span class="glyphicon glyphicon-plus">
-                            </span>
+                        <a data-toggle="collapse" href="#addFriend">
+                            <div class="bottom-5 text-center add-icon">
+                                <span class="glyphicon glyphicon-plus">
+                                </span>
+                            </div>
+                        </a>
+                        <div id="addFriend" class="collapse">
+                            <div class="thumbnail bottom-5 clearfix">
+                                <div>
+                                    <label for="inviteCode">Friend Invite</label>
+                                    <input type="text" class="form-control bottom-5" id="inviteCode" placeholder="Enter Code">
+                                </div>
+                                <div>
+                                    <button class="btn btn-default pull-right" type="button" id="inviteButton">
+                                        Invite
+                                    </button>
+                                </div>
+
+                            </div>
                         </div>
+
+
                         <div id="friends"></div>
                     </div>
                 </div>
@@ -85,9 +100,6 @@
                 </div>
             </div>
         </div>
-        <!--
-        <img src="img/friends.png">Friends <a href="#" id="addFriend" class="btn btn-default" role="button">Add</a>
--->
     </div>
     <div id="postsColumn" class="col-xs-12 col-sm-10 col-md-8 col-lg-7">
         <div id="friendsDetails"></div>

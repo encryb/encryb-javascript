@@ -30,7 +30,9 @@ define([
         ui: {
             settingsColumn: "#settingsColumn",
             postsColumn: "#postsColumn",
-            expandSettings: "#expandSettings"
+            expandSettings: "#expandSettings",
+            inviteButton: "#inviteButton",
+            inviteCode: "#inviteCode"
         },
 
             /*
@@ -52,17 +54,22 @@ define([
 
              */
         events: {
-            "click #addFriend": 'showAddFriendForm',
-            "click @ui.expandSettings": 'expandSettings'
+            "click @ui.expandSettings": "expandSettings",
+            "click @ui.inviteButton": "inviteFriend"
         },
         triggers: {
-            "click #saveManifests": 'manifests:save'
+            "click #saveManifests": "manifests:save"
         },
 
         expandSettings: function() {
             this.ui.postsColumn.toggleClass('col-xs-12 col-xs-8');
             this.ui.settingsColumn.toggleClass('hidden-xs');
             this.ui.expandSettings.toggleClass('glyphicon-expand glyphicon-collapse-down');
+        },
+
+        inviteFriend: function() {
+            console.log("Invite", this.ui.inviteCode.val());
+
         },
 
         showAddFriendForm: function() {
@@ -83,7 +90,7 @@ define([
 
             var newFriend = new FriendModel(attrs);
             this.state.saveManifest(newFriend)
-                .then(Storage.shareDropbox)
+                .then(Dropbox.shareDropbox)
                 .then(function(url) {
                     newFriend.set('manifestUrl', url);
                     App.state.myFriends.add(newFriend);

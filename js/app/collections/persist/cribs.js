@@ -1,8 +1,7 @@
 define([
     'backbone',
-    'dropboxdatastore',
     'app/models/crib'
-], function(Backbone, DropboxDatastore, Crib){
+], function(Backbone, Crib){
 
     var FriendCollection = Backbone.Collection.extend({
         model: Crib,

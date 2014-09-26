@@ -1,8 +1,7 @@
 define([
   'backbone',
-  'dropboxdatastore',
   'app/models/friend'
-], function(Backbone, DropboxDatastore, Friend){
+], function(Backbone, Friend){
 
 var FriendCollection = Backbone.Collection.extend({
     model: Friend,

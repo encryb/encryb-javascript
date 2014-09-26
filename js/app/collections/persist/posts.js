@@ -1,8 +1,7 @@
 define([
   'backbone',
-  'app/storage',
   'app/models/post'
-], function(Backbone, storage, Post){
+], function(Backbone, Post){
 
 var Posts = Backbone.Collection.extend({
     model: Post,

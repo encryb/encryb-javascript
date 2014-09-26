@@ -9,13 +9,13 @@ define([
     'app/app',
     'app/models/post',
     'app/models/friend',
-    'app/storage',
+    'app/services/dropbox',
     'utils/data-convert',
     'utils/image',
     'utils/random',
     'require-text!app/templates/wall.html'
 ], function($, _, Backbone, Jcrop, Jasny, Marionette, Visibility, App, PostModel, FriendModel,
-            Storage, DataConvert, ImageUtil, RandomUtil,
+            Dropbox, DataConvert, ImageUtil, RandomUtil,
             WallTemplate
     ){
 

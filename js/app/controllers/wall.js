@@ -10,13 +10,12 @@ define([
     'app/views/friend',
     'app/views/headerPanel',
     'app/encryption',
-    'app/storage',
-    'utils/dropbox-client',
+    'app/services/dropbox',
     'utils/data-convert'
     ],
 function (Backbone, Marionette, App, State, PermissionColl,
           WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView,
-          Encryption, Storage, DropboxClient, DataConvert) {
+          Encryption, Dropbox, DataConvert) {
 
 
     function startDownload(uri, name) {
@@ -78,7 +77,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
 
         _checkSettings: function() {
             var keysLoaded = (Encryption.getKeys() != null);
-            var dropboxAuthenticated = DropboxClient.isAuthenticated();
+            var dropboxAuthenticated = Dropbox.client.isAuthenticated();
 
             if (!keysLoaded || !dropboxAuthenticated) {
                 return false;
@@ -162,7 +161,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
             var model = new Backbone.Model();
 
             var keysLoaded = (Encryption.getKeys() != null);
-            model.set("dropboxEnabled", DropboxClient.isAuthenticated());
+            model.set("dropboxEnabled", Dropbox.client.isAuthenticated());
             model.set("keysLoaded", keysLoaded);
             model.set("displayAbout", displayAbout);
 
@@ -172,7 +171,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
                 App.main.show(setupView);
 
                 setupView.on("dropbox:login", function () {
-                    DropboxClient.authenticate({}, function (error, client) {
+                    Dropbox.client.authenticate({}, function (error, client) {
                         if (error) {
                             console.log("Dropbox Authentication Error", error);
                         }
@@ -183,7 +182,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
 
                 });
                 setupView.on("dropbox:logout", function () {
-                    DropboxClient.signOut({}, function () {
+                    Dropbox.client.signOut({}, function () {
                         window.location.href = "https://www.dropbox.com/logout";
                         model.set("dropboxEnabled", false);
                     })
@@ -209,7 +208,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
                 });
                 setupView.on("keys:saveToDropbox", function () {
                     var keys = Encryption.getEncodedKeys();
-                    Storage.uploadDropbox("encryb.keys", JSON.stringify(keys));
+                    Dropbox.uploadDropbox("encryb.keys", JSON.stringify(keys));
                 });
 
                 setupView.on("continue", function () {
@@ -245,7 +244,7 @@ function (Backbone, Marionette, App, State, PermissionColl,
                         var deferred = new $.Deferred();
                         deferreds.push(deferred);
                         var picture = DataConvert.dataUriToTypedArray(resized);
-                        Storage.uploadDropbox("profilePic",  picture['data']).then(Storage.shareDropbox).done(function(url) {
+                        Dropbox.uploadDropbox("profilePic",  picture['data']).then(Dropbox.shareDropbox).done(function(url) {
                             console.log("URL", url);
                             model.set('pictureUrl', url);
                             deferred.resolve();

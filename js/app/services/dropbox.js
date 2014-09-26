@@ -1,15 +1,19 @@
 define([
   'jquery',
-  'utils/dropbox-client',
-  'utils/gdrive',
-  'msgpack',
-  'utils/data-convert',
-  'app/constants',
-  'app/encryption'
-
-], function($, DropboxClient, gdrive, msgpack, dataConvert, constants, encryption){
+  'dropbox',
+  'backbone.dropboxDatastore',
+  'app/constants'
+], function($, Dropbox, DropboxDatastore, Constants){
 
 var exports = {};
+
+var dropboxClient = new Dropbox.Client({key: Constants.DROPBOX_APP_KEY});
+if (!dropboxClient.isAuthenticated()) dropboxClient.authenticate({interactive: false});
+
+Backbone.DropboxDatastore.client = dropboxClient;
+Backbone.Dropbox = Dropbox;
+
+exports.client = dropboxClient;
 
 var TAG_TYPE_RESIZED = "resized";
 var TAG_TYPE_FULLSIZE = "fullsize";
@@ -157,33 +161,6 @@ exports.downloadUrl = function(downloadUrl) {
     xhr.onload = function() {
         var ecnryptedData = xhr.response;
         deferred.resolve(ecnryptedData);
-    };
-    xhr.onerror = function() {
-        deferred.fail();
-    };
-    xhr.send();
-
-    return deferred;
-}
-
-exports.downloadData = function(downloadUrl, isImage, password) {
-
-    var deferred = $.Deferred();
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', downloadUrl);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function() {
-        var ecnryptedData = xhr.response;
-        var data;
-        if (isImage) {
-            data = encryption.decryptImageData(ecnryptedData, password);
-        }
-        else {
-            data = encryption.decryptTextData(ecnryptedData, password);
-        }
-
-        deferred.resolve(data);
     };
     xhr.onerror = function() {
         deferred.fail();

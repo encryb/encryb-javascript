@@ -1,7 +1,6 @@
 define([
   'backbone',
-  'utils/dropbox-client'
-], function(Backbone, DropboxClient){
+], function(Backbone){
 
 var Comments = Backbone.Collection.extend({
 

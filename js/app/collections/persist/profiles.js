@@ -1,7 +1,6 @@
 define([
-    'backbone',
-    'dropboxdatastore'
-], function(Backbone, DropboxDatastore){
+    'backbone'
+], function(Backbone){
 
     var ProfileModel = Backbone.Model.extend({
         defaults: {

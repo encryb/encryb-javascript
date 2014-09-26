@@ -1,7 +1,7 @@
 define([
     'backbone',
     'app/encryption',
-    'app/storage'
+    'app/services/dropbox'
 ], function (Backbone, Encryption, Storage) {
 
 

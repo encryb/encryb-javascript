@@ -9,10 +9,8 @@ require.config({
 
 	paths: {
 		app: '../app',
-		tpl: '../tpl',
 		utils: '../utils',
         dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.1-latest',
-        dropboxdatastore: 'backbone.dropboxDatastore',
         marionette: 'backbone.marionette',
         visibility: 'visibility-1.2.1.min'
 	},
@@ -80,9 +78,9 @@ require([
     'marionette',
     'app/app',
     'app/controllers/wall',
-    'utils/dropbox-client'
+    'app/services/dropbox'
 ],
-function (Backbone, Marionette, App, WallContr, DropboxClient) {
+function (Backbone, Marionette, App, WallContr, Dropbox) {
 
     var AppRouter = Marionette.AppRouter.extend({
         appRoutes: {
@@ -96,13 +94,12 @@ function (Backbone, Marionette, App, WallContr, DropboxClient) {
         controller: new WallContr()
     });
 
-    if (DropboxClient.isAuthenticated()) {
+    if (Dropbox.client.isAuthenticated()) {
         App.start();
     }
     else {
-        DropboxClient.authenticate({interactive: false}, function() {
+        Dropbox.client.authenticate({interactive: false}, function() {
             App.start();
         });
     }
-    //App.start();
 });

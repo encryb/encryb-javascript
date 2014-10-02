@@ -22,7 +22,7 @@ var TAG_SPLIT = "/";
 
 exports.createFolder = function(path) {
     var deferred = $.Deferred();
-    DropboxClient.mkdir(path, function (error, stats) {
+    dropboxClient.mkdir(path, function (error, stats) {
         if (error) {
             deferred.fail();
             console.log(error);
@@ -35,7 +35,7 @@ exports.createFolder = function(path) {
 
 exports.remove = function(path) {
     var deferred = $.Deferred();
-    DropboxClient.remove(path, function (error, stats) {
+    dropboxClient.remove(path, function (error, stats) {
         if (error) {
             deferred.fail();
             console.log(error);
@@ -48,7 +48,7 @@ exports.remove = function(path) {
 
 exports.exists = function(path) {
     var deferred = $.Deferred();
-    DropboxClient.stat(path, {}, function (error, data, stats) {
+    dropboxClient.stat(path, {}, function (error, data, stats) {
         if (error) {
             deferred.fail();
         } else {
@@ -59,7 +59,7 @@ exports.exists = function(path) {
 }
 exports.downloadDropbox = function(path) {
     var deferred = $.Deferred();
-    DropboxClient.readFile(path, {}, function (error, data, stats) {
+    dropboxClient.readFile(path, {}, function (error, data, stats) {
         if (error) {
             deferred.fail();
             console.log(error);
@@ -72,7 +72,7 @@ exports.downloadDropbox = function(path) {
 
 exports.uploadDropbox = function(path, data) {
     var deferred = $.Deferred();
-    DropboxClient.writeFile(path, data, function (error, stats) {
+    dropboxClient.writeFile(path, data, function (error, stats) {
         if (error) {
             deferred.fail();
             console.log(error);
@@ -85,7 +85,7 @@ exports.uploadDropbox = function(path, data) {
 
 exports.shareDropbox = function(stats) {
     var deferred = $.Deferred();
-    DropboxClient.makeUrl(stats.path, {downloadHack:true}, function (error, resp) {
+    dropboxClient.makeUrl(stats.path, {downloadHack:true}, function (error, resp) {
         if (error) {
             deferred.fail();
             console.log(error);

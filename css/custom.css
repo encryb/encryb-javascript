@@ -116,6 +116,14 @@ ul.collection-list li {
     background: #F8F8F8;
 }
 
+.invite {
+    padding: 6px 0px;
+}
+
+.invite:nth-of-type(n+2){
+    border-top: 1px solid #ddd;
+}
+
 .comment-border {
     border: 0;
     border-top: 1px solid #ccc;

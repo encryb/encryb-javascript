@@ -1,6 +1,7 @@
 define([
   'backbone',
-], function(Backbone){
+  'app/services/dropbox'
+], function(Backbone, Dropbox){
 
 var Comments = Backbone.Collection.extend({
 

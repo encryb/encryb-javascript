@@ -1,7 +1,8 @@
 define([
   'backbone',
-  'app/models/post'
-], function(Backbone, Post){
+  'app/models/post',
+  'app/services/dropbox'
+], function(Backbone, Post, Dropbox){
 
 var Posts = Backbone.Collection.extend({
     model: Post,

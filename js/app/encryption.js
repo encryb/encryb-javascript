@@ -103,10 +103,7 @@ define([
         if (password instanceof Array) {
             password = Sjcl.codec.bytes.toBits(password);
         }
-        var t0 = performance.now();
         var ct = Sjcl.json._decrypt(password, encData);
-        var t1 = performance.now();
-        console.log("Decryption of " + encData.ct.length + " took " + (t1 - t0) + " milliseconds.");
 
         return ct;
     }

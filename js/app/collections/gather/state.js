@@ -10,25 +10,29 @@ define([
     'app/collections/persist/profiles',
     'app/collections/persist/comments',
     'app/collections/persist/upvotes',
+    'app/collections/persist/invites',
     'app/models/postWrapper',
     'app/encryption',
     'app/services/dropbox',
     'app/remoteManifest'
 ], function(Backbone, Marionette, _, Msgpack, FilteredCollection, App,
-            PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl,
-            PostWrapper, Encryption, Storage, RemoteManifest) {
+            PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl, InviteColl,
+            PostWrapper, Encryption, Dropbox, RemoteManifest) {
 
     var State = Marionette.Object.extend({
 
         initialize: function(options) {
 
-            this.myId = Backbone.DropboxDatastore.client.dropboxUid();
+            this.initialSyncCompleted = false;
+
+            this.myId = Dropbox.client.dropboxUid();
 
             this.myPosts = new PostColl();
             this.myComments = new CommentColl();
             this.myUpvotes = new UpvoteColl();
             this.myFriends = new FriendColl();
             this.myProfiles = new ProfileColl();
+            this.myInvites = new InviteColl();
 
             this.manifestCache = {};
 
@@ -77,10 +81,12 @@ define([
                     this.myPosts.fetch(),
                     this.myComments.fetch(),
                     this.myUpvotes.fetch(),
-                    this.myFriends.fetch()
+                    this.myFriends.fetch(),
+                    this.myInvites.fetch()
                 ).done(function() {
-                        state.trigger("synced:full");
-                    });
+                    state.initialSyncCompleted = true;
+                    state.trigger("synced:full");
+                });
             }.bind(this));
         },
 
@@ -131,7 +137,7 @@ define([
                 return;
             }
 
-            Storage.downloadUrl(friendManifest).done(function (data) {
+            Dropbox.downloadUrl(friendManifest).done(function (data) {
 
                 var decData = Encryption.decryptManifestData(data);
                 var decObj = Msgpack.decode(decData.buffer);
@@ -369,11 +375,18 @@ define([
             manifest['name'] = profile.get('name');
             manifest['intro'] = profile.get('intro');
             manifest['pictureUrl'] = profile.get('pictureUrl');
-            manifest['userId'] = Backbone.DropboxDatastore.client.dropboxUid();
+            manifest['userId'] = this.myId;
             manifest['publicKey'] = myKey;
 
             var packedManifest = new Uint8Array(Msgpack.encode(manifest));
-            return friend.saveManifest(packedManifest);
+            var deferred = $.Deferred();
+
+            var encText = Encryption.encryptWithEcc(friend.get('publicKey'),  "plain/text", packedManifest, true);
+            Dropbox.uploadDropbox(friend.get('manifestFile'), encText).done(function(stats) {
+                deferred.resolve(stats);
+            });
+
+            return deferred;
         },
 
         saveManifests: function() {

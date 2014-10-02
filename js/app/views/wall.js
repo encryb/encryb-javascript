@@ -7,15 +7,8 @@ define([
     'marionette',
     'visibility',
     'app/app',
-    'app/models/post',
-    'app/models/friend',
-    'app/services/dropbox',
-    'utils/data-convert',
-    'utils/image',
-    'utils/random',
     'require-text!app/templates/wall.html'
-], function($, _, Backbone, Jcrop, Jasny, Marionette, Visibility, App, PostModel, FriendModel,
-            Dropbox, DataConvert, ImageUtil, RandomUtil,
+], function($, _, Backbone, Jcrop, Jasny, Marionette, Visibility, App,
             WallTemplate
     ){
 
@@ -25,7 +18,8 @@ define([
             posts: "#posts",
             friendsDetails: "#friendsDetails",
             createPost: "#createPost",
-            friends: "#friends"
+            friends: "#friends",
+            invites: "#invites"
         },
         ui: {
             settingsColumn: "#settingsColumn",
@@ -68,41 +62,8 @@ define([
         },
 
         inviteFriend: function() {
-            console.log("Invite", this.ui.inviteCode.val());
-
-        },
-
-        showAddFriendForm: function() {
-/*
-            var app = this;
-            Modals.addFriend().done(function(model) {
-                app.createUser(model.get('account'), model.get('friendManifest'));
-            });
-            */
-        },
-
-        createUser: function(account, friendsManifest) {
-
-            var deferred = $.Deferred();
-
-            var id = RandomUtil.makeId();
-            var attrs = {account: account, manifestFile: id, friendsManifest: friendsManifest};
-
-            var newFriend = new FriendModel(attrs);
-            this.state.saveManifest(newFriend)
-                .then(Dropbox.shareDropbox)
-                .then(function(url) {
-                    newFriend.set('manifestUrl', url);
-                    App.state.myFriends.add(newFriend);
-                    newFriend.save();
-                    deferred.resolve(newFriend);
-                });
-            return deferred;
-        },
-
-        deleteCallback: function (model) {
-            console.log("Deleting " + model);
-            this.state.saveManifests();
+            var userId = this.ui.inviteCode.val();
+            App.vent.trigger("invite:send", userId);
         }
     });
 

@@ -59,7 +59,7 @@ exports.exists = function(path) {
 }
 exports.downloadDropbox = function(path) {
     var deferred = $.Deferred();
-    dropboxClient.readFile(path, {}, function (error, data, stats) {
+    dropboxClient.readFile(path, {arrayBuffer:true}, function (error, data, stats) {
         if (error) {
             deferred.fail();
             console.log(error);

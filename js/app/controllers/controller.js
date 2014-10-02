@@ -385,10 +385,21 @@ function (Backbone, Marionette, App, State, PermissionColl, FriendModel,
                     Encryption.saveKeys(keys['secretKey'], keys['publicKey']);
                     model.set("keysLoaded", true);
                 });
-                setupView.on("keys:saveToDropbox", function () {
+                setupView.on("keys:saveToDropbox", function (password) {
                     var keys = Encryption.getEncodedKeys();
-                    Dropbox.uploadDropbox("encryb.keys", JSON.stringify(keys));
+                    var jsonKeys = JSON.stringify(keys)
+                    var encKeys = Encryption.encrypt(password, "text/keys", jsonKeys, false);
+                    Dropbox.uploadDropbox("encryb.keys", encKeys);
                 });
+
+                setupView.on("keys:loadFromDropbox", function(password){
+                    $.when(Dropbox.downloadDropbox("encryb.keys")).done(function(encKeys){
+                        var jsonKeys = Encryption.decryptTextData(encKeys, password);
+                        var keys = JSON.parse(jsonKeys);
+                        Encryption.saveKeys(keys.secretKey, keys.publicKey);
+                        model.set("keysLoaded", true);
+                    });
+                })
 
                 setupView.on("continue", function () {
                     App.appRouter.navigate("");

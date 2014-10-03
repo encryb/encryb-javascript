@@ -32,7 +32,7 @@ define([
 
         onRender: function(){
             var perms = this.options.permissions.toJSON();
-            this.ui.permissions.selectize({
+            var selectDiv = this.ui.permissions.selectize({
                 plugins: ['remove_button'],
                 delimiter: ',',
                 persist: false,
@@ -43,6 +43,8 @@ define([
                 create: false
             });
 
+            var selectize = selectDiv[0].selectize;
+            selectize.addItem("all");
         },
 
         permissionAdded: function(permission) {

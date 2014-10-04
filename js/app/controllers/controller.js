@@ -50,6 +50,7 @@ function (Backbone, Marionette, App, State, PermissionColl, FriendModel,
                 friendModel.set("friendsManifest", inviteModel.get('manifestUrl'));
                 friendModel.save();
 
+                App.vent.trigger("friend:added");
                 App.state.onMyFriendAdded(friendModel);
 
                 require(["appengine!encrybuser"], function (AppEngine) {
@@ -121,6 +122,7 @@ function (Backbone, Marionette, App, State, PermissionColl, FriendModel,
                             }
                         }(inviteEntity.id);
 
+                        App.vent.trigger("invite:added");
                         App.state.myInvites.create(invite, {wait: true, success: confirmInvite});
                     }
 
@@ -164,6 +166,7 @@ function (Backbone, Marionette, App, State, PermissionColl, FriendModel,
 
 
                         friendModel.save(changes, {success: confirmAccept});
+                        App.vent.trigger("friend:added");
                         App.state.onMyFriendAdded(friendModel);
                     }
 
@@ -283,6 +286,23 @@ function (Backbone, Marionette, App, State, PermissionColl, FriendModel,
             });
             wall.invites.show(invitesView);
 
+            var showHideInvites = function() {
+                if (App.state.myInvites.length == 0) {
+                    wall.ui.invitePanel.addClass("hide");
+                }
+                else {
+                    wall.ui.invitePanel.removeClass("hide");
+                }
+            }
+
+            // hide invites panel if there are no invites
+            App.state.myInvites.on("all", showHideInvites);
+            App.vent.on("invite:added", function() {
+                wall.glowInvites();
+            });
+            App.vent.on("friend:added", function() {
+                wall.glowFriends();
+            });
 
             App.vent.on("friend:selected", function(friendModel) {
                 require(["app/views/friendsDetails"], function (FriendsDetailsView) {

@@ -98,7 +98,12 @@ define([
             var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
             for (var i=0; i<postUpvotes.length; i++) {
                 var upvote = postUpvotes[i];
-                wrapper.addUpvote(upvote.get("id"), upvote.get("owner") , upvote.get("text"), upvote.get("date"));
+                if (upvote.get("myUpvote")) {
+                    wrapper.addMyUpvote();
+                }
+                else {
+                    wrapper.addFriendsUpvote(upvote.get("owner"), upvote.get("profilePictureUrl"), upvote.get("ownerId"));
+                }
             }
         },
         onMyPostRemoved: function(post) {
@@ -134,6 +139,16 @@ define([
             for (var i=0; i<postComments.length; i++) {
                 var comment = postComments[i];
                 wrapper.addComment(comment);
+            }
+            var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
+            for (var i=0; i<postUpvotes.length; i++) {
+                var upvote = postUpvotes[i];
+                if (upvote.get("myUpvote")) {
+                    wrapper.addMyUpvote();
+                }
+                else {
+                    wrapper.addFriendsUpvote(upvote.get("owner"), upvote.get("profilePictureUrl"), upvote.get("ownerId"));
+                }
             }
         },
         removeFriendsPost: function(post, friend) {

@@ -7,7 +7,7 @@ var Comments = Backbone.Collection.extend({
 
     model: Backbone.Model,
 
-    dropboxDatastore: new Backbone.DropboxDatastore('Comments_1'),
+    dropboxDatastore: new Backbone.DropboxDatastore('Comments_2'),
 
     initialize: function () {
         this.dropboxDatastore.syncCollection(this);

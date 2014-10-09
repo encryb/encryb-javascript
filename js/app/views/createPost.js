@@ -21,7 +21,8 @@ define([
 
             this.on("post:submit", function(post){
                 App.state.myPosts.create(post, {wait:true});
-                App.state.saveManifests();
+                App.vent.trigger("post:created");
+                //App.state.saveManifests();
             });
         },
 

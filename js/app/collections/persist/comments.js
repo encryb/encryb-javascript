@@ -14,7 +14,7 @@ var Comments = Backbone.Collection.extend({
     },
 
     addComment: function (postId, text, date) {
-        this.create({postId: postId, text: text, date: date});
+        this.create({postId: postId, text: text, date: date}, {wait:true});
     },
 
     removeComment: function(postId, commentId) {

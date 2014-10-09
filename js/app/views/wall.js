@@ -74,9 +74,7 @@ define([
             "click @ui.expandSettings": "expandSettings",
             "click @ui.inviteButton": "inviteFriend"
         },
-        triggers: {
-            "click #saveManifests": "manifests:save"
-        },
+
 
         expandSettings: function() {
             this.ui.postsColumn.toggleClass('col-xs-12 col-xs-8');

@@ -164,6 +164,8 @@ ul.collection-list li {
     background-color: #fff;
     border: 2px solid #ddd;
     border-radius: 2px;
+    cursor: pointer;
+    cursor: hand;
 }
 
 .border-warning {

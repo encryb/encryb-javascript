@@ -102,7 +102,7 @@ define([
                     wrapper.addMyUpvote();
                 }
                 else {
-                    wrapper.addFriendsUpvote(upvote.get("owner"), upvote.get("profilePictureUrl"), upvote.get("ownerId"));
+                    wrapper.addFriendsUpvote(upvote.get("friend"));
                 }
             }
         },
@@ -147,7 +147,7 @@ define([
                     wrapper.addMyUpvote();
                 }
                 else {
-                    wrapper.addFriendsUpvote(upvote.get("owner"), upvote.get("profilePictureUrl"), upvote.get("ownerId"));
+                    wrapper.addFriendsUpvote(upvote.get("friend"));
                 }
             }
         },
@@ -167,8 +167,9 @@ define([
         },
 
         addFriendsUpvote: function(upvote, friend) {
-            var attr = _.extend(_.clone(upvote), {owenerId: friend.get('userId'), owner: friend.get('name'), profilePictureUrl: friend.get('pictureUrl')});
-            var model = new Backbone.Model(attr);
+            var model = new Backbone.Model();
+            model.set("postId", upvote.postId);
+            model.set("friend", friend);
             this.upvotes.add(model);
         },
         removeFriendsUpvote: function(post, friend) {
@@ -232,7 +233,7 @@ define([
                 post.addMyUpvote();
             }
             else {
-                post.addFriendsUpvote(upvote.get('name'), upvote.get('profilePictureUrl'), upvote.get('userId'));
+                post.addFriendsUpvote(upvote.get("friend"));
             }
         },
         dispatchUpvoteRemove: function(upvote) {

@@ -50,14 +50,13 @@ define([
             }
         },
 
-        addFriendsUpvote: function(name, pictureUrl, userId) {
-            var friend = new Backbone.Model({friendId: userId, name: name, pictureUrl: pictureUrl});
+        addFriendsUpvote: function(friend) {
             var upvotes = this.get("upvotes").get("friendUpvotes").add(friend);
         },
 
         removeFriendsUpvote: function(userId) {
             var friendUpvotes = this.get("upvotes").get("friendUpvotes");
-            var friend = friendUpvotes.findWhere({friendId: userId});
+            var friend = friendUpvotes.findWhere({userId: userId});
             friendUpvotes.remove(friend);
         },
 

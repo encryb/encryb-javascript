@@ -12,6 +12,8 @@ define([
   var UpvoteView = Marionette.ItemView.extend({
       template: _.template( UpvoteTemplate ),
 
+      tagName: "span",
+
       ui: {
           upvotePicture: '.upvote-thumbnail'
       },
@@ -36,7 +38,9 @@ define([
               return sum;
           }
       },
+
       childView: UpvoteView,
+
       childViewContainer: "#upvotes",
       modelEvents: {
           "change": "render"

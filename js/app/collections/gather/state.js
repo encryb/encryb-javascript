@@ -88,7 +88,8 @@ define([
 
         onMyPostAdded: function(post) {
             var wrapper = new PostWrapper();
-            wrapper.setMyPost(post, this.name, this.profilePictureUrl);
+            var model = new Backbone.Model({userId: this.myId, name: this.name, pictureUrl: this.profilePictureUrl});
+            wrapper.setMyPost(post, model);
             this.posts.add(wrapper);
             var postComments = this.comments.where({postId: wrapper.get("postId")});
             for (var i=0; i<postComments.length; i++) {
@@ -133,8 +134,9 @@ define([
 
         addFriendsPost: function(post, friend) {
             var wrapper = new PostWrapper();
-            wrapper.setFriendsPost(post, friend.get('name'), friend.get('pictureUrl'), friend.get('userId'));
+            wrapper.setFriendsPost(post, friend);
             this.posts.add(wrapper);
+            console.log("Adding post");
             var postComments = this.comments.where({postId: wrapper.get("postId")});
             for (var i=0; i<postComments.length; i++) {
                 var comment = postComments[i];
@@ -209,6 +211,7 @@ define([
             var model = this.posts.findWhere({postId: postId});
             // we might not have this post yet.
             if (!model) {
+                console.log("don't have post", comment);
                 return;
             }
             model.addComment(comment);

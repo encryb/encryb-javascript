@@ -155,15 +155,20 @@ ul.collection-list li {
 }
 
 .upvote-thumbnail {
-    position: relative;
-    float: left;
-    display: inline-block;
     width: auto;
     max-height: 36px;
     padding: 1px;
     background-color: #fff;
     border: 2px solid #ddd;
     border-radius: 2px;
+    cursor: pointer;
+    cursor: hand;
+}
+
+.post-thumbnail {
+    border: 2px solid #ddd;
+    border-radius: 2px;
+    padding: 1px;
     cursor: pointer;
     cursor: hand;
 }

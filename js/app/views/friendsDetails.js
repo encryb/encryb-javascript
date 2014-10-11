@@ -16,6 +16,15 @@ define([
 
         template: _.template(FriendsDetailsTemplate),
 
+        templateHelpers: function(){
+            var collection = this.collection;
+            return {
+                numberOfFriends: function(){
+                    return collection.length;
+                }
+            }
+        },
+
         childView: FriendOfFriendView,
         childViewContainer: "#friendsOfFriends",
 

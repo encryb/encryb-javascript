@@ -265,13 +265,13 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
                         state.addFriendsUpvote(upvote, friend);
                     }
                 }
-                if (friend.hasOwnProperty('comments')) {
+                if (manifest.hasOwnProperty('comments')) {
                     for (var i=0; i< manifest.comments.length; i++) {
                         var comment = manifest.comments[i];
                         state.addFriendsComment(comment, friend);
                     }
                 }
-                if (friend.hasOwnProperty('friends')) {
+                if (manifest.hasOwnProperty('friends')) {
                     for (var i=0; i< manifest.friends.length; i++) {
                         var friendOfFriend = manifest.friends[i];
                         state.addFriendOfFriend(friendOfFriend, friend);

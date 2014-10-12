@@ -30,6 +30,7 @@ define([
 
         initialize: function() {
             this.model.fetchPost(false);
+            this.listenTo(this.model.get("poster"), "change", this.render);
         },
 
         'modelEvents': {

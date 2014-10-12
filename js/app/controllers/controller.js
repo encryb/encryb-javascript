@@ -374,11 +374,15 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                     }
 
                     $.when.apply($, deferreds).done(function() {
-                        model.save();
+                        var profileChanges = model.changedAttributes();
+                        if (profileChanges) {
+                            FriendAdapter.sendUpdatedProfile(profileChanges);
+                            model.save();
+                        }
                         controller.showWall();
                         App.appRouter.navigate("");
                         App.vent.trigger("profile:updated", model);
-                        controller._publishProfile();
+                        AppEngine.publishProfile();
                     });
                 });
             });

@@ -48,7 +48,14 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             });
             return deferred;
         },
-
+        sendUpdatedProfile: function(changes) {
+            var friendAdapter = this;
+            App.state.myFriends.each(function(friend) {
+                $.when(friendAdapter._getModelUsedToNotifyFriend(friend)).done(function(notifyModel){
+                    notifyModel.save(changes);
+                });
+            });
+        },
         _getModelUsedToNotifyMe: function(friend) {
             var friendId = friend.get("userId");
             if (this.notifyMePromises.hasOwnProperty(friendId)) {
@@ -87,9 +94,19 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             }
             $.when(this._getModelUsedToNotifyMe(friend)).done(function(notifyModel) {
                 friendAdapter.syncFriendsFeed(friend, notifyModel);
-                notifyModel.on("change", function(model, options) {
+                notifyModel.on("change:lastUpdated", function(model, options) {
                    friendAdapter.syncFriendsFeed(friend, model);
                 });
+                notifyModel.on("change:name", function(model, options) {
+                    friend.save({name : model.get("name")});
+                });
+                notifyModel.on("change:intro", function(model, options) {
+                    friend.save({intro : model.get("intro")});
+                });
+                notifyModel.on("change:pictureUrl", function(model, options) {
+                    friend.save({pictureUrl : model.get("pictureUrl")});
+                });
+
             });
         },
 

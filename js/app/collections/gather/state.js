@@ -27,6 +27,8 @@ define([
 
             this.myId = Dropbox.client.dropboxUid();
 
+            this.myModel = new Backbone.Model();
+
             this.myPosts = new PostColl();
             this.myComments = new CommentColl();
             this.myUpvotes = new UpvoteColl();
@@ -68,8 +70,19 @@ define([
 
         fetchAll: function() {
             $.when(this.myProfiles.fetch()).done(function () {
-                this.profilePictureUrl = this.myProfiles.getFirst().get('pictureUrl');
-                this.name = this.myProfiles.getFirst().get('name');
+                var profile = this.myProfiles.getFirst();
+
+                this.myModel.set("name", profile.get("name"));
+                this.myModel.set("pictureUrl", profile.get("pictureUrl"));
+                this.myModel.set("userId", this.myId);
+
+                profile.on("change:name", function(model){
+                    App.state.myModel.set("name", model.get("name"));
+                });
+                profile.on("change:profileUrl", function(model){
+                    App.state.myModel.set("profileUrl", model.get("profileUrl"));
+                });
+
 
                 var state = this;
                 state.trigger("synced:profile");
@@ -88,8 +101,7 @@ define([
 
         onMyPostAdded: function(post) {
             var wrapper = new PostWrapper();
-            var model = new Backbone.Model({userId: this.myId, name: this.name, pictureUrl: this.profilePictureUrl});
-            wrapper.setMyPost(post, model);
+            wrapper.setMyPost(post, this.myModel);
             this.posts.add(wrapper);
             var postComments = this.comments.where({postId: wrapper.get("postId")});
             for (var i=0; i<postComments.length; i++) {
@@ -113,12 +125,13 @@ define([
             model.destroy();
         },
         onMyCommentAdded: function(comment) {
-            var attr = _.extend(_.clone(comment.attributes), {owenerId: this.myId, owner: this.name, myComment: true});
+
+            var attr = _.extend(_.clone(comment.attributes), {commenter: this.myModel, myComment: true});
             var model = new Backbone.Model(attr);
             this.comments.add(model);
         },
         onMyCommentRemoved: function(comment) {
-            var model = this.comments.findWhere({postId: comment.get("postId")});
+            var model = this.comments.findWhere({postId: comment.get("postId"), commenter: this.myModel});
             this.comments.remove(model);
         },
         onMyUpvoteAdded: function(upvote) {
@@ -136,7 +149,6 @@ define([
             var wrapper = new PostWrapper();
             wrapper.setFriendsPost(post, friend);
             this.posts.add(wrapper);
-            console.log("Adding post");
             var postComments = this.comments.where({postId: wrapper.get("postId")});
             for (var i=0; i<postComments.length; i++) {
                 var comment = postComments[i];
@@ -159,12 +171,12 @@ define([
             this.posts.remove(model);
         },
         addFriendsComment: function(comment, friend) {
-            var attr = _.extend(_.clone(comment), {owenerId: friend.get('userId'), owner: friend.get('name'), myComment: false});
+            var attr = _.extend(_.clone(comment), {commenter: friend, myComment: false});
             var model = new Backbone.Model(attr);
             this.comments.add(model);
         },
         removeFriendsComment: function(comment, friend) {
-            var model = this.comments.findWhere({id: comment.id, owenerId: friend.get('userId')});
+            var model = this.comments.findWhere({id: comment.id, commenter: friend});
             this.comments.remove(model);
         },
 

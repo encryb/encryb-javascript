@@ -69,34 +69,42 @@ define([
         },
 
         fetchAll: function() {
-            $.when(this.myProfiles.fetch()).done(function () {
-                var profile = this.myProfiles.getFirst();
 
-                this.myModel.set("name", profile.get("name"));
-                this.myModel.set("pictureUrl", profile.get("pictureUrl"));
-                this.myModel.set("userId", this.myId);
+            if (this.fetchPromise) {
+                return this.fetchPromise;
+            }
+
+            var deferred = $.Deferred();
+            this.fetchPromise = deferred.promise();
+            var state = this;
+
+            $.when(this.myProfiles.fetch()).done(function () {
+                var profile = state.myProfiles.getFirst();
+
+                state.myModel.set("name", profile.get("name"));
+                state.myModel.set("pictureUrl", profile.get("pictureUrl"));
+                state.myModel.set("userId", state.myId);
 
                 profile.on("change:name", function(model){
-                    App.state.myModel.set("name", model.get("name"));
+                    state.myModel.set("name", model.get("name"));
                 });
                 profile.on("change:profileUrl", function(model){
-                    App.state.myModel.set("profileUrl", model.get("profileUrl"));
+                    state.myModel.set("profileUrl", model.get("profileUrl"));
                 });
 
 
-                var state = this;
-                state.trigger("synced:profile");
+                deferred.notify(state);
                 $.when(
-                    this.myPosts.fetch(),
-                    this.myComments.fetch(),
-                    this.myUpvotes.fetch(),
-                    this.myFriends.fetch(),
-                    this.myInvites.fetch()
+                    state.myPosts.fetch(),
+                    state.myComments.fetch(),
+                    state.myUpvotes.fetch(),
+                    state.myFriends.fetch(),
+                    state.myInvites.fetch()
                 ).done(function() {
-                    state.initialSyncCompleted = true;
-                    state.trigger("synced:full");
+                    deferred.resolve(state);
                 });
-            }.bind(this));
+            });
+            return this.fetchPromise;
         },
 
         onMyPostAdded: function(post) {
@@ -223,7 +231,6 @@ define([
             var model = this.posts.findWhere({postId: postId});
             // we might not have this post yet.
             if (!model) {
-                console.log("don't have post", comment);
                 return;
             }
             model.addComment(comment);

@@ -18,6 +18,10 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
         notifyFriendPromises: {},
         notifyMePromises: {},
 
+        setFriendAdapter: function(friends) {
+            friends.on("add", this.attachFriend.bind(this));
+        },
+
         createFriend: function (inviteModel) {
             var deferred = $.Deferred();
 

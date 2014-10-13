@@ -16,12 +16,11 @@ define([
     'app/encryption',
     'app/services/appengine',
     'app/services/dropbox',
-    'utils/data-convert',
-    'utils/random'
+    'utils/data-convert'
     ],
 function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, FriendModel,
           WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, InvitePreviewView,
-          Encryption, AppEngine, Dropbox, DataConvert, RandomUtil) {
+          Encryption, AppEngine, Dropbox, DataConvert) {
 
 
     function startDownload(uri, name) {
@@ -57,12 +56,12 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 return;
             }
             App.state = new State();
-            App.state.on("synced:profile", function() {
-               callback();
-            });
+            FriendAdapter.setFriendAdapter(App.state.myFriends);
 
-            App.state.myFriends.on("add", FriendAdapter.attachFriend.bind(FriendAdapter));
-            App.state.fetchAll();
+
+            $.when(App.state.fetchAll()).progress(function() {
+                callback();
+            });
         },
 
         showWall: function() {
@@ -86,16 +85,6 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
 
             var wall = new WallView();
             App.main.show(wall);
-
-            wall.on("manifests:save", function() {
-                FriendAdapter.saveManifests();
-            });
-
-            App.vent.on("post:created", FriendAdapter.saveManifests);
-            App.vent.on("post:deleted", FriendAdapter.saveManifests);
-            App.vent.on("post:liked", FriendAdapter.saveManifests);
-            App.vent.on("comment:created", FriendAdapter.saveManifests);
-            App.vent.on("comment:deleted", FriendAdapter.saveManifests);
 
             var postsView = new PostsView({
                 collection: App.state.filteredPosts
@@ -138,17 +127,16 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             }
 
             // hide invites panel if there are no invites
-            App.state.myInvites.on("all", showHideInvites);
+            this.listenTo(App.state.myInvites, "all", showHideInvites);
 
-
-            App.vent.on("invite:added", function() {
+            wall.listenTo(App.vent, "invite:added", function() {
                 wall.glowInvites();
             });
-            App.vent.on("friend:added", function() {
+            wall.listenTo(App.vent, "friend:added", function() {
                 wall.glowFriends();
             });
 
-            App.vent.on("friend:selected", function(friendModel) {
+            wall.listenTo(App.vent, "friend:selected", function(friendModel) {
                 require(["app/views/friendsDetails"], function (FriendsDetailsView) {
 
                     var friendsOfFriend = App.state.getFriendsOfFriend(friendModel);
@@ -157,7 +145,7 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 });
             });
 
-            App.vent.on("invite:find", function(friendId) {
+            wall.listenTo(App.vent, "invite:find", function(friendId) {
                 $.when(AppEngine.findProfile(friendId)).done(function(profile){
                     var model = new Backbone.Model();
 
@@ -174,7 +162,7 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             });
 
             var controller = this;
-            App.vent.on("invite:send", function(inviteModel) {
+            wall.listenTo(App.vent, "invite:send", function(inviteModel) {
                 $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
                     AppEngine.invite(friendModel);
                     // hide the invite details from the wall
@@ -184,7 +172,7 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             });
 
 
-            App.vent.on("invite:accept", function(inviteModel){
+            wall.listenTo(App.vent, "invite:accept", function(inviteModel){
                 $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
                     AppEngine.acceptInvite(friendModel);
                     FriendAdapter.updateDatastoreProfile(friendModel);
@@ -193,17 +181,18 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
 
             });
 
+            wall.listenTo(App.vent, "post:created", FriendAdapter.saveManifests);
+            wall.listenTo(App.vent, "post:deleted", FriendAdapter.saveManifests);
+            wall.listenTo(App.vent, "post:liked", FriendAdapter.saveManifests);
+            wall.listenTo(App.vent, "comment:created", FriendAdapter.saveManifests);
+            wall.listenTo(App.vent, "comment:deleted", FriendAdapter.saveManifests);
 
-            if (App.state.initialSyncCompleted) {
+
+
+            $.when(App.state.fetchAll()).done(function(){
                 controller._processAccepts();
                 controller._processInvites();
-            }
-            else {
-                App.state.on("synced:full", function() {
-                    controller._processAccepts();
-                    controller._processInvites();
-                });
-            }
+            });
 
             if (!profile.get('shared')) {
                 AppEngine.publishProfile();

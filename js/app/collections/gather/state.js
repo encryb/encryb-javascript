@@ -7,7 +7,6 @@ define([
     'app/app',
     'app/collections/persist/posts',
     'app/collections/persist/friends',
-    'app/collections/persist/profiles',
     'app/collections/persist/comments',
     'app/collections/persist/upvotes',
     'app/collections/persist/invites',
@@ -16,24 +15,32 @@ define([
     'app/services/dropbox',
     'app/remoteManifest'
 ], function(Backbone, Marionette, _, Msgpack, FilteredCollection, App,
-            PostColl, FriendColl, ProfileColl, CommentColl, UpvoteColl, InviteColl,
+            PostColl, FriendColl,  CommentColl, UpvoteColl, InviteColl,
             PostWrapper, Encryption, Dropbox, RemoteManifest) {
 
     var State = Marionette.Object.extend({
 
         initialize: function(options) {
 
-            this.initialSyncCompleted = false;
-
             this.myId = Dropbox.client.dropboxUid();
-
             this.myModel = new Backbone.Model();
+
+            var profile = options.profile;
+            this.myModel.set("name", profile.get("name"));
+            this.myModel.set("pictureUrl", profile.get("pictureUrl"));
+            this.myModel.set("userId", this.myId);
+
+            this.listenTo(profile, "change:name", function(model){
+                this.myModel.set("name", model.get("name"));
+            });
+            this.listenTo(profile,"change:profileUrl", function(model){
+                this.myModel.set("profileUrl", model.get("profileUrl"));
+            });
 
             this.myPosts = new PostColl();
             this.myComments = new CommentColl();
             this.myUpvotes = new UpvoteColl();
             this.myFriends = new FriendColl();
-            this.myProfiles = new ProfileColl();
             this.myInvites = new InviteColl();
 
             this.posts = new Backbone.Collection();
@@ -78,31 +85,14 @@ define([
             this.fetchPromise = deferred.promise();
             var state = this;
 
-            $.when(this.myProfiles.fetch()).done(function () {
-                var profile = state.myProfiles.getFirst();
-
-                state.myModel.set("name", profile.get("name"));
-                state.myModel.set("pictureUrl", profile.get("pictureUrl"));
-                state.myModel.set("userId", state.myId);
-
-                profile.on("change:name", function(model){
-                    state.myModel.set("name", model.get("name"));
-                });
-                profile.on("change:profileUrl", function(model){
-                    state.myModel.set("profileUrl", model.get("profileUrl"));
-                });
-
-
-                deferred.notify(state);
-                $.when(
-                    state.myPosts.fetch(),
-                    state.myComments.fetch(),
-                    state.myUpvotes.fetch(),
-                    state.myFriends.fetch(),
-                    state.myInvites.fetch()
-                ).done(function() {
-                    deferred.resolve(state);
-                });
+            $.when(
+                state.myPosts.fetch(),
+                state.myComments.fetch(),
+                state.myUpvotes.fetch(),
+                state.myFriends.fetch(),
+                state.myInvites.fetch()
+            ).done(function() {
+                deferred.resolve(state);
             });
             return this.fetchPromise;
         },

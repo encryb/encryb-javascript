@@ -44,41 +44,46 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             return true;
         },
 
-
-        _loadState: function(callback) {
-
+        _loadProfile: function(callback) {
             if(!this._checkSettings()) {
                 this.settings(true);
                 return;
             }
-            if (App.state) {
-                callback();
-                return;
-            }
-            App.state = new State();
-            FriendAdapter.setFriendAdapter(App.state.myFriends);
-
-
-            $.when(App.state.fetchAll()).progress(function() {
-                callback();
+            var controller = this;
+            $.when(App.getProfile()).done(function(profile){
+                if (profile.get('name').length == 0) {
+                    controller._profile(profile);
+                    return;
+                }
+                var publicKey = Encryption.getEncodedKeys().publicKey;
+                if (publicKey != profile.get("publicKey")) {
+                    controller._profile(profile);
+                    return;
+                }
+                callback(profile);
             });
+
         },
 
+
+        _setupState: function(profile) {
+
+            if (!App.state) {
+                App.state = new State({profile: profile});
+                FriendAdapter.setFriendAdapter(App.state.myFriends);
+            }
+
+
+        },
         showWall: function() {
-            this._loadState(this._showWall.bind(this));
+            this._loadProfile(this._showWall.bind(this));
         },
-        _showWall: function () {
 
-            var profile = App.state.myProfiles.getFirst();
-            if (profile.get('name').length == 0) {
-                this._profile();
-                return;
-            }
-            var publicKey = Encryption.getEncodedKeys().publicKey;
-            if (publicKey != profile.get("publicKey")) {
-                this._profile();
-                return;
-            }
+
+        _showWall: function (profile) {
+
+            this._setupState(profile);
+            App.state.fetchAll();
 
             var headerPanel = new HeaderPanelView({model: profile});
             App.headerPanel.show(headerPanel);
@@ -102,15 +107,6 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 collection: App.state.myFriends
             });
             wall.friends.show(friendsView);
-
-            /*
-            var showInvites = App.state.myInvites.length > 0;
-            if (showInvites) {
-                $("#invitePanel").show();
-            }
-            else {
-                $("#invitePanel").hide();
-            }*/
 
             var invitesView = new InvitesView({
                 collection: App.state.myInvites
@@ -288,6 +284,7 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                     Encryption.createKeys();
                     model.set("keysLoaded", true);
                 });
+
                 setupView.on("keys:remove", function () {
                     Encryption.removeKeys();
                     model.set("keysLoaded", false);
@@ -326,24 +323,40 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
         },
 
         profile: function() {
-            this._loadState(this._profile.bind(this));
+            this._loadProfile(this._profile.bind(this));
         },
-        _profile: function() {
+        _profile: function(profile) {
 
             var controller = this;
 
-            var model = App.state.myProfiles.getFirst();
             require(["app/views/profile"], function (ProfileView) {
+                var model = new Backbone.Model();
+                model.set("profile", profile);
+                model.set("publicKey", Encryption.getEncodedKeys().publicKey)
                 var profileView = new ProfileView({model: model});
                 App.main.show(profileView);
 
+                profileView.on("key:edit", function() {
+                    controller.settings();
+                });
+
+                profileView.on("key:cloudRefresh", function() {
+                    $.when(AppEngine.findProfile(Dropbox.client.dropboxUid())).done(function(profile){
+                        if(profile.publicKey) {
+                            model.set("publicKey", profile.publicKey);
+                        }
+                        else {
+                            model.set("publicKey", "none");
+                        }
+                    });
+                });
                 profileView.on('profile:updated', function(changes) {
                     var deferreds = [];
                     if ('name' in changes) {
-                        model.set('name', changes['name']);
+                        profile.set('name', changes['name']);
                     }
                     if ('intro' in changes) {
-                        model.set('intro', changes['intro']);
+                        profile.set('intro', changes['intro']);
                     }
                     if('picture' in changes) {
                         var resized = changes['picture'];
@@ -353,25 +366,29 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                         var picture = DataConvert.dataUriToTypedArray(resized);
                         Dropbox.uploadDropbox("profilePic",  picture['data']).then(Dropbox.shareDropbox).done(function(url) {
                             console.log("URL", url);
-                            model.set('pictureUrl', url);
+                            profile.set('pictureUrl', url);
                             deferred.resolve();
                         });
                     }
                     var publicKey = Encryption.getEncodedKeys().publicKey;
-                    if (publicKey != model.get("publicKey")) {
-                        model.set("publicKey", publicKey);
+                    if (publicKey != profile.get("publicKey")) {
+                        profile.set("publicKey", publicKey);
                     }
 
                     $.when.apply($, deferreds).done(function() {
-                        var profileChanges = model.changedAttributes();
-                        if (profileChanges) {
-                            FriendAdapter.sendUpdatedProfile(profileChanges);
-                            model.save();
-                        }
+                        var profileChanges = profile.changedAttributes();
                         controller.showWall();
                         App.appRouter.navigate("");
-                        App.vent.trigger("profile:updated", model);
-                        AppEngine.publishProfile();
+
+                        if (profileChanges) {
+                            controller._setupState(profile);
+                            $.when(App.state.fetchAll()).done(function() {
+                                FriendAdapter.sendUpdatedProfile(profileChanges);
+                                AppEngine.publishProfile();
+                                profile.save();
+                            });
+                        }
+
                     });
                 });
             });

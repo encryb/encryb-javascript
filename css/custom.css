@@ -204,6 +204,11 @@ ul.collection-list li {
     float: none;
 }
 
+.vertical-align {
+    display: flex;
+    align-items: center;
+}
+
 .sitelogo a {
     text-decoration: none;
     font-size: 2.5rem;

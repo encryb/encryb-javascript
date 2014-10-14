@@ -20,9 +20,11 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
 
         setFriendAdapter: function(friends) {
             friends.on("add", this.attachFriend.bind(this));
+            this.friends = friends;
         },
 
         createFriend: function (inviteModel) {
+            var friendAdapter = this;
             var deferred = $.Deferred();
 
             var manifestFile = "manifests" + "/" + RandomUtil.makeId();
@@ -43,7 +45,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
 
             $.when(Backbone.DropboxDatastore.createSharedDatastore()).then(function (datastore) {
                 attrs['myDatastoreId'] = datastore.getId();
-                App.state.myFriends.create(attrs, {
+                friendAdapter.friends.create(attrs, {
                     success: function (model) {
                         deferred.resolve(model);
                     }
@@ -137,9 +139,8 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
 
         updateDatastoreProfile: function(friend) {
             var friendAdapter = this;
-            var profile = App.state.myProfiles.getFirst();
-            $.when(this._getModelUsedToNotifyFriend(friend)).done(
-                function(notifyModel) {
+            $.when(this._getModelUsedToNotifyFriend(friend), App.getProfile()).done(
+                function(notifyModel, profile) {
                     var changes = {
                         name: profile.get('name'),
                         intro: profile.get('intro'),
@@ -190,7 +191,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
         },
 
         saveManifests: function() {
-            App.state.myFriends.each(function(friend) {
+            this.friends.each(function(friend) {
                 this.saveManifest(friend);
             }, FriendAdapter);
         },

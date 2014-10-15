@@ -183,6 +183,12 @@ ul.collection-list li {
     padding: 2rem;
 }
 
+.close-icon {
+    font-size: 2rem;
+    cursor: pointer;
+    cursor: hand;
+}
+
 .password-icon {
     border: 2px solid #ddd;
     border-radius: 10px;

@@ -141,6 +141,10 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 });
             });
 
+            wall.listenTo(App.vent, "friend:unselect", function(){
+                wall.friendsDetails.empty();
+            });
+
             wall.listenTo(App.vent, "invite:find", function(friendId) {
                 $.when(AppEngine.findProfile(friendId)).done(function(profile){
                     var model = new Backbone.Model();
@@ -175,6 +179,10 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                     inviteModel.destroy();
                 });
 
+            });
+
+            wall.listenTo(App.vent, "friend:unfriend", function(friendModel) {
+               FriendAdapter.deleteFriend(friendModel);
             });
 
             wall.listenTo(App.vent, "post:created", FriendAdapter.saveManifests);

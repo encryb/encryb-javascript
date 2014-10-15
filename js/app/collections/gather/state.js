@@ -73,6 +73,9 @@ define([
             App.vent.on("friend:selected", function(friendModel){
                 App.state.filterByUser(friendModel.get('userId'));
             });
+            App.vent.on("friend:unselect", function(){
+               App.state.unsetFilter();
+            });
         },
 
         fetchAll: function() {

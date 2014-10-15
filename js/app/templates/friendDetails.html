@@ -3,7 +3,12 @@
         <div class="well well-sm clearfix">
             <div class="row">
                 <div class="col-xs-12">
-                    <legend><%- name %></legend>
+                    <legend class="clearfix">
+                        <span class="pull-left">
+                            <%- name %><% if(favorite) { %> <span class="glyphicon glyphicon-glass"></span> <% } %>
+                        </span>
+                        <span id="unselectFriend" class="pull-right close-icon glyphicon glyphicon-remove"></span>
+                    </legend>
                 </div>
             </div>
             <div class="row">

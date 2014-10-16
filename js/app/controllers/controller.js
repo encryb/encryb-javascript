@@ -12,14 +12,13 @@ define([
     'app/views/friend',
     'app/views/headerPanel',
     'app/views/invites',
-    'app/views/invitePreview',
     'app/encryption',
     'app/services/appengine',
     'app/services/dropbox',
     'utils/data-convert'
     ],
 function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, FriendModel,
-          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, InvitePreviewView,
+          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView,
           Encryption, AppEngine, Dropbox, DataConvert) {
 
 
@@ -132,13 +131,20 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 wall.glowFriends();
             });
 
-            wall.listenTo(App.vent, "friend:selected", function(friendModel) {
+
+            var showFriend = function(friendModel) {
                 require(["app/views/friendsDetails"], function (FriendsDetailsView) {
 
                     var friendsOfFriend = App.state.getFriendsOfFriend(friendModel);
-                    var details = new FriendsDetailsView({model: friendModel, collection: friendsOfFriend});
+                    var details = new FriendsDetailsView({model: friendModel,
+                        commonFriends: friendsOfFriend.commonFriends, otherFriends: friendsOfFriend.otherFriends});
                     wall.friendsDetails.show(details);
                 });
+            };
+
+            wall.listenTo(App.vent, "friend:selected", function(friendModel) {
+                showFriend(friendModel);
+                window.scrollTo(0,0);
             });
 
             wall.listenTo(App.vent, "friend:unselect", function(){
@@ -146,6 +152,11 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             });
 
             wall.listenTo(App.vent, "invite:find", function(friendId) {
+                var friendModel = App.state.myFriends.findWhere({userId: friendId});
+                if (friendModel) {
+                    showFriend(friendModel);
+                    return;
+                }
                 $.when(AppEngine.findProfile(friendId)).done(function(profile){
                     var model = new Backbone.Model();
 
@@ -155,9 +166,11 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                     model.set("pictureUrl", profile.pictureUrl);
                     model.set("publicKey", profile.publicKey);
 
-
-                    var invitePreviewView = new InvitePreviewView({model: model});
-                    wall.invitePreview.show(invitePreviewView);
+                    require(["app/views/friendsDetails"], function (FriendsDetailsView) {
+                        var details = new FriendsDetailsView({model: model, invitePreview: true});
+                        wall.friendsDetails.show(details);
+                        window.scrollTo(0,0);
+                    });
                 });
             });
 
@@ -166,7 +179,7 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
                     AppEngine.invite(friendModel);
                     // hide the invite details from the wall
-                    wall.invitePreview.reset();
+                    wall.friendsDetails.reset();
                     FriendAdapter.updateDatastoreProfile(friendModel);
                 });
             });
@@ -234,10 +247,6 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 for (var i = 0; i < invites.length; i++) {
                     var inviteEntity = invites[i];
 
-                    var existingInvites = App.state.myInvites.where({userId: inviteEntity.userId});
-                    if (existingInvites.length > 0) {
-                        continue;
-                    }
                     var attr = {
                         userId: inviteEntity.userId,
                         name: inviteEntity.name,
@@ -247,8 +256,17 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                         friendsDatastoreId: inviteEntity.datastoreId
                     };
 
+                    var existingInvite = App.state.myInvites.findWhere({userId: inviteEntity.userId});
 
-                    App.state.myInvites.create(attr, {wait: true});
+                    if (existingInvite) {
+                        existingInvite.save(attr);
+                        console.log("updated existing invite");
+                    }
+                    else {
+                        App.state.myInvites.create(attr, {wait: true});
+                        console.log("created new invite");
+                    }
+
                     App.vent.trigger("invite:added");
                 }
 

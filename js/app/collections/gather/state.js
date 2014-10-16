@@ -197,7 +197,19 @@ define([
             if (!this.friendsOfFriends.hasOwnProperty(friendId)) {
                 this.friendsOfFriends[friendId] = new Backbone.Collection();
             }
-            return this.friendsOfFriends[friendId];
+            var friends =  this.friendsOfFriends[friendId];
+
+            var commonFriends = new Backbone.Collection();
+            var otherFriends = new Backbone.Collection();
+            friends.each(function(friend) {
+                if (this.myFriends.findWhere({userId: friend.get("userId")})){
+                    commonFriends.add(friend);
+                }
+                else {
+                    otherFriends.add(friend);
+                }
+            }, this);
+            return {otherFriends: otherFriends, commonFriends: commonFriends};
         },
 
         addFriendOfFriend: function(friendOfFriend, friend) {

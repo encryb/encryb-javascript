@@ -54,6 +54,16 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             });
             return deferred;
         },
+        deleteFriend: function(friendModel) {
+            var manifestFile = friendModel.get("manifestFile");
+            Backbone.DropboxDatastore.deleteDatastore(friendModel.get("myDatastoreId"));
+            if (friendModel.has("friendsDatastoreId")) {
+                Backbone.DropboxDatastore.deleteDatastore(friendModel.get("friendsDatastoreId"));
+            }
+            Dropbox.remove(manifestFile);
+            this.removeCollection(friendModel);
+            friendModel.destroy();
+        },
         sendUpdatedProfile: function(changes) {
             var friendAdapter = this;
             App.state.myFriends.each(function(friend) {
@@ -191,7 +201,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
         },
 
         saveManifests: function() {
-            this.friends.each(function(friend) {
+            App.state.myFriends.each(function(friend) {
                 this.saveManifest(friend);
             }, FriendAdapter);
         },
@@ -228,12 +238,22 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
                 var decryptedData = Encryption.decryptManifestData(data);
                 var manifest = Msgpack.decode(decryptedData.buffer);
 
-                friendAdapter.addCollection(friend, manifest);
+                friendAdapter.updateCollection(friend, manifest);
             });
         },
 
+        removeCollection: function(friend) {
 
-        addCollection: function(friend, manifest) {
+            var manifest = {};
+            manifest['posts'] = [];
+            manifest['upvotes'] = [];
+            manifest['comments'] = [];
+            manifest['friends'] = [];
+
+            this.updateCollection(friend, manifest);
+        },
+
+        updateCollection: function(friend, manifest) {
             var state  = App.state;
 
             var friendId = friend.get("userId");

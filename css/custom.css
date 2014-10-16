@@ -244,3 +244,14 @@ ul.collection-list li {
 .glow {
     box-shadow: 0px 0px 8px #0095FF;
 }
+
+.alert-sm {
+    padding: 5px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.friend {
+    padding: 10px 2px;
+    border-top: 2px solid #DDD;
+}

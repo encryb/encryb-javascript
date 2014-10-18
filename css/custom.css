@@ -154,6 +154,23 @@ ul.collection-list li {
     margin-right: 15px;
 }
 
+.post-container {
+    margin-right: -15px;
+    margin-bottom: -5px;
+}
+
+.post-container > div {
+    margin-right: 15px;
+    margin-bottom: 5px;
+}
+
+.post-text:before {
+    content: "";
+    width: 10em;
+    display: block;
+    overflow: hidden;
+}
+
 .upvote-thumbnail {
     width: auto;
     max-height: 36px;

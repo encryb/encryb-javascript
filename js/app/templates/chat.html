@@ -1,0 +1,26 @@
+<div class="rotate">
+<div class="panel panel-primary" style="width:300px;">
+    <div class="panel-heading pointer-hand clearfix" data-toggle="collapse" data-target="#collapse<%-uniqueId()%>">
+
+            <span class="glyphicon glyphicon-comment"></span> Bob
+
+        <div class="btn-group pull-right">
+            <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                <span class="glyphicon glyphicon-chevron-down"></span>
+            </button>
+            <ul class="dropdown-menu slidedown">
+            </ul>
+        </div>
+    </div>
+    <div id="collapse<%-uniqueId()%>" class="panel-collapse collapse in">
+        <div class="panel-body" style="max-height: 250px; overflow-y: auto">
+            <ul class="chat">
+
+            </ul>
+        </div>
+        <div style="padding: 5px">
+            <textarea class="form-control" style="resize: none;" rows="2"></textarea>
+        </div>
+    </div>
+</div>
+</div>

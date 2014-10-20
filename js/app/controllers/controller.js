@@ -12,13 +12,14 @@ define([
     'app/views/friend',
     'app/views/headerPanel',
     'app/views/invites',
+    'app/views/chats',
     'app/encryption',
     'app/services/appengine',
     'app/services/dropbox',
     'utils/data-convert'
     ],
 function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, FriendModel,
-          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView,
+          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
           Encryption, AppEngine, Dropbox, DataConvert) {
 
 
@@ -111,6 +112,30 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 collection: App.state.myInvites
             });
             wall.invites.show(invitesView);
+
+
+
+            var col = new Backbone.Collection();
+            var mod = new Backbone.Model();
+            var chatLine = new Backbone.Model({name:"Ogi Boras", time:1, text: "Hello World, how are you doing!"});
+            var chatLine2 = new Backbone.Model({name:"Bob", time:2, text: "Great, how are you doing?"});
+
+            var chatLines = new Backbone.Collection();
+            chatLines.add(chatLine);
+            chatLines.add(chatLine2);
+            mod.set("chatLines", chatLines);
+
+            col.add(mod);
+
+            var mod2 = new Backbone.Model();
+            col.add(mod2);
+
+            var chatsView = new ChatsView({
+                collection: col
+            });
+            wall.chats.show(chatsView);
+
+
 
             var showHideInvites = function() {
                 if (App.state.myInvites.length == 0) {

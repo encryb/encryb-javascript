@@ -17,6 +17,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
         manifestCache : {},
         notifyFriendPromises: {},
         notifyMePromises: {},
+        outgoingChatPromises: {},
 
         setFriendAdapter: function(friends) {
             friends.on("add", this.attachFriend.bind(this));
@@ -72,6 +73,71 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
                 });
             });
         },
+        setupIncomingChatCollection: function(friend){
+            var friendId = friend.get("userId");
+
+            var ChatCollection = Backbone.Collection.extend({
+                dropboxDatastore: new Backbone.DropboxDatastore('Chat', {
+                    datastoreId: friend.get("friendsDatastoreId")
+                }),
+
+                initialize: function() {
+                    this.dropboxDatastore.syncCollection(this);
+                }
+            });
+
+
+            App.state.chats[friendId] = new Backbone.Collection();
+
+            var chat = new ChatCollection();
+            chat.fetch();
+            chat.on("add", function(model){
+                App.vent.trigger("chat:received", friend);
+                var model = new Backbone.Model({time:model.get("time"), text: model.get("text")});
+                App.state.chats[friendId].add(model);
+            });
+        },
+
+        _getOutgoingChatCollection: function(friend) {
+            var friendId = friend.get("userId");
+            if (this.outgoingChatPromises.hasOwnProperty(friendId)) {
+                return this.outgoingChatPromises[friendId];
+            }
+            var deferred = $.Deferred();
+            this.outgoingChatPromises[friendId] = deferred;
+
+            var ChatCollection = Backbone.Collection.extend({
+                dropboxDatastore: new Backbone.DropboxDatastore('Chat', {
+                    datastoreId: friend.get("myDatastoreId")
+                }),
+
+                initialize: function() {
+                    this.dropboxDatastore.syncCollection(this);
+                }
+            });
+            var chat = new ChatCollection();
+            chat.fetch({
+                success: function (collection, response, options) {
+                    deferred.resolve(chat);
+                },
+                error: function(collection, response, options) {
+                    console.log("Fetch failed", friend, response);
+                    deferred.reject();
+                }
+            });
+            return deferred;
+        },
+
+        sendChat: function(friend, text) {
+            var time = new Date().getTime();
+            $.when(this._getOutgoingChatCollection(friend)).done(function(chats){
+                chats.create({time:time, text: text});
+            });
+            var chat = new Backbone.Model({isMine: true, time:time, text: text});
+            App.state.chats[friend.get("userId")].add(chat);
+        },
+
+
         _getModelUsedToNotifyMe: function(friend) {
             var friendId = friend.get("userId");
             if (this.notifyMePromises.hasOwnProperty(friendId)) {
@@ -124,6 +190,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
                 });
 
             });
+            this.setupIncomingChatCollection(friend);
         },
 
 

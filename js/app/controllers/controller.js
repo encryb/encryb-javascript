@@ -115,23 +115,17 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
 
 
 
-            var col = new Backbone.Collection();
-            var mod = new Backbone.Model();
-            var chatLine = new Backbone.Model({name:"Ogi Boras", time:1, text: "Hello World, how are you doing!"});
-            var chatLine2 = new Backbone.Model({name:"Bob", time:2, text: "Great, how are you doing?"});
+            var chats = new Backbone.Collection();
 
-            var chatLines = new Backbone.Collection();
-            chatLines.add(chatLine);
-            chatLines.add(chatLine2);
-            mod.set("chatLines", chatLines);
-
-            col.add(mod);
-
-            var mod2 = new Backbone.Model();
-            col.add(mod2);
+            wall.listenTo(App.vent, "friend:chat", function(friendModel) {
+                var chatLines = App.state.chats[friendModel.get("userId")]
+                var chat = new Backbone.Model({friend: friendModel});
+                chat.set("chatLines", chatLines);
+                chats.add(chat);
+            });
 
             var chatsView = new ChatsView({
-                collection: col
+                collection: chats
             });
             wall.chats.show(chatsView);
 
@@ -156,6 +150,18 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
                 wall.glowFriends();
             });
 
+            wall.listenTo(App.vent, "chat:submit", function(friend, text) {
+                FriendAdapter.sendChat(friend, text);
+            });
+            wall.listenTo(App.vent, "chat:received", function(friend) {
+                var friendChat = chats.findWhere({friend: friend});
+                if (!friendChat) {
+                    var chatLines = App.state.chats[friend.get("userId")]
+                    var chat = new Backbone.Model({friend: friend});
+                    chat.set("chatLines", chatLines);
+                    chats.add(chat);
+                }
+            });
 
             var showFriend = function(friendModel) {
                 require(["app/views/friendsDetails"], function (FriendsDetailsView) {

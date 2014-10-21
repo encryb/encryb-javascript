@@ -4,19 +4,33 @@ define([
     'backbone',
     'marionette',
     'utils/misc',
+    'app/app',
     'require-text!app/templates/chat.html',
     'require-text!app/templates/chatLine.html'
-], function($, _, Backbone, Marionette, MiscUtils, ChatTemplate, ChatLineTemplate) {
+], function($, _, Backbone, Marionette, MiscUtils, App, ChatTemplate, ChatLineTemplate) {
 
     var ChatLineView = Marionette.ItemView.extend({
         template: _.template(ChatLineTemplate),
         tagName: "li",
-        templateHelpers: {
-            prettyTime: function() {
-                return MiscUtils.formatFullTime(this.time);
+        templateHelpers: function() {
+            var friend = this.friend;
+            return {
+                prettyTime: function () {
+                    return MiscUtils.formatFullTime(this.time);
+                },
+                getName: function () {
+                    if (this.isMine) {
+                        return "me";
+                    }
+                    else {
+                        return friend.escape("name");
+                    }
+                }
             }
         },
-
+        initialize: function(options) {
+            this.friend = options.friend;
+        }
     });
 
     var ChatView = Marionette.CompositeView.extend({
@@ -26,7 +40,10 @@ define([
         childViewContainer: ".chat",
 
         initialize: function() {
-            this.collection = this.model.get("chatLines")
+            this.collection = this.model.get("chatLines");
+            this.childViewOptions =  { friend: this.model.get("friend") };
+            this.on("add:child", this.chatAdded);
+
         },
 
         templateHelpers: function() {
@@ -55,11 +72,16 @@ define([
 
         modelAdded: function() {
             if (this.ui.panelBody.scrollTop() + this.ui.panelBody.outerHeight() >= this.ui.panelBody.prop("scrollHeight")) {
-                // TODO, check if there is better way to do this
-                setTimeout(_.bind(function() {
-                    this.ui.panelBody.scrollTop(this.ui.panelBody.prop("scrollHeight"));
-                }, this));
+                this.scrollDown = true;
             }
+        },
+
+        chatAdded : function() {
+            if (this.scrollDown) {
+                this.ui.panelBody.scrollTop(this.ui.panelBody.prop("scrollHeight"));
+                this.scrollDown = false;
+            }
+            this.newChatHighlight();
         },
 
         submitChat: function(e) {
@@ -67,18 +89,22 @@ define([
                 if (this.ui.textinput.val().length == 0) {
                     return false;
                 }
-                var model = new Backbone.Model({name:"Me", text:this.ui.textinput.val(), time:new Date().getTime()});
-                this.collection.add(model);
+                App.vent.trigger("chat:submit", this.model.get("friend"), this.ui.textinput.val());
                 this.ui.textinput.val("");
 
+                this.scrollDown = true;
 
                 return false;
             }
         },
         clickPanel: function() {
             this.ui.panel.removeClass("panel-primary").addClass("panel-default");
-            console.log($(".panel").is(":focus"));
-            console.log("BOOOOOOOOOOOOOBBOOOOOOOOOOOOOOOOLLLLLLLLLAAAAAAAAAAAAAa");
+        },
+
+        newChatHighlight: function() {
+            if(!this.ui.textinput.is(":focus")) {
+                this.ui.panel.removeClass("panel-default").addClass("panel-primary");
+            }
         },
 
         scrollCheck: function(e) {

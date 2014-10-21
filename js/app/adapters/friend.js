@@ -55,6 +55,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             });
             return deferred;
         },
+        // TODO: destroy promises
         deleteFriend: function(friendModel) {
             var manifestFile = friendModel.get("manifestFile");
             Backbone.DropboxDatastore.deleteDatastore(friendModel.get("myDatastoreId"));
@@ -90,14 +91,35 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             App.state.chats[friendId] = new Backbone.Collection();
 
             var chat = new ChatCollection();
-            chat.fetch();
-            chat.on("add", function(model){
+            chat.on("add", _.bind(function(model){
                 App.vent.trigger("chat:received", friend);
-                var model = new Backbone.Model({time:model.get("time"), text: model.get("text")});
-                App.state.chats[friendId].add(model);
+                var chatLine = new Backbone.Model({time: model.get("time"), text: model.get("text")});
+                App.state.chats[friendId].add(chatLine);
+                this.confirmChat(friend, model.get("time"));
+            },this));
+            chat.fetch();
+
+        },
+        confirmChat: function(friend, timeOfReceivedChat) {
+            $.when(this._getModelUsedToNotifyFriend(friend).done(function(model){
+                model.set("chatReceived", timeOfReceivedChat);
+                model.save();
+            }));
+        },
+        clearReceivedChats: function(friend, receivedTime) {
+            $.when(this._getOutgoingChatCollection(friend)).done(function(chats) {
+                var chatLinesToDelete = [];
+                chats.each(function(chatLine) {
+                    if (chatLine.get("time") <= receivedTime) {
+                        chatLinesToDelete.push(chatLine);
+                    }
+                });
+                for(var i=0; i<chatLinesToDelete.length; i++) {
+                    var chatLine = chatLinesToDelete[i];
+                    chatLine.destroy();
+                }
             });
         },
-
         _getOutgoingChatCollection: function(friend) {
             var friendId = friend.get("userId");
             if (this.outgoingChatPromises.hasOwnProperty(friendId)) {
@@ -118,7 +140,7 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
             var chat = new ChatCollection();
             chat.fetch({
                 success: function (collection, response, options) {
-                    deferred.resolve(chat);
+                    deferred.resolve(collection);
                 },
                 error: function(collection, response, options) {
                     console.log("Fetch failed", friend, response);
@@ -187,6 +209,9 @@ function ($, Backbone, Marionette, Msgpack, App, Encryption, Dropbox, RemoteMani
                 });
                 notifyModel.on("change:pictureUrl", function(model, options) {
                     friend.save({pictureUrl : model.get("pictureUrl")});
+                });
+                notifyModel.on("change:chatReceived", function(model, options) {
+                   friendAdapter.clearReceivedChats(friend, model.get("chatReceived"));
                 });
 
             });

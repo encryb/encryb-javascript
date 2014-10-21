@@ -43,7 +43,6 @@ define([
             this.collection = this.model.get("chatLines");
             this.childViewOptions =  { friend: this.model.get("friend") };
             this.on("add:child", this.chatAdded);
-
         },
 
         templateHelpers: function() {
@@ -57,13 +56,15 @@ define([
         ui: {
             panelBody : ".panel-body",
             panel : ".panel",
-            textinput: "textarea"
+            textinput: "textarea",
+            closeButton: "#chatClose"
         },
 
         events: {
             'mousewheel @ui.panelBody': 'scrollCheck',
             'click @ui.panel': 'clickPanel',
-            'keydown @ui.textinput': 'submitChat'
+            'keydown @ui.textinput': 'submitChat',
+            'click @ui.closeButton': 'closeChat'
         },
 
         collectionEvents: {
@@ -109,6 +110,10 @@ define([
 
         scrollCheck: function(e) {
             return MiscUtils.isScrollOverflow(e);
+        },
+
+        closeChat: function(e) {
+            this.model.collection.remove(this.model);
         }
     });
 

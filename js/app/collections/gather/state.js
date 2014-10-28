@@ -2,7 +2,6 @@ define([
     'backbone',
     'marionette',
     'underscore',
-    'msgpack',
     'backbone-filtered-collection',
     'app/app',
     'app/collections/persist/posts',
@@ -12,7 +11,7 @@ define([
     'app/collections/persist/invites',
     'app/models/postWrapper',
     'app/services/dropbox'
-], function(Backbone, Marionette, _, Msgpack, FilteredCollection, App,
+], function(Backbone, Marionette, _, FilteredCollection, App,
             PostColl, FriendColl,  CommentColl, UpvoteColl, InviteColl,
             PostWrapper, Dropbox) {
 

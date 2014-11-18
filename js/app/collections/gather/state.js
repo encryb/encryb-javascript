@@ -126,7 +126,7 @@ define([
         onMyPostRemoved: function(post) {
             var postId = this.myId + ":" + post.get("id");
             var model = this.posts.findWhere({postId: postId});
-            model.destroy();
+            this.posts.remove(model);
         },
         onMyCommentAdded: function(comment) {
 

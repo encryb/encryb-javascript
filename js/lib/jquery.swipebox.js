@@ -675,17 +675,29 @@
 				}
 
 				slide = $( '#swipebox-slider .slide' ).eq( index );
+				slide.addClass('slide-loading');
 
-				if ( ! $this.isVideo( src ) ) {
-					slide.addClass( 'slide-loading' );
-					$this.loadMedia( src, function() {
-						slide.removeClass( 'slide-loading' );
-						slide.html( this );
-					} );
-				} else {
-					slide.html( $this.getVideo( src ) );
+				var _openMedia = function(media) {
+					if (!$this.isVideo(media)) {
+						$this.loadMedia(media, function () {
+							slide.removeClass('slide-loading');
+							slide.html(this);
+						});
+					} else {
+						slide.removeClass('slide-loading');
+						slide.html($this.getVideo(media));
+					}
 				}
-				
+
+
+				if ($.isFunction(src.done)) {
+					$.when(src).done(function(media) {
+						_openMedia(media);
+					});
+				}
+				else {
+					_openMedia(src);
+				}
 			},
 
 			/**
@@ -759,7 +771,7 @@
 			 * Load image
 			 */
 			loadMedia : function ( src, callback ) {
-				if ( ! this.isVideo( src ) ) {
+					if ( ! this.isVideo( src ) ) {
 					var img = $( '<img>' ).on( 'load', function() {
 						callback.call( img );
 					} );

@@ -51,21 +51,18 @@ define([
 
         showImage: function(){
             var view = this;
+
+            var mediaDeferred = $.Deferred();
+            $.when(this.model.fetchPost(true)).done(function(){
+                mediaDeferred.resolve(view.model.get('fullImageData'));
+            });
+
             $.swipebox(
                 [
-                    { href: "img/swipebox/loader.gif", title: view.model.get('textData') }
+                    { href: mediaDeferred.promise(), title: view.model.get('textData') }
                 ] );
 
-            $.when(this.model.fetchPost(true)).done(function(){
-                if ($.swipebox.isOpen) {
-                    $.swipebox.close();
-                    $.swipebox(
-                        [
-                            { href: view.model.get('fullImageData'), title: view.model.get('textData') }
-                        ]);
-                }
 
-            });
         },
 
         clickedPosterPicture: function() {

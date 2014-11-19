@@ -4,15 +4,15 @@ define([
     'backbone',
     'bootbox',
     'dropzone',
-    'jasny-bootstrap',
     'marionette',
     'selectize',
     'app/app',
+    'app/adapters/post',
     'app/models/post',
     'utils/image',
     'require-text!app/templates/createPost.html'
 
-], function($, _, Backbone, Bootbox, Dropzone, JasnyBootsrap, Marionette, Selectize, App, Post, ImageUtil, CreatePostTemplate){
+], function($, _, Backbone, Bootbox, Dropzone, Marionette, Selectize, App, PostAdapter, Post, ImageUtil, CreatePostTemplate){
 
     var NewPostView = Marionette.CompositeView.extend({
         template: _.template( CreatePostTemplate ),
@@ -27,7 +27,6 @@ define([
             postSubmitButton: '#postSubmitButton',
             newPostTrigger: '#newPostTrigger',
             newPostText: '#newPostText',
-            newPostImage: '#newPostImage',
             newPostForm: '#newPostForm',
             newPostDiv: '#newPostDiv',
             permissions: "#permissions",
@@ -100,7 +99,7 @@ define([
                     post.set({hasImage: true, resizedImageData: resizedData, fullImageData: fullsizeData });
                 }
 
-                var deferred = post.uploadPost();
+                var deferred = PostAdapter.uploadPost(post);
                 $.when(deferred).done(function() {
                     createPostView.dropzone.emit("success", file);
                 });

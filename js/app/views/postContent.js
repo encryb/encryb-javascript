@@ -2,14 +2,16 @@ define([
     'jquery',
     'underscore',
     'backbone',
+    'bootstrap',
     'marionette',
     'jquery.swipebox',
     'autolinker',
     'app/app',
+    'app/adapters/post',
     'utils/misc',
     'require-text!app/templates/postContent.html'
 
-], function($, _, Backbone, Marionette, Swipebox, Autolinker, App, MiscUtils, PostContentTemplate){
+], function($, _, Backbone, Bootsrap, Marionette, Swipebox, Autolinker, App, PostAdapter, MiscUtils, PostContentTemplate){
 
     var PostContentView = Marionette.ItemView.extend({
 

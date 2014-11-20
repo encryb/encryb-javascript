@@ -324,8 +324,8 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Ran
 
         saveManifests: function() {
             App.state.myFriends.each(function(friend) {
-                this.saveManifest(friend);
-            }, FriendAdapter);
+                setTimeout(function() { FriendAdapter.saveManifest(friend); }, 0); ;
+            });
         },
 
         saveManifest: function(friend) {

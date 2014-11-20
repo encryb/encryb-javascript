@@ -3,6 +3,7 @@ define([
     'marionette',
     'app/app',
     'app/adapters/friend',
+    'app/adapters/post',
     'app/collections/gather/state',
     'app/collections/permissions',
     'app/models/friend',
@@ -19,7 +20,7 @@ define([
     'utils/collection-paged',
     'utils/data-convert'
     ],
-function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, FriendModel,
+function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel,
           WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
           Encryption, AppEngine, Dropbox, CollectionPaged, DataConvert) {
 
@@ -252,10 +253,27 @@ function (Backbone, Marionette, App, FriendAdapter, State, PermissionColl, Frien
             });
 
             wall.listenTo(App.vent, "post:created", FriendAdapter.saveManifests);
-            wall.listenTo(App.vent, "post:deleted", FriendAdapter.saveManifests);
-            wall.listenTo(App.vent, "post:liked", FriendAdapter.saveManifests);
-            wall.listenTo(App.vent, "comment:created", FriendAdapter.saveManifests);
-            wall.listenTo(App.vent, "comment:deleted", FriendAdapter.saveManifests);
+
+            wall.listenTo(App.vent, "post:deleted", function(post) {
+                PostAdapter.deletePost(post);
+                post.deletePost();
+                FriendAdapter.saveManifests();
+            });
+            wall.listenTo(App.vent, "post:liked", function(postId) {
+                App.state.myUpvotes.toggleUpvote(postId);
+                FriendAdapter.saveManifests();
+            });
+            wall.listenTo(App.vent, "comment:created", function(postId, comment) {
+                App.state.myComments.addComment(postId, comment['text'], comment['date']);
+                FriendAdapter.saveManifests();
+            });
+            wall.listenTo(App.vent, "comment:deleted", function(commentId) {
+                var comment = App.state.myComments.findWhere({id: commentId});
+                if (comment) {
+                    comment.destroy();
+                    FriendAdapter.saveManifests();
+                }
+            });
 
 
 

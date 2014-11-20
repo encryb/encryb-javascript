@@ -18,8 +18,6 @@ define([
     var State = Marionette.Object.extend({
 
         initialize: function(options) {
-
-
             this.myModel = new Backbone.Model();
 
             var profile = options.profile;

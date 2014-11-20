@@ -102,7 +102,6 @@ define([
 
         deletePost: function(model) {
             Storage.remove(FOLDER_POSTS + model.get('postId'));
-            this.destroy();
         }
     };
     return PostAdapter;

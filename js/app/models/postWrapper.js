@@ -14,7 +14,7 @@ define([
 
             var commentsColl = new Backbone.Collection();
             commentsColl.comparator = function(comment) {
-                return comment.get("date"); // Note the minus!
+                return comment.get("date");
             };
             this.set("comments", commentsColl);
 

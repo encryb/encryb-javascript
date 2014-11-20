@@ -1,24 +1,20 @@
 define([
     'backbone',
+    'sjcl',
     'app/services/dropbox',
-    'app/encryption'
-], function (Backbone, Storage, Encryption) {
+    'app/encryption',
+    'utils/data-convert',
+    'utils/random'
 
-    var PostContent = Backbone.Model.extend({
+], function (Backbone, Sjcl, Storage, Encryption, DataConvert, Random) {
 
+    var FOLDER_POSTS = "posts/";
 
-        defaults: {
-            fullImageData: "img/loading.gif"
-        },
+    var PostAdapter = {
 
-        // not persisted
-        sync: function () { return false; },
-
-        fetchPost: function(fullFetch) {
+        fetchPost: function(model, fullFetch) {
 
             var deferred = $.Deferred();
-
-            var model = this;
 
             var password = model.get('password');
 
@@ -33,7 +29,7 @@ define([
                 if(model.get('resizedImageData') == null) {
                     deferredResizedImage = Storage.downloadUrl(model.get('resizedImageUrl'));
                 }
-                if(fullFetch && model.get('fullImageData') == model.defaults.fullImageData) {
+                if(fullFetch && model.get('fullImageData') == null) {
                     deferredFullImage = Storage.downloadUrl(model.get('fullImageUrl'));
                 }
             }
@@ -64,7 +60,50 @@ define([
                     });
                 });
             return deferred;
+        },
+
+        uploadPost: function (model) {
+
+            var deferred = $.Deferred();
+
+            var postId = Random.makeId();
+            var password = Sjcl.random.randomWords(8,1);
+
+            var text = model.get('textData');
+            var encText = null;
+            if (text) {
+                encText = Encryption.encrypt(password,  "plain/text", text);
+            }
+
+            var image = model.get('fullImageData');
+            var encImage = null;
+            if (image) {
+                var imageDict = DataConvert.dataUriToTypedArray(image);
+                encImage = Encryption.encrypt(password, imageDict['mimeType'], imageDict['data'], true);
+            }
+
+            var resizedImage = model.get('resizedImageData');
+            var encResizedImage = null;
+            if (resizedImage) {
+                var resizedImageDict = DataConvert.dataUriToTypedArray(resizedImage);
+                encResizedImage = Encryption.encrypt(password, resizedImageDict['mimeType'], resizedImageDict['data'], true);
+            }
+
+            var model = this;
+            $.when(Storage.uploadPost(FOLDER_POSTS + postId, encText, encResizedImage, encImage)).done(function (update) {
+
+                update['postId'] = postId;
+                update['password'] = Sjcl.codec.bytes.fromBits(password);
+                model.set(update);
+                deferred.resolve();
+            });
+            return deferred;
+        },
+
+        deletePost: function(model) {
+            Storage.remove(FOLDER_POSTS + model.get('postId'));
+            this.destroy();
         }
-    });
-    return PostContent;
+    };
+    return PostAdapter;
 });

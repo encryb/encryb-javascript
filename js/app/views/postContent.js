@@ -38,7 +38,7 @@ define([
         },
 
         initialize: function() {
-            this.model.fetchPost(false);
+            PostAdapter.fetchPost(this.model, false);
             this.listenTo(this.model.get("poster"), "change", this.render);
         },
 
@@ -55,7 +55,7 @@ define([
             var view = this;
 
             var mediaDeferred = $.Deferred();
-            $.when(this.model.fetchPost(true)).done(function(){
+            $.when(PostAdapter.fetchPost(this.model, true)).done(function(){
                 mediaDeferred.resolve(view.model.get('fullImageData'));
             });
 

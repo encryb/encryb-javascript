@@ -7,6 +7,7 @@ define([
     'app/collections/gather/state',
     'app/collections/permissions',
     'app/models/friend',
+    'app/models/post',
     'app/views/wall',
     'app/views/createPost',
     'app/views/posts',
@@ -20,7 +21,7 @@ define([
     'utils/collection-paged',
     'utils/data-convert'
     ],
-function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel,
+function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
           Encryption, AppEngine, Dropbox, CollectionPaged, DataConvert) {
 
@@ -252,7 +253,49 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                FriendAdapter.deleteFriend(friendModel);
             });
 
-            wall.listenTo(App.vent, "post:created", FriendAdapter.saveManifests);
+            wall.listenTo(App.vent, "post:created", function(post, uiNotifyDeferred) {
+
+                var postDeferreds = [];
+                for (var i = 0; i < post.content.length; i++) {
+
+                    var content = post.content[i];
+
+
+                    var model = new PostModel();
+                    model.set("permissions", post.permissions);
+                    model.set("created", post.created);
+                    if (content.textData) {
+                        model.set("textData", content.textData);
+                        model.set("hasText", true);
+                    }
+                    if (content.resizedData) {
+                        model.set("resizedImageData", content.resizedData);
+                        model.set("fullImageData", content.fullsizeData);
+                        model.set("hasImage", true);
+                    }
+
+                    var deferred = PostAdapter.uploadPost(model);
+                    /*
+                    $.when(deferred).done(function() {
+                        createPostView.dropzone.emit("success", file);
+                    });
+                    */
+                    postDeferreds.push(deferred);
+                }
+
+                $.when.apply($, postDeferreds).then(function() {
+                    var posts = arguments;
+
+                    for (var i = 0; i < posts.length; i++) {
+                        var post = posts[i];
+                        if (post) {
+                            App.state.myPosts.create(post, {wait: true});
+                        }
+                    }
+                    uiNotifyDeferred.resolve();
+                    FriendAdapter.saveManifests();
+                });
+            });
 
             wall.listenTo(App.vent, "post:deleted", function(post) {
                 PostAdapter.deletePost(post);

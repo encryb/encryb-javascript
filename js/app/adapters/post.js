@@ -75,27 +75,27 @@ define([
                 encText = Encryption.encrypt(password,  "plain/text", text);
             }
 
-            var image = model.get('fullImageData');
-            var encImage = null;
-            if (image) {
-                var imageDict = DataConvert.dataUriToTypedArray(image);
-                encImage = Encryption.encrypt(password, imageDict['mimeType'], imageDict['data'], true);
-            }
-
             var resizedImage = model.get('resizedImageData');
-            var encResizedImage = null;
+            var encResizedImageDeferred = null;
             if (resizedImage) {
                 var resizedImageDict = DataConvert.dataUriToTypedArray(resizedImage);
-                encResizedImage = Encryption.encrypt(password, resizedImageDict['mimeType'], resizedImageDict['data'], true);
+                encResizedImageDeferred = Encryption.encryptAsync(password, resizedImageDict['mimeType'], resizedImageDict['data'].buffer);
             }
 
-            var model = this;
-            $.when(Storage.uploadPost(FOLDER_POSTS + postId, encText, encResizedImage, encImage)).done(function (update) {
+            var image = model.get('fullImageData');
+            var encImageDeferred = null;
+            if (image) {
+                var imageDict = DataConvert.dataUriToTypedArray(image);
+                encImageDeferred = Encryption.encryptAsync(password, imageDict['mimeType'], imageDict['data'].buffer);
+            }
 
-                update['postId'] = postId;
-                update['password'] = Sjcl.codec.bytes.fromBits(password);
-                model.set(update);
-                deferred.resolve();
+            $.when(encResizedImageDeferred, encImageDeferred).done(function(encResizedImage, encImage) {
+                $.when(Storage.uploadPost(FOLDER_POSTS + postId, encText, encResizedImage, encImage)).done(function (update) {
+                    update['postId'] = postId;
+                    update['password'] = Sjcl.codec.bytes.fromBits(password);
+                    model.set(update);
+                    deferred.resolve(model);
+                });
             });
             return deferred;
         },

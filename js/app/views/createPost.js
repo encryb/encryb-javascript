@@ -60,64 +60,55 @@ define([
             selectize.refreshOptions(true);
         },
 
-
         // $TODO: this should be moved outside of the view
         createPost: function(event) {
             event.preventDefault();
 
-            var createPostView = this;
-
             this.ui.postSubmitButton.addClass("hide");
             this.ui.loadingImage.removeClass("hide");
+
+            setTimeout(this._createPost.bind(this), 0);
+        },
+
+        _createPost: function() {
+            var createPostView = this;
 
             var selectize = this.ui.permissions[0].selectize;
             var permissions = selectize.getValue();
 
             var date = new Date().getTime();
 
-            // value for album / non
-            //this.ui.newPostText.val();
-
             var files = this.dropzone.files;
-            var postDeferreds = [];
+
+            var post = {created: date, permissions: permissions, content: [], text: this.ui.newPostText.val() };
 
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
 
-                var post = new Post();
-                post.set({created: date, permissions: permissions});
+                var content = {};
 
                 var postText = file.caption;
                 if (postText && postText.length > 0) {
-                    post.set({hasText: true, textData: postText});
+                    content['textData'] = postText;
                 }
 
                 var imageElement = $(file.previewElement).find(".dz-details").children("img").get(0);
                 if (imageElement) {
-                    var resizedData = ImageUtil.resize(imageElement, 300, 300);
-                    var fullsizeData = ImageUtil.resize(imageElement, 1920, 1440);
-                    post.set({hasImage: true, resizedImageData: resizedData, fullImageData: fullsizeData });
+                    var resized = ImageUtil.resize(imageElement, 1920, 1440);
+
+                    content['resizedData'] = resized.thumbnail;
+                    content['fullsizeData'] = resized.fullsize;
                 }
 
-                var deferred = PostAdapter.uploadPost(post);
-                $.when(deferred).done(function() {
-                    createPostView.dropzone.emit("success", file);
-                });
-                postDeferreds.push(deferred);
+                post.content.push(content);
             }
 
-            $.when.apply($, postDeferreds).then(function() {
-                var posts = arguments;
 
-                for (var i=0; i < posts.length; i++) {
-                    var post = posts[i];
-                    if (post) {
-                        App.state.myPosts.create(post, {wait:true});
-                    }
-                }
+            var creationDeferred = $.Deferred();
 
-                App.vent.trigger("post:created");
+            App.vent.trigger("post:created", post, creationDeferred);
 
+            $.when(creationDeferred).done(function() {
                 createPostView.ui.newPostForm.trigger('reset');
                 createPostView.ui.newPostDiv.removeClass("in");
                 createPostView.ui.newPostTrigger.show();
@@ -130,7 +121,6 @@ define([
                 createPostView.trigger("post:submit", post);
 
                 selectize.clear();
-
             });
         },
 

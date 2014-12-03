@@ -124,7 +124,7 @@ define([
         return imageData;
     }
 
-    exports.decryptImageDataAsync = function(packedData, password) {
+    exports.decryptImageDataAsync = function(password, packedData) {
         var deferred = $.Deferred();
 
         SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {

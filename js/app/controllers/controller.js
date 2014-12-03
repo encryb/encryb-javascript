@@ -253,47 +253,23 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                FriendAdapter.deleteFriend(friendModel);
             });
 
-            wall.listenTo(App.vent, "post:created", function(post, uiNotifyDeferred) {
+            wall.listenTo(App.vent, "post:created", function(postMeta, images, uiNotifyDeferred) {
+                var deferred = PostAdapter.uploadPost(postMeta, images);
+                $.when(deferred).done(function(postMeta, uploadedImages) {
 
-                var postDeferreds = [];
-                for (var i = 0; i < post.content.length; i++) {
-
-                    var content = post.content[i];
-
-
-                    var model = new PostModel();
-                    model.set("permissions", post.permissions);
-                    model.set("created", post.created);
-                    if (content.textData) {
-                        model.set("textData", content.textData);
-                        model.set("hasText", true);
+                    var postModel = new PostModel(postMeta);
+                    var contentCollection = new Backbone.Collection();
+                    for (var i=0; i<uploadedImages.length; i++) {
+                        var image = uploadedImages[i];
+                        var imageModel = new Backbone.Model(image);
+                        contentCollection.add(imageModel);
                     }
-                    if (content.resizedData) {
-                        model.set("resizedImageData", content.resizedData);
-                        model.set("fullImageData", content.fullsizeData);
-                        model.set("hasImage", true);
-                    }
+                    postModel.set("content", contentCollection);
 
-                    var deferred = PostAdapter.uploadPost(model);
-                    /*
-                    $.when(deferred).done(function() {
-                        createPostView.dropzone.emit("success", file);
-                    });
-                    */
-                    postDeferreds.push(deferred);
-                }
-
-                $.when.apply($, postDeferreds).then(function() {
-                    var posts = arguments;
-
-                    for (var i = 0; i < posts.length; i++) {
-                        var post = posts[i];
-                        if (post) {
-                            App.state.myPosts.create(post, {wait: true});
-                        }
-                    }
+                    var json = postModel.toJSON();
+                    App.state.myPosts.create(json, {wait: true, parse:true});
                     uiNotifyDeferred.resolve();
-                    FriendAdapter.saveManifests();
+                    //FriendAdapter.saveManifests();
                 });
             });
 

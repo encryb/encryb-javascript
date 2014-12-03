@@ -96,55 +96,51 @@ exports.shareDropbox = function(stats) {
     return deferred;
 }
 
-exports.getFullImagePath = function(id) {
-    return id + TAG_SPLIT + TAG_TYPE_FULLSIZE;
+exports.getFullImagePath = function(id, contentNumber) {
+    return id + TAG_SPLIT + TAG_TYPE_FULLSIZE + contentNumber;
 }
 
-exports.getResizedImagePath = function(id) {
-    return id + TAG_SPLIT + TAG_TYPE_RESIZED;
+exports.getResizedImagePath = function(id, contentNumber) {
+    return id + TAG_SPLIT + TAG_TYPE_RESIZED + contentNumber;
 }
 
-exports.getTextPath = function(id) {
-    return id + TAG_SPLIT + TAG_TYPE_TEXT;
+exports.getTextPath = function(id, contentNumber) {
+    return id + TAG_SPLIT + TAG_TYPE_TEXT + contentNumber;
 }
 
-exports.uploadPost = function (id, textData, resizedImageData, imageData) {
+exports.uploadPost = function (id, contentNumber, textData, resizedImageData, imageData) {
     var deferred = $.Deferred();
-
-    var createFolder = exports.createFolder(id);
 
     var deferredText = null;
     var deferredFullImage = null;
     var deferredResizedImage = null;
 
     if (textData) {
-        deferredText = exports.uploadDropbox(exports.getTextPath(id), textData).then(exports.shareDropbox);
+        deferredText = exports.uploadDropbox(exports.getTextPath(id, contentNumber), textData).then(exports.shareDropbox);
     }
     if (resizedImageData) {
-        deferredResizedImage = exports.uploadDropbox(exports.getResizedImagePath(id), resizedImageData).then(exports.shareDropbox);
+        deferredResizedImage = exports.uploadDropbox(exports.getResizedImagePath(id, contentNumber), resizedImageData).then(exports.shareDropbox);
     }
     if (imageData) {
-        deferredFullImage = exports.uploadDropbox(exports.getFullImagePath(id), imageData).then(exports.shareDropbox);
+        deferredFullImage = exports.uploadDropbox(exports.getFullImagePath(id, contentNumber), imageData).then(exports.shareDropbox);
     }
 
 
-    $.when(createFolder).done(function() {
-        var update = {};
+    var update = {};
 
-        $.when(deferredText, deferredResizedImage, deferredFullImage).done(function(textUrl, resizedImageUrl, imageUrl){
+    $.when(deferredText, deferredResizedImage, deferredFullImage).done(function(textUrl, resizedImageUrl, imageUrl){
 
-            if (textUrl != null) {
-                update['textUrl'] = textUrl;
-            }
-            if (resizedImageUrl != null) {
-                update['resizedImageUrl'] = resizedImageUrl;
-            }
-            if (imageUrl != null) {
-                update['fullImageUrl'] = imageUrl;
-            }
+        if (textUrl != null) {
+            update['textUrl'] = textUrl;
+        }
+        if (resizedImageUrl != null) {
+            update['resizedImageUrl'] = resizedImageUrl;
+        }
+        if (imageUrl != null) {
+            update['fullImageUrl'] = imageUrl;
+        }
 
-            deferred.resolve(update);
-        });
+        deferred.resolve(update);
     });
 
     return deferred;
@@ -159,8 +155,8 @@ exports.downloadUrl = function(downloadUrl) {
     xhr.open('GET', downloadUrl);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
-        var ecnryptedData = xhr.response;
-        deferred.resolve(ecnryptedData);
+        var encryptedData = xhr.response;
+        deferred.resolve(encryptedData);
     };
     xhr.onerror = function() {
         deferred.fail();

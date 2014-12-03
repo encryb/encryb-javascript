@@ -80,33 +80,40 @@ define([
 
             var files = this.dropzone.files;
 
-            var post = {created: date, permissions: permissions, content: [], text: this.ui.newPostText.val() };
+            var postMeta = {created: date, permissions: permissions};
+
+            var text = this.ui.newPostText.val();
+            if (text.length > 0) {
+                postMeta['textData'] = text;
+            }
+
+            var images = [];
 
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
 
-                var content = {};
+                var image = {};
 
                 var postText = file.caption;
                 if (postText && postText.length > 0) {
-                    content['textData'] = postText;
+                    image['textData'] = postText;
                 }
 
                 var imageElement = $(file.previewElement).find(".dz-details").children("img").get(0);
                 if (imageElement) {
                     var resized = ImageUtil.resize(imageElement, 1920, 1440);
 
-                    content['resizedData'] = resized.thumbnail;
-                    content['fullsizeData'] = resized.fullsize;
+                    image['resizedImageData'] = resized.thumbnail;
+                    image['fullImageData'] = resized.fullsize;
                 }
 
-                post.content.push(content);
+                images.push(image);
             }
 
 
             var creationDeferred = $.Deferred();
 
-            App.vent.trigger("post:created", post, creationDeferred);
+            App.vent.trigger("post:created", postMeta, images, creationDeferred);
 
             $.when(creationDeferred).done(function() {
                 createPostView.ui.newPostForm.trigger('reset');
@@ -117,8 +124,6 @@ define([
                 createPostView.ui.loadingImage.addClass("hide");
 
                 createPostView.dropzone.removeAllFiles();
-
-                createPostView.trigger("post:submit", post);
 
                 selectize.clear();
             });
@@ -154,6 +159,7 @@ define([
                 addRemoveLinks: true,
                 thumbnailWidth: null,
                 thumbnailHeight: null,
+                maxThumbnailFilesize: 100,
                 dictRemoveFile: '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
             });
             this.dropzone.on("addedfile", function(file) {

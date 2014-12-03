@@ -4,12 +4,13 @@ define([
     'backbone',
     'marionette',
     'app/app',
+    'app/adapters/post',
     'app/views/comments',
     'app/views/postContent',
     'app/views/upvotes',
     'require-text!app/templates/post.html'
 
-], function($, _, Backbone, Marionette, App, CommentsView, PostContentView, UpvotesView, PostTemplate) {
+], function($, _, Backbone, Marionette, App, PostAdapter, CommentsView, PostContentView, UpvotesView, PostTemplate) {
     var PostView = Marionette.LayoutView.extend({
         template: _.template(PostTemplate),
         regions: {
@@ -21,8 +22,13 @@ define([
             this.setupChildren();
         },
         setupChildren: function () {
-            var postContentView = new PostContentView({model: this.model.get('post')});
-            this.content.show(postContentView);
+
+            var postModel = this.model.get("post");
+            //check what happens if this view gets destroyed before fetchPost completes
+            $.when(PostAdapter.fetchPost(postModel, false)).done(function() {
+                var postContentView = new PostContentView({model: postModel});
+                this.content.show(postContentView);
+            }.bind(this));
 
             var upvotesModel = this.model.get("upvotes");
             var upvotesView = new UpvotesView({model: upvotesModel, collection: upvotesModel.get("friendUpvotes")});

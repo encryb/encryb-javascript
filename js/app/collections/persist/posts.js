@@ -7,7 +7,7 @@ define([
 var Posts = Backbone.Collection.extend({
     model: Post,
 
-    dropboxDatastore: new Backbone.DropboxDatastore('Version_10'),
+    dropboxDatastore: new Backbone.DropboxDatastore('Posts_1'),
 
     initialize: function() {
         this.dropboxDatastore.syncCollection(this);

@@ -28,17 +28,19 @@
     </div>
 </div>
 
+<% if (typeof textData !== "undefined") { %>
 <div class="row">
     <div class="col-xs-12">
-        <div class="post-container">
-            <% if (typeof resizedImageData !== "undefined" && resizedImageData != "pending") { %>
-                <div class="pull-left">
-                    <img id ="resizedImage" src='<%- resizedImageData %>' class="img-thumbnail">
-                </div>
-            <% } %>
-            <div class="post-text">
-                <%= formatText() %>
-            </div>
+        <div style="font-size: 1.2em; padding: 5px;">
+            <%- textData %>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<div class="row top-10">
+    <div class="col-xs-12">
+            <div class="postImages"></div>
         </div>
     </div>
 </div>

@@ -52,20 +52,18 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 this.settings(true);
                 return;
             }
-            var controller = this;
             $.when(App.getProfile()).done(function(profile){
                 if (profile.get('name').length == 0 || !profile.has('userId') ) {
-                    controller._profile(profile);
+                    this._profile(profile);
                     return;
                 }
                 var publicKey = Encryption.getEncodedKeys().publicKey;
                 if (publicKey != profile.get("publicKey")) {
-                    controller._profile(profile);
+                    this._profile(profile);
                     return;
                 }
                 callback(profile);
-            });
-
+            }.bind(this));
         },
 
 
@@ -83,10 +81,19 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
         },
 
 
+        _openChatWindow: function(chats, friend) {
+            var friendChat = chats.findWhere({friend: friend});
+            if (!friendChat) {
+                var chatLines = App.state.chats[friend.get("userId")]
+                var chat = new Backbone.Model({friend: friend});
+                chat.set("chatLines", chatLines);
+                chats.add(chat);
+            }
+        },
+
         _showWall: function (profile) {
 
             this._setupState(profile);
-            App.state.fetchAll();
 
             var headerPanel = new HeaderPanelView({model: profile});
             App.headerPanel.show(headerPanel);
@@ -103,6 +110,7 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 });
                 wall.posts.show(postsView);
 
+                // if user scrolls the bottom of the wall, add more posts to the wall
                 $(window).scroll(function() {
                     var postsBottom = $('#posts').prop("scrollHeight") + $("#posts").offset().top;
                     var pageBottom = $(window).scrollTop() + window.innerHeight;
@@ -111,7 +119,6 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                     }
                 });
             });
-
 
 
             var perms = new PermissionColl();
@@ -135,15 +142,10 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
 
             var chats = new Backbone.Collection();
 
+            // user clicked on chat icon in friends list
             wall.listenTo(App.vent, "friend:chat", function(friendModel) {
-                var friendChat = chats.findWhere({friend: friendModel});
-                if (!friendChat) {
-                    var chatLines = App.state.chats[friendModel.get("userId")]
-                    var chat = new Backbone.Model({friend: friendModel});
-                    chat.set("chatLines", chatLines);
-                    chats.add(chat);
-                }
-            });
+                this._openChatWindow(chats, friendModel);
+            }.bind(this));
 
             var chatsView = new ChatsView({
                 collection: chats
@@ -174,15 +176,10 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
             wall.listenTo(App.vent, "chat:submit", function(friend, text) {
                 FriendAdapter.sendChat(friend, text);
             });
-            wall.listenTo(App.vent, "chat:received", function(friend) {
-                var friendChat = chats.findWhere({friend: friend});
-                if (!friendChat) {
-                    var chatLines = App.state.chats[friend.get("userId")]
-                    var chat = new Backbone.Model({friend: friend});
-                    chat.set("chatLines", chatLines);
-                    chats.add(chat);
-                }
-            });
+            // Chat was received by friend adapter
+            wall.listenTo(App.vent, "chat:received", function(friendModel) {
+                this._openChatWindow(chats, friendModel);
+            }.bind(this));
             wall.listenTo(App.vent, "chat:confirm", function(friend, time) {
                FriendAdapter.sendReceiveConfirmation(friend, time);
             });
@@ -229,7 +226,6 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 });
             });
 
-            var controller = this;
             wall.listenTo(App.vent, "invite:send", function(inviteModel) {
                 $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
                     AppEngine.invite(friendModel);
@@ -294,12 +290,10 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 }
             });
 
-
-
             $.when(App.state.fetchAll()).done(function(){
-                controller._processAccepts();
-                controller._processInvites();
-            });
+                this._processAccepts();
+                this._processInvites();
+            }.bind(this));
 
         },
 

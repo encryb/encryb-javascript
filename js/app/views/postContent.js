@@ -17,18 +17,6 @@ define([
             PostImageTemplate, PostContentTemplate){
 
 
-    var PostImageView = Marionette.ItemView.extend({
-        template: _.template(PostImageTemplate),
-        className: "postImage",
-        initialize: function() {
-            this.listenTo(this.model, "change", this.render);
-        },
-        triggers: {
-            "click .pointer-hand" : "image:click"
-        }
-});
-
-
     var PostContentView = Marionette.ItemView.extend({
 
         template: _.template( PostContentTemplate ),
@@ -62,7 +50,6 @@ define([
         },
 
         events: {
-            "click #resizedImage": "showImage",
             "click .post-thumbnail": "clickedPosterPicture"
         },
 
@@ -77,18 +64,13 @@ define([
             var postImagesElement = this.ui.postImages;
             var children = [];
 
-
-            var blah = this;
-
             if (this.model.has("content")) {
                 var collection = this.model.get("content");
                 var isFirst = true;
-                collection.each(function (model) {
+                collection.each(function (model, index) {
                     var imageElement = $(this.postImageTemplate(model.attributes));
-
-
                     imageElement.click(function() {
-                        this.showImage();
+                        this.showImage(index);
                     }.bind(this));
 
                     imageElement.css("background-image", "url(" + model.escape("resizedImageData") + ")");
@@ -133,12 +115,12 @@ define([
 
         },
 
-        showImage: function(){
+        showImage: function(index){
             var swipeboxArgs = [];
             this.model.get("content").each(function(content) {
                 swipeboxArgs.push({href:content.getFullImage(),title:content.get("textData")|| ""})
             });
-            $.swipebox(swipeboxArgs);
+            $.swipebox(swipeboxArgs, {initialIndexOnArray:index});
         },
 
         clickedPosterPicture: function() {
@@ -147,8 +129,6 @@ define([
             }
             App.vent.trigger("friend:selected", this.model.get("poster"));
         }
-
-
     });
     return PostContentView;
 });

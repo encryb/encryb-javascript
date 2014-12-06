@@ -5,17 +5,18 @@ define([
 
     var Post = Backbone.Model.extend({
 
-        constructor: function() {
-            Backbone.Model.apply(this, arguments);
-        },
+        nonPersistent: [ "caption", "thumbnail", "image"],
 
-        nonPersistent: [ "resizedImageData", "fullImageData", "textData"],
-
-        // Return a copy of the model's `attributes` object.
         toJSON: function() {
 
-            var json = _.omit(this.attributes, ["content"]);
+            var exclude = ["content"];
+            // we uploaded text to a file, do not store it in datastore as well
+            if (this.has("textUrl")) {
+                exclude.push("text");
+            }
+            var json = _.omit(this.attributes, exclude);
 
+            // $TODO: FIX
             // toJSON gets called by two different things,
             // so we return json in 2 different ways
             if (!this.attributes.hasOwnProperty("content")) {

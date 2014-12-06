@@ -73,7 +73,7 @@ define([
                         this.showImage(index);
                     }.bind(this));
 
-                    imageElement.css("background-image", "url(" + model.escape("resizedImageData") + ")");
+                    imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
                     var ratio = model.resizedWidth / model.resizedHeight;
                     var cols, rows;
                     if (ratio > 2.5) {
@@ -118,7 +118,7 @@ define([
         showImage: function(index){
             var swipeboxArgs = [];
             this.model.get("content").each(function(content) {
-                swipeboxArgs.push({href:content.getFullImage(),title:content.get("textData")|| ""})
+                swipeboxArgs.push({href:content.getFullImage(),title:content.get("caption")|| ""})
             });
             $.swipebox(swipeboxArgs, {initialIndexOnArray:index});
         },

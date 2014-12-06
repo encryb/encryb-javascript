@@ -8,113 +8,152 @@ define([
 
 ], function (Backbone, Sjcl, Storage, Encryption, DataConvert, Random) {
 
+    // $CONFIG
     var FOLDER_POSTS = "posts/";
 
-    function _uploadContent(content, password, folderId, contentNumber) {
+    function _uploadContent(content, password, folderPath, contentNumber) {
 
         var deferred = $.Deferred();
 
-        var text = content.textData;
-        var resizedImage = content.resizedImageData;
-        var image = content.fullImageData;
+        var caption = content.get("caption");
+        var thumbnail = content.get("thumbnail");
+        var image = content.get("image");
 
-        var encText = null;
-        if (text) {
-            encText = Encryption.encrypt(password,  "plain/text", text);
+        var uploadCaption = null;
+        if (caption) {
+            var captionPath = Storage.getCaptionPath(folderPath, contentNumber);
+            var encCaption = Encryption.encrypt(password, "plain/text", caption);
+
+            var setCaptionUrl = function(url) {
+                content.set("captionUrl", url);
+            };
+
+            uploadCaption = Storage.uploadDropbox(captionPath, encCaption)
+                        .then(Storage.shareDropbox)
+                        .then(setCaptionUrl);
         }
 
-        var encResizedImageDeferred = null;
-        if (resizedImage) {
-            var resizedImageDict = DataConvert.dataUriToTypedArray(resizedImage);
-            encResizedImageDeferred = Encryption.encryptAsync(password, resizedImageDict['mimeType'], resizedImageDict['data'].buffer);
+        var uploadThumbnail = null;
+        if (thumbnail) {
+
+            var thumbPath = Storage.getThumbnailPath(folderPath, contentNumber);
+            var setThumbnailUrl = function(url) {
+                content.set("thumbnailUrl", url);
+            };
+
+            var thumbnailDict = DataConvert.dataUriToTypedArray(thumbnail);
+            uploadThumbnail = Encryption.encryptAsync(password, thumbnailDict['mimeType'], thumbnailDict['data'].buffer)
+                              .then(Storage.uploadDropbox.bind(null, thumbPath))
+                              .then(Storage.shareDropbox)
+                              .then(setThumbnailUrl);
         }
 
-        var encImageDeferred = null;
+        var uploadImage = null;
         if (image) {
+            var imagePath = Storage.getImagePath(folderPath, contentNumber);
+            var setImageUrl = function(url) {
+                content.set("imageUrl", url);
+            };
+
             var imageDict = DataConvert.dataUriToTypedArray(image);
-            encImageDeferred = Encryption.encryptAsync(password, imageDict['mimeType'], imageDict['data'].buffer);
-        }
+            uploadThumbnail = Encryption.encryptAsync(password, imageDict['mimeType'], imageDict['data'].buffer)
+                              .then(Storage.uploadDropbox.bind(null, imagePath))
+                              .then(Storage.shareDropbox)
+                              .then(setImageUrl);
+            }
 
-        $.when(encResizedImageDeferred, encImageDeferred).done(function(encResizedImage, encImage) {
-            $.when(Storage.uploadPost(FOLDER_POSTS + folderId, contentNumber, encText, encResizedImage, encImage)).done(function (result) {
-                $.extend(content, result);
-                deferred.resolve();
-            });
-        });
-        return deferred.promise();
-    };
-
-    var setImage = function (content, resizedImage) {
-        var deferred = $.Deferred();
-        content.set("resizedImageData", resizedImage);
-
-        var img = new Image();
-        img.onload = function () {
-            content.resizedWidth = this.width;
-            content.resizedHeight = this.height;
+        $.when(uploadCaption, uploadThumbnail, uploadImage).done(function() {
             deferred.resolve();
-        }
-        img.src = resizedImage;
-
+        });
         return deferred.promise();
     }
 
 
+    var decryptText = function(password, encryptedData) {
+        var deferred = $.Deferred();
+        var decrypted = Encryption.decryptTextData(encryptedData, password);
+        deferred.resolve(decrypted);
+        return deferred.promise();
+    }
 
     var PostAdapter = {
 
-        fetchPost: function(model) {
+        fetchPost: function(post) {
 
             var deferred = $.Deferred();
-            var password = model.get('password');
+            var password = post.get('password');
             var deferreds = [];
 
-            if (model.get('textData') == null && model.has('textUrl')) {
-                var textDeferred = Storage.downloadUrl(model.get('textUrl'))
-                    .then(function(encryptedText){
-                        var deferred = $.Deferred();
-                        model.set("textData", Encryption.decryptTextData(encryptedText, password));
-                        deferred.resolve();
-                        return deferred.promise();
-                    });
+            if (!post.has('text') && post.has('textUrl')) {
+
+                var setText = function(model, text) {
+                    var deferred = $.Deferred();
+                    model.set("text", text);
+                    deferred.resolve();
+                    return deferred.promise();
+                }
+                var textDeferred = Storage.downloadUrl(post.get('textUrl'))
+                    .then(Encryption.decryptTextDataAsync.bind(null, password))
+                    .then(setText.bind(null, post));
                 deferreds.push(textDeferred);
             }
 
-            if (model.has("content")) {
+            if (post.has("content")) {
+                var contentList = post.get("content");
+                contentList.each(function (content) {
+                    if (!content.has("caption") && content.has("captionUrl")) {
 
-                var content = model.get('content');
-                content.each(function (c) {
-                    if (!c.has('textData') && c.has("textUrl")) {
-                        var textUrl = c.get('textUrl');
-                        var textDeferred = Storage.downloadUrl(textUrl)
-                            .then(function(encryptedData) {
-                                var deferred = $.Deferred();
-                                var decrypted = Encryption.decryptTextData(encryptedData, password);
-                                c.set("textData", decrypted);
-                                deferred.resolve();
-                                return deferred.promise();
-                            });
-                        deferreds.push(textDeferred);
+                        var setCaption = function(model, caption) {
+                            var deferred = $.Deferred();
+                            model.set("caption", caption);
+                            deferred.resolve();
+                            return deferred.promise();
+                        }
+
+                        var captionUrl = content.get("captionUrl");
+                        var captionDeferred = Storage.downloadUrl(captionUrl)
+                            .then(Encryption.decryptTextDataAsync.bind(null, password))
+                            .then(setCaption.bind(null, content));
+                        deferreds.push(captionDeferred);
                     }
-                    if (!c.has('resizedImageData') && c.has("resizedImageUrl")) {
-                        var resizedImageUrl = c.get('resizedImageUrl');
+
+                    if (!content.has("thumbnail") && content.has("thumbnailUrl")) {
+
+                        var setImage = function(content, resizedImage) {
+                            var deferred = $.Deferred();
+                            content.set("thumbnail", resizedImage);
+
+                            var img = new Image();
+                            img.onload = function () {
+                                content.resizedWidth = this.width;
+                                content.resizedHeight = this.height;
+                                deferred.resolve();
+                            };
+                            img.src = resizedImage;
+
+                            return deferred.promise();
+                        }
+
+                        var resizedImageUrl = content.get("thumbnailUrl");
                         var resizedImageDeferred = Storage.downloadUrl(resizedImageUrl)
-                            .then(Encryption.decryptImageDataAsync.bind(null, password))
-                            .then(setImage.bind(null, c));
+                                             .then(Encryption.decryptImageDataAsync.bind(null, password))
+                                             .then(setImage.bind(null, content));
 
                         deferreds.push(resizedImageDeferred);
                     }
-                    c.getFullImage = function () {
+
+                    // setup a function that fetches the full size image and attach it directly to content object
+                    content.getFullImage = function () {
                         var deferred = $.Deferred();
-                        if (c.has("fullImageData")) {
-                            deferred.resolve(c.get("fullImageData"));
+                        if (content.has("image")) {
+                            deferred.resolve(content.get("image"));
                         }
                         else {
-                            var fullImageUrl = c.get('fullImageUrl');
+                            var fullImageUrl = content.get("imageUrl");
                             Storage.downloadUrl(fullImageUrl)
                                 .then(Encryption.decryptImageDataAsync.bind(null, password))
                                 .done(function (fullImage) {
-                                    c.set('fullImageData', fullImage);
+                                    content.set("image", fullImage);
                                     deferred.resolve(fullImage);
                                 });
                         }
@@ -130,25 +169,55 @@ define([
             return deferred.promise();
         },
 
-        uploadPost: function(postMeta, images) {
+        uploadPost: function(post) {
             var deferred = $.Deferred();
 
             var password = Sjcl.random.randomWords(8,1);
             var folderId = Random.makeId();
+            var folderPath = FOLDER_POSTS + folderId;
 
-            $.when(Storage.createFolder(FOLDER_POSTS + folderId)).done( function () {
-                var uploads = [];
-                for (var i = 0; i < images.length; i++) {
-                    var image = images[i];
-                    var upload = _uploadContent(image, password, folderId, i);
-                    uploads.push(upload);
+
+            var uploads = [];
+
+            // $CONFIG
+            // If text is longer than x, store it in file, rather than in the datastore
+            var haveLargeText = post.has("text") && post.get("text").length > 200;
+            var contentList = post.get("content");
+
+            // we have nothing to upload
+            if (!haveLargeText && (!contentList || contentList.length == 0)) {
+                return;
+            }
+
+            $.when(Storage.createFolder(folderPath)).done( function () {
+
+                var uploadText = null;
+                if (haveLargeText) {
+                    var text = post.get("text");
+                    var textPath = Storage.getTextPath(folderPath);
+                    var encText = Encryption.encrypt(password, "plain/text", text);
+
+                    var setTextUrl = function(url) {
+                        post.set("textUrl", url);
+                    };
+
+                    uploadText = Storage.uploadDropbox(textPath, encText)
+                        .then(Storage.shareDropbox)
+                        .then(setTextUrl);
+                    uploads.push(uploadText);
+                }
+
+                if (contentList) {
+                    contentList.each(function(content, index) {
+                        var upload = _uploadContent(content, password, folderPath, index);
+                        uploads.push(upload);
+                    })
                 }
 
                 $.when.apply($, uploads).done(function () {
-                    postMeta["password"] = Sjcl.codec.bytes.fromBits(password);
-                    postMeta["folderId"] = folderId;
-                    console.log("UploadPost", JSON.stringify(postMeta));
-                    deferred.resolve(postMeta, images);
+                    post.set("password", Sjcl.codec.bytes.fromBits(password));
+                    post.set("folderId", folderId);
+                    deferred.resolve();
                 });
             });
 

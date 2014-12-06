@@ -249,23 +249,28 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                FriendAdapter.deleteFriend(friendModel);
             });
 
-            wall.listenTo(App.vent, "post:created", function(postMeta, images, uiNotifyDeferred) {
-                var deferred = PostAdapter.uploadPost(postMeta, images);
-                $.when(deferred).done(function(postMeta, uploadedImages) {
+            wall.listenTo(App.vent, "post:created", function(postMeta, contentList, uiNotifyDeferred) {
 
-                    var postModel = new PostModel(postMeta);
-                    var contentCollection = new Backbone.Collection();
-                    for (var i=0; i<uploadedImages.length; i++) {
-                        var image = uploadedImages[i];
-                        var imageModel = new Backbone.Model(image);
-                        contentCollection.add(imageModel);
-                    }
-                    postModel.set("content", contentCollection);
 
-                    var json = postModel.toJSON();
-                    App.state.myPosts.create(json, {wait: true, parse:true});
+                var postModel = new PostModel(postMeta);
+                var contentCollection = new Backbone.Collection();
+                for (var i=0; i<contentList.length; i++) {
+                    var content = contentList[i];
+                    var contentModel = new Backbone.Model(content);
+                    contentCollection.add(contentModel);
+                }
+                postModel.set("content", contentCollection);
+
+                var upload = PostAdapter.uploadPost(postModel);
+                $.when(upload).done(function() {
+
+                    App.state.myPosts.add(postModel);
                     uiNotifyDeferred.resolve();
-                    //FriendAdapter.saveManifests();
+
+                    // made sure we get get Id for this post before we save
+                    $.when(postModel.save()).done(function() {
+                        FriendAdapter.saveManifests();
+                    });
                 });
             });
 

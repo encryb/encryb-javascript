@@ -80,40 +80,41 @@ define([
 
             var files = this.dropzone.files;
 
-            var postMeta = {created: date, permissions: permissions};
+            var post = {created: date, permissions: permissions};
 
             var text = this.ui.newPostText.val();
             if (text.length > 0) {
-                postMeta['textData'] = text;
+                post['text'] = text;
             }
 
-            var images = [];
+            var contentList = [];
 
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
 
-                var image = {};
+                var content = {};
 
-                var postText = file.caption;
-                if (postText && postText.length > 0) {
-                    image['textData'] = postText;
+                var caption = file.caption;
+                if (caption && caption.length > 0) {
+                    content['caption'] = caption;
                 }
 
                 var imageElement = $(file.previewElement).find(".dz-details").children("img").get(0);
                 if (imageElement) {
+                    // $CONFIG
                     var resized = ImageUtil.resize(imageElement, 1920, 1440);
 
-                    image['resizedImageData'] = resized.thumbnail;
-                    image['fullImageData'] = resized.fullsize;
+                    content['thumbnail'] = resized.thumbnail;
+                    content['image'] = resized.fullsize;
                 }
 
-                images.push(image);
+                contentList.push(content);
             }
 
 
             var creationDeferred = $.Deferred();
 
-            App.vent.trigger("post:created", postMeta, images, creationDeferred);
+            App.vent.trigger("post:created", post, contentList, creationDeferred);
 
             $.when(creationDeferred).done(function() {
                 createPostView.ui.newPostForm.trigger('reset');

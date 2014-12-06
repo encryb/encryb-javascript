@@ -142,5 +142,14 @@ define([
 
         return decrypted;
     }
+
+    // $TODO, fake for now
+    exports.decryptTextDataAsync = function(password, packedData) {
+        var deferred = $.Deferred();
+        var decrypted = exports.decryptTextData(packedData, password);
+        deferred.resolve(decrypted);
+        return deferred.promise();
+    }
+
     return exports;
 });

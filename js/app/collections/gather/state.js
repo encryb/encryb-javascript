@@ -101,6 +101,16 @@ define([
         },
 
         onMyPostAdded: function(post) {
+            // if post was just created, it might not have id (assigned by the datastore)
+            // in that case, save the post first.
+            if (post.has("id")){
+                return this._onMyPostAdded(post);
+            }
+            $.when(post.save()).done(function(){
+                this._onMyPostAdded(post);
+            }.bind(this));
+        },
+        _onMyPostAdded: function(post) {
             var wrapper = new PostWrapper();
             wrapper.setMyPost(post, this.myModel);
             this.posts.add(wrapper);

@@ -250,8 +250,6 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
             });
 
             wall.listenTo(App.vent, "post:created", function(postMeta, contentList, uiNotifyDeferred) {
-
-
                 var postModel = new PostModel(postMeta);
                 var contentCollection = new Backbone.Collection();
                 for (var i=0; i<contentList.length; i++) {

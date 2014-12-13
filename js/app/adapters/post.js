@@ -68,14 +68,6 @@ define([
         return deferred.promise();
     }
 
-
-    var decryptText = function(password, encryptedData) {
-        var deferred = $.Deferred();
-        var decrypted = Encryption.decryptTextData(encryptedData, password);
-        deferred.resolve(decrypted);
-        return deferred.promise();
-    }
-
     var PostAdapter = {
 
         fetchPost: function(post) {
@@ -225,7 +217,9 @@ define([
         },
 
         deletePost: function(model) {
-            Storage.remove(FOLDER_POSTS + model.get('folderId'));
+            if (model.has('folderId')) {
+                Storage.remove(FOLDER_POSTS + model.get('folderId'));
+            }
         }
     };
     return PostAdapter;

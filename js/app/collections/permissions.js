@@ -26,11 +26,19 @@ define([
         },
 
         addFriend: function (friend) {
-            var permissions = this;
-            $.when(friend.save()).done(function(){
-                var permission = new PermissionModel({id: friend.get('id'), display: friend.get('name')});
-                permissions.add(permission);
-            });
+            if (friend.has("id")){
+                this._addFriend(friend);
+            }
+            else {
+                $.when(friend.save()).done(function () {
+                    this._addFriend(friend);
+                }.bind(this));
+            }
+        },
+
+        _addFriend: function (friend) {
+            var permission = new PermissionModel({id: friend.get('id'), display: friend.get('name')});
+            this.add(permission);
         },
 
         removeFriend: function (friend) {

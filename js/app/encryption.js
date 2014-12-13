@@ -11,6 +11,14 @@ define([
     var _OLD_KEY = "global";
 
 
+
+    /** Encrypt a binary array or a string.
+     * @param {String|bitArray} key The password or key.
+     * @param {String} mimeType Mime Type of data or null.
+     * @param {String|Array} [data] Data to encrypt.
+     * @param {Boolean} [isBinary] If data is string or a binary array.
+     * @return {ArrayBuffer} ArrayBuffer of encrypted data.
+     */
     exports.encrypt = function(key, mimeType, data, isBinary) {
         if (isBinary) {
             data = Sjcl.codec.bytes.toBits(data);
@@ -18,8 +26,9 @@ define([
         var encrypted = Sjcl.json._encrypt(key, data);
 
         var encryptedData = SjclConvert.convertFromBits(encrypted);
-        encryptedData['mimeType'] = mimeType;
-
+        if (mimeType) {
+            encryptedData['mimeType'] = mimeType;
+        }
         var buf = Encoding.encode(encryptedData);
 
         return buf;
@@ -51,19 +60,24 @@ define([
 
         var publicKeyEncoded = Sjcl.codec.hex.fromBits(publicKey.x) + Sjcl.codec.hex.fromBits(publicKey.y);
         var secretKeyEncoded = Sjcl.codec.hex.fromBits(secretKey);
-        exports.saveKeys(secretKeyEncoded, publicKeyEncoded);
+
+        var databaseKey = Sjcl.random.randomWords(8,1);
+        var databaseKeyEncoded = JSON.stringify(databaseKey);
+
+        exports.saveKeys(secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded);
     }
 
-    exports.saveKeys = function(secretKeyEncoded, publicKeyEncoded) {
+    exports.saveKeys = function(secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded) {
         localStorage.setItem("secretKey", secretKeyEncoded);
         localStorage.setItem("publicKey", publicKeyEncoded);
-
+        localStorage.setItem("databaseKey", databaseKeyEncoded);
     }
 
 
     exports.removeKeys = function() {
         localStorage.removeItem("secretKey");
         localStorage.removeItem("publicKey");
+        localStorage.removeItem("databaseKey");
     };
 
     exports.publicHexToKey = function(publicKeyEncoded) {
@@ -84,23 +98,34 @@ define([
     exports.getKeys = function() {
         var secretKeyEncoded = localStorage.getItem("secretKey");
         var publicKeyEncoded = localStorage.getItem("publicKey");
+        var databaseKeyEncoded = localStorage.getItem("databaseKey");
 
         if (secretKeyEncoded === null || publicKeyEncoded === null ) {
             return null;
         }
+        if (databaseKeyEncoded === null) {
+            var databaseKeyBits = Sjcl.random.randomWords(8,1);
+            var databaseKey = Sjcl.codec.bytes.fromBits(databaseKeyBits);
+            databaseKeyEncoded = JSON.stringify(databaseKey);
+            localStorage.setItem("databaseKey", databaseKeyEncoded);
+        }
 
         return {
             publicKey: exports.publicHexToKey(publicKeyEncoded),
-            secretKey: exports.secretHexToKey(secretKeyEncoded)
+            secretKey: exports.secretHexToKey(secretKeyEncoded),
+            databaseKey: JSON.parse(databaseKeyEncoded)
         };
     };
 
     exports.getEncodedKeys = function() {
         var secretKeyEncoded = localStorage.getItem("secretKey");
         var publicKeyEncoded = localStorage.getItem("publicKey");
+        var databaseKeyEncoded = localStorage.getItem("databaseKey");
+
         return {
             publicKey: publicKeyEncoded,
-            secretKey: secretKeyEncoded
+            secretKey: secretKeyEncoded,
+            databaseKey: databaseKeyEncoded
         };
 
     };

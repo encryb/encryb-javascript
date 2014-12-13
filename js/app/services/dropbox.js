@@ -1,9 +1,11 @@
 define([
   'jquery',
+  'underscore',
   'dropbox',
   'backbone.dropboxDatastore',
-  'app/constants'
-], function($, Dropbox, DropboxDatastore, Constants){
+  'app/constants',
+  'app/encryption'
+], function($, _, Dropbox, DropboxDatastore, Constants, Encryption){
 
 var exports = {};
 

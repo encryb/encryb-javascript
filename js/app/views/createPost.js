@@ -80,8 +80,10 @@ define([
 
             var files = this.dropzone.files;
 
-            var post = {created: date, permissions: permissions};
-
+            var post = {created: date};
+            if (permissions.length > 0) {
+                post['permissions'] = permissions;
+            }
             var text = this.ui.newPostText.val();
             if (text.length > 0) {
                 post['text'] = text;

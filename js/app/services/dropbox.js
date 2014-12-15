@@ -23,6 +23,7 @@ var TAG_TYPE_TEXT = "text";
 var TAG_TYPE_RESIZED = "resized";
 var TAG_TYPE_FULLSIZE = "fullsize";
 var TAG_TYPE_CAPTION= "caption";
+var TAG_TYPE_DATA = "data";
 var TAG_SPLIT = "/";
 
 exports.createFolder = function(path) {
@@ -117,6 +118,9 @@ exports.getCaptionPath = function(id, contentNumber) {
     return id + TAG_SPLIT + TAG_TYPE_CAPTION + contentNumber;
 };
 
+exports.getDataPath = function(id, contentNumber) {
+    return id + TAG_SPLIT + TAG_TYPE_DATA + contentNumber;
+};
 
 exports.downloadUrl = function(downloadUrl) {
 

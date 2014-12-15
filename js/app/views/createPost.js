@@ -91,6 +91,7 @@ define([
 
             var contentList = [];
 
+            var deferreds = [];
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
 
@@ -101,34 +102,50 @@ define([
                     content['caption'] = caption;
                 }
 
-                var imageElement = $(file.previewElement).find(".dz-details").children("img").get(0);
-                if (imageElement) {
-                    // $CONFIG
-                    var resized = ImageUtil.resize(imageElement, 1920, 1440);
+                var loadDeferred = $.Deferred();
+                deferreds.push(loadDeferred);
+                var fileReader = new FileReader();
+                fileReader.onload = (function(_file, _fileReader, _loadDeferred, _content) {
+                    return function() {
 
-                    content['thumbnail'] = resized.thumbnail;
-                    content['image'] = resized.fullsize;
-                }
+                        if (_file.type.match(/image.*/)) {
+                            var image = new Image();
+                            image.src = _fileReader.result;
+
+                            image.onload = function () {
+                                var resized = ImageUtil.resize(image, 1920, 1440);
+                                _content['thumbnail'] = resized.thumbnail;
+                                _content['image'] = resized.fullsize;
+                                _loadDeferred.resolve();
+                            }
+                        }
+                        else {
+                            _content['data'] = _fileReader.result;
+                            _loadDeferred.resolve();
+                        }
+                    }
+                })(file, fileReader, loadDeferred, content);
+                fileReader.readAsDataURL(file);
 
                 contentList.push(content);
             }
 
+            $.when.apply($, deferreds).done(function() {
+                var creationDeferred = $.Deferred();
+                App.vent.trigger("post:created", post, contentList, creationDeferred);
 
-            var creationDeferred = $.Deferred();
+                $.when(creationDeferred).done(function () {
+                    createPostView.ui.newPostForm.trigger('reset');
+                    createPostView.ui.newPostDiv.removeClass("in");
+                    createPostView.ui.newPostTrigger.show();
 
-            App.vent.trigger("post:created", post, contentList, creationDeferred);
+                    createPostView.ui.postSubmitButton.removeClass("hide");
+                    createPostView.ui.loadingImage.addClass("hide");
 
-            $.when(creationDeferred).done(function() {
-                createPostView.ui.newPostForm.trigger('reset');
-                createPostView.ui.newPostDiv.removeClass("in");
-                createPostView.ui.newPostTrigger.show();
+                    createPostView.dropzone.removeAllFiles();
 
-                createPostView.ui.postSubmitButton.removeClass("hide");
-                createPostView.ui.loadingImage.addClass("hide");
-
-                createPostView.dropzone.removeAllFiles();
-
-                selectize.clear();
+                    selectize.clear();
+                });
             });
         },
 
@@ -160,9 +177,8 @@ define([
                 autoProcessQueue: false,
                 url: "nope",
                 addRemoveLinks: true,
-                thumbnailWidth: null,
-                thumbnailHeight: null,
-                maxThumbnailFilesize: 100,
+                thumbnailWidth: 120,
+                maxThumbnailFilesize: 40,
                 dictRemoveFile: '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
             });
             this.dropzone.on("addedfile", function(file) {

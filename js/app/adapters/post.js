@@ -18,6 +18,7 @@ define([
         var caption = content.get("caption");
         var thumbnail = content.get("thumbnail");
         var image = content.get("image");
+        var data = content.get("data");
 
         var uploadCaption = null;
         if (caption) {
@@ -60,9 +61,24 @@ define([
                               .then(Storage.uploadDropbox.bind(null, imagePath))
                               .then(Storage.shareDropbox)
                               .then(setImageUrl);
-            }
+        }
 
-        $.when(uploadCaption, uploadThumbnail, uploadImage).done(function() {
+        var uploadData = null;
+        if (data) {
+            var dataPath = Storage.getDataPath(folderPath, contentNumber);
+            var setDataUrl = function(url) {
+                content.set("dataUrl", url);
+            };
+
+            var dataDict = DataConvert.dataUriToTypedArray(data);
+            console.log(dataDict);
+            uploadThumbnail = Encryption.encryptAsync(password, dataDict['mimeType'], dataDict['data'].buffer)
+                .then(Storage.uploadDropbox.bind(null, dataPath))
+                .then(Storage.shareDropbox)
+                .then(setDataUrl);
+        }
+
+        $.when(uploadCaption, uploadThumbnail, uploadImage, uploadData).done(function() {
             deferred.resolve();
         });
         return deferred.promise();

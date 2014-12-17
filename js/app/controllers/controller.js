@@ -292,6 +292,14 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                     FriendAdapter.saveManifests();
                 }
             });
+            wall.listenTo(App.vent, "file:download", function(content, password){
+
+                Dropbox.downloadUrl(content.get('dataUrl'))
+                    .then(Encryption.decryptImageDataAsync.bind(null, password))
+                    .done(function(data) {
+                        startDownload(data, content.get("filename"));
+                    });
+            });
 
             $.when(App.state.fetchAll()).done(function(){
                 this._processAccepts();

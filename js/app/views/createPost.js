@@ -121,6 +121,8 @@ define([
                         }
                         else {
                             _content['data'] = _fileReader.result;
+                            _content['filename'] = _file.name;
+                            console.log("content", content);
                             _loadDeferred.resolve();
                         }
                     }

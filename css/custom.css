@@ -356,7 +356,7 @@ ul.collection-list li {
     opacity: .9;
 }
 
-
+.postFiles,
 .postImages {
     margin: 0 auto;
     position: relative;
@@ -373,6 +373,10 @@ ul.collection-list li {
     display : block;
 }
 
+.postFile {
+    background: #ebebeb url("../img/upload.png") no-repeat 50% 80%;
+}
+
 .picture-text {
     display: none;
     position: absolute;
@@ -385,3 +389,10 @@ ul.collection-list li {
     padding: 5px;
     max-height: 50%;
 }
+
+.border-file {
+    border: 2px solid #909090;
+    border-radius: 5px;
+}
+
+

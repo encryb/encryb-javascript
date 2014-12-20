@@ -404,7 +404,7 @@
         var $el = $(el);
         var gridId = $el.attr('grid-id');
         if (gridId === undefined) {
-            gridId = _.size(grids.length);
+            gridId = _.size(grids);
             $el.attr('grid-id', gridId);
         }
         return gridId;

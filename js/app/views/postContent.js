@@ -82,21 +82,23 @@ define([
                         imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
                         var ratio = model.resizedWidth / model.resizedHeight;
                         var cols, rows;
-                        if (ratio > 2.5) {
-                            cols = 4;
-                            rows = 2;
+                        if (ratio > 2) {
+                            cols = 8;
+                            rows = 4;
                         }
-                        else if (ratio < 0.5) {
-                            cols = 3;
-                            rows = 3;
+                        else if (ratio < 1) {
+                            cols = 6;
+                            rows = 8;
                         }
                         else {
-                            cols = 4;
-                            rows = 3;
+                            cols = 7;
+                            rows = 4;
                         }
                         if (isFirst) {
-                            cols = cols * 2;
-                            rows = rows * 2;
+                            if (ratio >= 1) {
+                                cols = cols * 2;
+                                rows = rows * 2;
+                            }
                             isFirst = false;
                         }
                         $.data(imageElement, 'grid-columns', cols);
@@ -118,16 +120,16 @@ define([
                 }, this);
             }
 
-            setTimeout(function() {
+            setTimeout(function () {
                 postImagesElement.cloudGrid({
                     children: imageChildren,
-                    gridGutter: 2,
-                    gridSize: 30
+                    gridGutter: 3,
+                    gridSize: 20
                 });
 
                 postFilesElement.cloudGrid({
                     children: fileChildren,
-                    gridGutter: 2,
+                    gridGutter: 3,
                     gridSize: 30
                 });
 
@@ -136,7 +138,6 @@ define([
                     postFilesElement.cloudGrid('reflowContent');
                 })
             }, 0);
-
         },
 
         showImage: function(index){

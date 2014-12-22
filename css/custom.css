@@ -391,8 +391,7 @@ ul.collection-list li {
 }
 
 .border-file {
-    border: 2px solid #909090;
-    border-radius: 5px;
-}
+    background-color: #fcfcfc;
+    border: 2px solid #909090;}
 
 

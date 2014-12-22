@@ -109,11 +109,20 @@ define([
                     if (model.has("filename")) {
                         var fileElement = $(this.postFileTemplate(model.attributes));
                         fileElement.click(function () {
+                            if (!model.has("data")) {
+                                fileElement.find(".downloadImage").addClass("hide");
+                                fileElement.find(".downloadLoadingImage").removeClass("hide");
+                            }
                             App.vent.trigger("file:download", model, password);
                         }.bind(this));
 
-                        $.data(fileElement, 'grid-columns', 5);
-                        $.data(fileElement, 'grid-rows', 5);
+                        this.listenTo(model, "change:data", function() {
+                            fileElement.find(".downloadLoadingImage").addClass("hide");
+                            fileElement.find(".downloadDoneImage").removeClass("hide");
+                        });
+
+                        $.data(fileElement, 'grid-columns', 6);
+                        $.data(fileElement, 'grid-rows', 4);
                         postFilesElement.append(fileElement);
                         fileChildren.push(fileElement);
                     }
@@ -130,7 +139,7 @@ define([
                 postFilesElement.cloudGrid({
                     children: fileChildren,
                     gridGutter: 3,
-                    gridSize: 30
+                    gridSize: 25
                 });
 
                 $(window).on('resize', function () {

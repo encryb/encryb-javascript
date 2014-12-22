@@ -294,9 +294,14 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
             });
             wall.listenTo(App.vent, "file:download", function(content, password){
 
+                if (content.has("data")) {
+                    startDownload(content.get("data"), content.get("filename"));
+                    return;
+                }
                 Dropbox.downloadUrl(content.get('dataUrl'))
                     .then(Encryption.decryptImageDataAsync.bind(null, password))
                     .done(function(data) {
+                        content.set("data", data);
                         startDownload(data, content.get("filename"));
                     });
             });

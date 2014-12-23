@@ -109,15 +109,6 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                     collection: paged
                 });
                 wall.posts.show(postsView);
-
-                // if user scrolls the bottom of the wall, add more posts to the wall
-                $(window).scroll(function() {
-                    var postsBottom = $('#posts').prop("scrollHeight") + $("#posts").offset().top;
-                    var pageBottom = $(window).scrollTop() + window.innerHeight;
-                    if ( postsBottom <= pageBottom + 10) {
-                        paged.increaseLimit(5);
-                    }
-                });
             });
 
 

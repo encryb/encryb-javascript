@@ -70,9 +70,14 @@ define([
 
     exports.saveKeys = function(secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded) {
         keyCache = null;
-        localStorage.setItem("secretKey", secretKeyEncoded);
-        localStorage.setItem("publicKey", publicKeyEncoded);
-        localStorage.setItem("databaseKey", databaseKeyEncoded);
+        try {
+            localStorage.setItem("secretKey", secretKeyEncoded);
+            localStorage.setItem("publicKey", publicKeyEncoded);
+            localStorage.setItem("databaseKey", databaseKeyEncoded);
+        }
+        catch (e) {
+            console.error("Could not save keys to local storage", e);
+        }
 
         encodedKeyCache = {'databaseKey' : databaseKeyEncoded, 'publicKey' : publicKeyEncoded,
             'secretKey' : secretKeyEncoded };
@@ -110,9 +115,16 @@ define([
             return keyCache;
         }
 
-        var secretKeyEncoded = localStorage.getItem("secretKey");
-        var publicKeyEncoded = localStorage.getItem("publicKey");
-        var databaseKeyEncoded = localStorage.getItem("databaseKey");
+        if (encodedKeyCache) {
+            var secretKeyEncoded = encodedKeyCache.secretKey;
+            var publicKeyEncoded = encodedKeyCache.publicKey;
+            var databaseKeyEncoded = encodedKeyCache.databaseKey;
+        }
+        else {
+            var secretKeyEncoded = localStorage.getItem("secretKey");
+            var publicKeyEncoded = localStorage.getItem("publicKey");
+            var databaseKeyEncoded = localStorage.getItem("databaseKey");
+        }
 
         if (secretKeyEncoded === null || publicKeyEncoded === null || databaseKeyEncoded === null) {
             return null;

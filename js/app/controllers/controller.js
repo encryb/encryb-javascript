@@ -412,18 +412,36 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                     Encryption.saveKeys(keys['secretKey'], keys['publicKey'], keys['databaseKey']);
                     model.set("keysLoaded", true);
                 });
-                setupView.on("keys:saveToDropbox", function (password) {
+
+                var saveKeysToDropbox = function(password) {
                     var keys = Encryption.getEncodedKeys();
                     var jsonKeys = JSON.stringify(keys);
                     var encKeys = Encryption.encrypt(password, "text/keys", jsonKeys, false);
                     Dropbox.uploadDropbox("encryb.keys", encKeys);
+                }
+
+
+                setupView.on("keys:saveToDropbox", function (password) {
+                    saveKeysToDropbox(password);
                 });
 
                 setupView.on("keys:loadFromDropbox", function(password){
                     $.when(Dropbox.downloadDropbox("encryb.keys")).done(function(encKeys){
                         var jsonKeys = Encryption.decryptTextData(encKeys, password);
                         var keys = JSON.parse(jsonKeys);
+                        var forceSave = false;
+
+                        // $LEGACY
+                        if (!keys.hasOwnProperty('databaseKey')) {
+                            keys.databaseKey = JSON.stringify(Encryption.generateDatabaseKey());
+                            forceSave = true;
+                        }
+
                         Encryption.saveKeys(keys.secretKey, keys.publicKey, keys.databaseKey);
+                        if (forceSave) {
+                            saveKeysToDropbox(password);
+                        }
+
                         model.set("keysLoaded", true);
                     });
                 })

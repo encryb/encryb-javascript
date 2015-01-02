@@ -91,6 +91,7 @@ define([
 
             var contentList = [];
 
+            console.log("files", files.length);
             var deferreds = [];
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
@@ -104,32 +105,53 @@ define([
 
                 var loadDeferred = $.Deferred();
                 deferreds.push(loadDeferred);
-                var fileReader = new FileReader();
-                fileReader.onload = (function(_file, _fileReader, _loadDeferred, _content) {
-                    return function() {
 
-                        if (_file.type.match(/image.*/)) {
-                            var image = new Image();
-                            image.src = _fileReader.result;
+                if (file.type.match(/image.*/)) {
+                    var image = new Image();
+                    image.src = window.URL.createObjectURL(file);
 
-                            image.onload = function () {
-                                var resized = ImageUtil.resize(image, 1920, 1440);
-                                _content['thumbnail'] = resized.thumbnail;
-                                _content['image'] = resized.fullsize;
+                    image.onload = (function(_image, _loadDeferred, _content) {
+                        return function () {
+                            var resized = ImageUtil.resize(_image, 1920, 1440);
+                            _content['thumbnail'] = resized.thumbnail;
+                            _content['image'] = resized.fullsize;
+                            _loadDeferred.resolve();
+                        };
+                    }(image, loadDeferred, content));
+                }
+                else if (file.type.match(/video.*/)) {
+                    var video =  document.createElement('video');
+                    video.src = window.URL.createObjectURL(file);
+                    video.currentTime = 5;
+
+                    $(video).one("seeked", function(_video, _loadDeferred, _content) {
+                        return function() {
+                            console.log("seeked");
+                            var fileReader = new FileReader();
+                            fileReader.onload = function() {
+                                var frame = ImageUtil.captureFrame(_video, 480, 360);
+                                _content['video'] = fileReader.result;
+                                _content['thumbnail'] = frame;
                                 _loadDeferred.resolve();
                             }
-                        }
-                        else {
+                            fileReader.readAsDataURL(file);
+                        };
+                    }(video, loadDeferred, content));
+                }
+                else {
+                    var fileReader = new FileReader();
+                    fileReader.onload = (function(_file, _fileReader, _loadDeferred, _content) {
+                        return function() {
                             _content['data'] = _fileReader.result;
                             _content['filename'] = _file.name;
-                            console.log("content", content);
                             _loadDeferred.resolve();
                         }
-                    }
-                })(file, fileReader, loadDeferred, content);
-                fileReader.readAsDataURL(file);
+                    })(file, fileReader, loadDeferred, content);
+                    fileReader.readAsDataURL(file);
 
+                }
                 contentList.push(content);
+
             }
 
             $.when.apply($, deferreds).done(function() {
@@ -194,7 +216,7 @@ define([
                         e.preventDefault();
                         e.stopPropagation();
                         Bootbox.prompt({
-                            title: "Image Caption:",
+                            title: "Caption:",
                             value: file.caption ? file.caption: "",
                             inputType: "textarea",
                             callback : function(result) {

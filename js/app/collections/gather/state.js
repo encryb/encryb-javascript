@@ -108,9 +108,12 @@ define([
             if (post.has("id")){
                 return this._onMyPostAdded(post);
             }
-            $.when(post.save()).done(function(){
+            var onSuccess = function(){
                 this._onMyPostAdded(post);
-            }.bind(this));
+            }.bind(this);
+
+            post.save({wait:true, success: onSuccess});
+
         },
         _onMyPostAdded: function(post) {
             var wrapper = new PostWrapper();

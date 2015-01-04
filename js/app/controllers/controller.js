@@ -257,9 +257,11 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                     uiNotifyDeferred.resolve();
 
                     // made sure we get get Id for this post before we save
-                    $.when(postModel.save()).done(function() {
+                    var onSuccess = function(){
                         FriendAdapter.saveManifests();
-                    });
+                    }.bind(this);
+
+                    postModel.save({wait:true, success: onSuccess});
                 });
             });
 

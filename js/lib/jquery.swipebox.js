@@ -778,7 +778,6 @@
 			 * Load image
 			 */
 			loadMedia : function ( src, isHostedVideo, callback ) {
-				console.log("hostedVideo", isHostedVideo);
 				if (  !isHostedVideo ) {
 					var img = $( '<img>' ).on( 'load', function() {
 						callback.call( img );

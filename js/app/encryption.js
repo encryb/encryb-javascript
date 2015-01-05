@@ -1,15 +1,13 @@
 define([
     'sjcl',
     'sjcl-worker/sjclWorkerInclude',
+    'compat/windowUrl',
     'utils/data-convert',
     'utils/encoding',
     'utils/sjcl-convert'
-], function(Sjcl, SjclWorker, DataConvert, Encoding, SjclConvert){
+], function(Sjcl, SjclWorker, WindowUrl, DataConvert, Encoding, SjclConvert){
 
     var exports = {};
-
-    var windowUrl = window.URL || window.webkitURL;
-
 
     var keyCache = null;
     var encodedKeyCache = null;
@@ -174,7 +172,7 @@ define([
 
         SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {
             var blob = new Blob([decrypted.data], {type: decrypted.mimeType});
-            deferred.resolve(windowUrl.createObjectURL(blob));
+            deferred.resolve(WindowUrl.createObjectURL(blob));
         });
 
         return deferred.promise();

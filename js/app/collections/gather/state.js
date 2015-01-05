@@ -112,7 +112,7 @@ define([
                 this._onMyPostAdded(post);
             }.bind(this);
 
-            post.save({wait:true, success: onSuccess});
+            post.save(null, {wait:true, success: onSuccess});
 
         },
         _onMyPostAdded: function(post) {

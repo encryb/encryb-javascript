@@ -261,7 +261,7 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                         FriendAdapter.saveManifests();
                     }.bind(this);
 
-                    postModel.save({wait:true, success: onSuccess});
+                    postModel.save(null, {wait:true, success: onSuccess});
                 });
             });
 

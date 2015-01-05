@@ -9,10 +9,12 @@ define([
     'app/app',
     'app/adapters/post',
     'app/models/post',
+    'compat/windowUrl',
     'utils/image',
     'require-text!app/templates/createPost.html'
 
-], function($, _, Backbone, Bootbox, Dropzone, Marionette, Selectize, App, PostAdapter, Post, ImageUtil, CreatePostTemplate){
+], function($, _, Backbone, Bootbox, Dropzone, Marionette, Selectize, App,
+            PostAdapter, Post, WindowUrl, ImageUtil, CreatePostTemplate){
 
     var NewPostView = Marionette.CompositeView.extend({
         template: _.template( CreatePostTemplate ),
@@ -91,7 +93,6 @@ define([
 
             var contentList = [];
 
-            console.log("files", files.length);
             var deferreds = [];
             for (var i=0; i < files.length; i++) {
                 var file = files[i];
@@ -108,11 +109,12 @@ define([
 
                 if (file.type.match(/image.*/)) {
                     var image = new Image();
-                    image.src = window.URL.createObjectURL(file);
+                    image.src = WindowUrl.createObjectURL(file);
 
                     image.onload = (function(_image, _loadDeferred, _content) {
                         return function () {
                             var resized = ImageUtil.resize(_image, 1920, 1440);
+                            WindowUrl.revokeObjectURL(image.src);
                             _content['thumbnail'] = resized.thumbnail;
                             _content['image'] = resized.fullsize;
                             _loadDeferred.resolve();
@@ -121,34 +123,25 @@ define([
                 }
                 else if (file.type.match(/video.*/)) {
                     var video =  document.createElement('video');
-                    video.src = window.URL.createObjectURL(file);
-                    video.currentTime = 5;
+                    video.src = WindowUrl.createObjectURL(file);
 
-                    $(video).one("seeked", function(_video, _loadDeferred, _content) {
+                    $(video).one("loadedmetadata", function(_video, _file, _loadDeferred, _content) {
                         return function() {
-                            console.log("seeked");
-                            var fileReader = new FileReader();
-                            fileReader.onload = function() {
+                            $(_video).one("seeked", function() {
                                 var frame = ImageUtil.captureFrame(_video, 480, 360);
-                                _content['video'] = fileReader.result;
+                                WindowUrl.revokeObjectURL(video.src);
+                                _content['video'] = _file;
                                 _content['thumbnail'] = frame;
                                 _loadDeferred.resolve();
-                            }
-                            fileReader.readAsDataURL(file);
+                            });
+                            _video.currentTime = _video.duration / 3;
                         };
-                    }(video, loadDeferred, content));
+                    }(video, file, loadDeferred, content));
                 }
                 else {
-                    var fileReader = new FileReader();
-                    fileReader.onload = (function(_file, _fileReader, _loadDeferred, _content) {
-                        return function() {
-                            _content['data'] = _fileReader.result;
-                            _content['filename'] = _file.name;
-                            _loadDeferred.resolve();
-                        }
-                    })(file, fileReader, loadDeferred, content);
-                    fileReader.readAsDataURL(file);
-
+                    content['data'] = file;
+                    content['filename'] = file.name;
+                    loadDeferred.resolve();
                 }
                 contentList.push(content);
 

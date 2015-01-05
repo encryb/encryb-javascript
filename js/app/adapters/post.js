@@ -36,12 +36,32 @@ define([
         }
 
 
-        var uploadAsset = function(asset, path, callback) {
+        var uploadAsset = function(asset, path, setUrl) {
+            if (asset instanceof File) {
+                return uploadFileAsset(asset, path, setUrl);
+            }
             var typedArray = DataConvert.dataUriToTypedArray(asset);
             return Encryption.encryptAsync(password, typedArray['mimeType'], typedArray['data'].buffer)
                 .then(Storage.uploadDropbox.bind(null, path))
                 .then(Storage.shareDropbox)
-                .then(callback);
+                .then(setUrl);
+        }
+
+        var uploadFileAsset = function(file, path, setUrl) {
+
+            var deferred = $.Deferred();
+            var fileReader = new FileReader();
+            fileReader.onload = function() {
+                var buffer = fileReader.result;
+                Encryption.encryptAsync(password, file.type, buffer)
+                    .then(Storage.uploadDropbox.bind(null, path))
+                    .then(Storage.shareDropbox)
+                    .then(setUrl).done( function() {
+                        deferred.resolve(arguments);
+                    });
+            }
+            fileReader.readAsArrayBuffer(file);
+            return deferred.promise();
         }
 
 

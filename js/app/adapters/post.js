@@ -4,9 +4,9 @@ define([
     'app/services/dropbox',
     'app/encryption',
     'utils/data-convert',
-    'utils/random'
+    'utils/misc'
 
-], function (Backbone, Sjcl, Storage, Encryption, DataConvert, Random) {
+], function (Backbone, Sjcl, Storage, Encryption, DataConvert, MiscUtils) {
 
     // $CONFIG
     var FOLDER_POSTS = "posts/";
@@ -227,7 +227,7 @@ define([
             var deferred = $.Deferred();
 
             var password = Sjcl.random.randomWords(8,1);
-            var folderId = Random.makeId();
+            var folderId = MiscUtils.makeId();
             var folderPath = FOLDER_POSTS + folderId;
 
 

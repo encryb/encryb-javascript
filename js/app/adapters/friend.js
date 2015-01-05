@@ -6,9 +6,9 @@ define([
     'app/encryption',
     'app/services/dropbox',
     'app/remoteManifest',
-    'utils/random'
+    'utils/misc'
 ],
-function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, RandomUtil) {
+function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, MiscUtils) {
 
     var FriendAdapter = {
 
@@ -26,7 +26,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Ran
             var friendAdapter = this;
             var deferred = $.Deferred();
 
-            var manifestFile = "manifests" + "/" + RandomUtil.makeId();
+            var manifestFile = "manifests" + "/" + MiscUtils.makeId();
             var attrs = {
                 userId: inviteModel.get("userId"),
                 name: inviteModel.get('name'),

@@ -152,7 +152,7 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 else {
                     wall.ui.invitePanel.removeClass("hide");
                 }
-            }
+            };
 
             // hide invites panel if there are no invites
             this.listenTo(App.state.myInvites, "all", showHideInvites);
@@ -465,7 +465,7 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
             require(["app/views/profile"], function (ProfileView) {
                 var model = new Backbone.Model();
                 model.set("profile", profile);
-                model.set("publicKey", Encryption.getEncodedKeys().publicKey)
+                model.set("publicKey", Encryption.getEncodedKeys().publicKey);
                 var profileView = new ProfileView({model: model});
                 App.main.show(profileView);
 

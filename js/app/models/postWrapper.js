@@ -2,6 +2,19 @@ define([
     'backbone'
 ], function (Backbone) {
 
+
+    var setupContentCollections = function(contentArray){
+        var collection = new Backbone.Collection();
+
+        for (var i=0; i<contentArray.length; i++) {
+            var contentAttributes = JSON.parse(contentArray[i]);
+            var model = new Backbone.Model(contentAttributes);
+            collection.add(model);
+        }
+        return collection;
+    };
+
+
     var PostWrapper = Backbone.Model.extend({
 
         defaults: {
@@ -62,8 +75,14 @@ define([
 
         setMyPost: function(postModel, myInfo) {
             this.postModel = postModel;
-
             var attr = _.extend(_.clone(postModel.attributes), {poster: myInfo, myPost: true});
+            // caching for newly created posts, content includes downloaded assets
+            if (postModel.hasOwnProperty("contentList")) {
+                attr["content"] = new Backbone.Collection(postModel["contentList"]);
+            }
+            else if (attr.hasOwnProperty("content")) {
+                attr["content"] = setupContentCollections(attr["content"]);
+            }
             var model = new Backbone.Model(attr);
             this.set("post", model);
             var userId = myInfo.get("userId");
@@ -73,6 +92,9 @@ define([
 
         setFriendsPost: function(postModel, friend) {
             var attr = _.extend(_.clone(postModel.attributes), {poster: friend, myPost: false});
+            if (attr.hasOwnProperty("content")) {
+                attr["content"] = setupContentCollections(attr["content"]);
+            }
             var model = new Backbone.Model(attr);
             this.set("post", model);
             this.setPostId(friend.get("userId"), postModel.get("id"));

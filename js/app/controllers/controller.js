@@ -1,6 +1,7 @@
 define([
     'backbone',
     'marionette',
+    'bootbox',
     'app/app',
     'app/adapters/friend',
     'app/adapters/post',
@@ -10,6 +11,7 @@ define([
     'app/models/post',
     'app/views/wall',
     'app/views/createPost',
+    'app/views/editPost',
     'app/views/posts',
     'app/views/friend',
     'app/views/headerPanel',
@@ -21,8 +23,8 @@ define([
     'utils/collection-paged',
     'utils/data-convert'
     ],
-function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
-          WallView, CreatePostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
+function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
+          WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
           Encryption, AppEngine, Dropbox, CollectionPaged, DataConvert) {
 
 
@@ -242,17 +244,12 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
 
             wall.listenTo(App.vent, "post:created", function(postMeta, contentList, uiNotifyDeferred) {
                 var postModel = new PostModel(postMeta);
-                var contentCollection = new Backbone.Collection();
-                for (var i=0; i<contentList.length; i++) {
-                    var content = contentList[i];
-                    var contentModel = new Backbone.Model(content);
-                    contentCollection.add(contentModel);
-                }
-                postModel.set("content", contentCollection);
-
+                postModel.contentList = contentList;
                 var upload = PostAdapter.uploadPost(postModel);
                 $.when(upload).done(function() {
 
+                    var filteredContent = PostAdapter.contentToJson(contentList);
+                    postModel.set("content", filteredContent);
                     App.state.myPosts.add(postModel);
                     uiNotifyDeferred.resolve();
 
@@ -265,6 +262,36 @@ function (Backbone, Marionette, App, FriendAdapter, PostAdapter, State, Permissi
                 });
             });
 
+            var editPostDialog;
+            var editPostView;
+            var editPostModel;
+            wall.listenTo(App.vent, "post:edit", function(post) {
+                editPostDialog = Bootbox.dialog({
+                    message: "<div id='bootbox'></div>",
+                    closeButton: false
+                });
+                editPostView = new EditPostView({
+                    model: post.get("post"),
+                    permissions: perms,
+                    el: $('#bootbox')
+                });
+                editPostView.render();
+                editPostModel = post;
+            });
+
+            wall.listenTo(App.vent, "post:edit:canceled", function() {
+                editPostView.destroy();
+                editPostDialog.modal("hide");
+            });
+            wall.listenTo(App.vent, "post:edited", function(changes){
+                editPostModel.get("post").set(changes);
+                var onEditSuccess = function() {
+                    FriendAdapter.saveManifests();
+                    editPostView.destroy();
+                    editPostDialog.modal("hide");
+                }.bind(this);
+                editPostModel.postModel.save(changes, {success: onEditSuccess, wait: true});
+            });
             wall.listenTo(App.vent, "post:deleted", function(post) {
                 PostAdapter.deletePost(post);
                 post.deletePost();

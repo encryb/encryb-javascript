@@ -11,15 +11,17 @@ define([
     // $CONFIG
     var FOLDER_POSTS = "posts/";
 
+    var EXCLUDE_CONTENT_KEYS = [ "caption", "thumbnail", "image", "video", "data"];
+
     function _uploadContent(content, password, folderPath, contentNumber) {
 
         var deferred = $.Deferred();
 
-        var caption = content.get("caption");
-        var thumbnail = content.get("thumbnail");
-        var image = content.get("image");
-        var video = content.get("video");
-        var data = content.get("data");
+        var caption = content["caption"];
+        var thumbnail = content["thumbnail"];
+        var image = content["image"];
+        var video = content["video"];
+        var data = content["data"];
 
         var uploadCaption = null;
         if (caption) {
@@ -27,7 +29,7 @@ define([
             var encCaption = Encryption.encrypt(password, "plain/text", caption);
 
             var setCaptionUrl = function(url) {
-                content.set("captionUrl", url);
+                content["captionUrl"] = url;
             };
 
             uploadCaption = Storage.uploadDropbox(captionPath, encCaption)
@@ -70,7 +72,7 @@ define([
 
             var thumbPath = Storage.getThumbnailPath(folderPath, contentNumber);
             var setThumbnailUrl = function(url) {
-                content.set("thumbnailUrl", url);
+                content["thumbnailUrl"] = url;
             };
             uploadThumbnail = uploadAsset(thumbnail, thumbPath, setThumbnailUrl);
 
@@ -80,7 +82,7 @@ define([
         if (image) {
             var imagePath = Storage.getImagePath(folderPath, contentNumber);
             var setImageUrl = function(url) {
-                content.set("imageUrl", url);
+                content["imageUrl"] = url;
             };
 
             uploadImage = uploadAsset(image, imagePath, setImageUrl);
@@ -90,7 +92,7 @@ define([
         if (video) {
             var videoPath = Storage.getImagePath(folderPath, contentNumber);
             var setVideoUrl = function(url) {
-                content.set("videoUrl", url);
+                content["videoUrl"] = url;
             };
 
             uploadVideo = uploadAsset(video, videoPath, setVideoUrl);
@@ -100,7 +102,7 @@ define([
         if (data) {
             var dataPath = Storage.getDataPath(folderPath, contentNumber);
             var setDataUrl = function(url) {
-                content.set("dataUrl", url);
+                content["dataUrl"] = url;
             };
 
             uploadData = uploadAsset(data, dataPath, setDataUrl);
@@ -236,8 +238,8 @@ define([
             // $CONFIG
             // If text is longer than x, store it in file, rather than in the datastore
             var haveLargeText = post.has("text") && post.get("text").length > 200;
-            var contentList = post.get("content");
 
+            var contentList = post.contentList;
             // we have nothing to upload
             if (!haveLargeText && (!contentList || contentList.length == 0)) {
                 return;
@@ -262,10 +264,11 @@ define([
                 }
 
                 if (contentList) {
-                    contentList.each(function(content, index) {
-                        var upload = _uploadContent(content, password, folderPath, index);
+                    for(var i=0; i<contentList.length; i++) {
+                        var content = contentList[i];
+                        var upload = _uploadContent(content, password, folderPath, i);
                         uploads.push(upload);
-                    })
+                    }
                 }
 
                 $.when.apply($, uploads).done(function () {
@@ -282,6 +285,17 @@ define([
             if (model.has('folderId')) {
                 Storage.remove(FOLDER_POSTS + model.get('folderId'));
             }
+        },
+
+        contentToJson: function(contentList) {
+
+            var filteredContentList = [];
+            for(var i=0; i<contentList.length; i++) {
+                var content = contentList[i];
+                var filteredContent = _.omit(content, EXCLUDE_CONTENT_KEYS);
+                filteredContentList.push(JSON.stringify(filteredContent));
+            }
+            return filteredContentList;
         }
     };
     return PostAdapter;

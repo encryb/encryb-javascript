@@ -56,6 +56,20 @@ define([
 
         initialize: function() {
             this.listenTo(this.model.get("poster"), "change", this.render);
+
+
+            var onResize = function() {
+                var postImagesElement = this.ui.postImages;
+                var postFilesElement = this.ui.postFiles;
+                if (postImagesElement) {
+                    postImagesElement.cloudGrid('reflowContent');
+                }
+                if (postFilesElement) {
+                    postFilesElement.cloudGrid('reflowContent');
+                }
+            }.bind(this);
+            $(window).on('resize', onResize);
+
         },
 
         postFileTemplate: _.template(PostFileTemplate),
@@ -152,11 +166,6 @@ define([
                     gridGutter: 3,
                     gridSize: 25
                 });
-
-                $(window).on('resize', function () {
-                    postImagesElement.cloudGrid('reflowContent');
-                    postFilesElement.cloudGrid('reflowContent');
-                })
             }, 0);
         },
 

@@ -118,13 +118,15 @@ define([
             wrapper.setMyPost(post, this.myModel);
             this.posts.add(wrapper);
             var postComments = this.comments.where({postId: wrapper.get("postId")});
-            for (var ci=0; ci<postComments.length; ci++) {
-                var comment = postComments[ci];
+
+            var i;
+            for (i=0; i<postComments.length; i++) {
+                var comment = postComments[i];
                 wrapper.addComment(comment);
             }
             var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
-            for (var ui=0; ui<postUpvotes.length; ui++) {
-                var upvote = postUpvotes[ui];
+            for (i=0; i<postUpvotes.length; i++) {
+                var upvote = postUpvotes[i];
                 if (upvote.get("myUpvote")) {
                     wrapper.addMyUpvote();
                 }

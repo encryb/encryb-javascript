@@ -22,7 +22,6 @@ define([
         initialize: function() {
             this.listenTo(this.options.permissions, "add", this.permissionAdded);
             this.listenTo(this.options.permissions, "remove", this.permissionRemoved);
-
         },
 
         ui: {

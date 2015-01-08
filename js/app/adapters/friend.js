@@ -282,7 +282,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
                         pictureUrl: profile.get('pictureUrl'),
                         publicKey: Encryption.getEncodedKeys().publicKey,
                         lastUpdated: new Date().getTime()
-                    }
+                    };
 
                     if(!notifyModel.get("manifestUrl")) {
                         friendAdapter.saveManifest(friend).then(Dropbox.shareDropbox).done(function(url){
@@ -327,7 +327,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
 
         saveManifests: function() {
             App.state.myFriends.each(function(friend) {
-                setTimeout(function() { FriendAdapter.saveManifest(friend); }, 0); ;
+                setTimeout(function() { FriendAdapter.saveManifest(friend); }, 0);
             });
         },
 
@@ -419,25 +419,26 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
                 });
             }
             else {
+                var i;
                 this.manifestCache[friendId] = manifest;
-                for (var i=0; i < manifest.posts.length; i++) {
+                for (i=0; i < manifest.posts.length; i++) {
                     var post = manifest.posts[i];
                     state.addFriendsPost(post, friend);
                 }
                 if (manifest.hasOwnProperty('upvotes')) {
-                    for (var i=0; i< manifest.upvotes.length; i++) {
+                    for (i=0; i< manifest.upvotes.length; i++) {
                         var upvote = manifest.upvotes[i];
                         state.addFriendsUpvote(upvote, friend);
                     }
                 }
                 if (manifest.hasOwnProperty('comments')) {
-                    for (var i=0; i< manifest.comments.length; i++) {
+                    for (i=0; i< manifest.comments.length; i++) {
                         var comment = manifest.comments[i];
                         state.addFriendsComment(comment, friend);
                     }
                 }
                 if (manifest.hasOwnProperty('friends')) {
-                    for (var i=0; i< manifest.friends.length; i++) {
+                    for (i=0; i< manifest.friends.length; i++) {
                         var friendOfFriend = manifest.friends[i];
                         state.addFriendOfFriend(friendOfFriend, friend);
                     }

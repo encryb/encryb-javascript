@@ -28,6 +28,14 @@
     </div>
 </div>
 
+<% if (typeof errors !== "undefined") { %>
+<div class="alert alert-danger" role="alert">
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="sr-only">Error:</span>
+    <%- errors %>
+</div>
+<% } %>
+
 <% if (typeof text !== "undefined") { %>
 <div class="row">
     <div class="col-xs-12">

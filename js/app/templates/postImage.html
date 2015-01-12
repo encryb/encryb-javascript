@@ -1,6 +1,10 @@
 <div class="gridItem pointer-hand">
+    <% if (typeof errors !== "undefined") { %>
+    <div class="picture-error"><%- errors %></div>
+    <% } %>
+
     <% if (typeof caption !== "undefined") { %>
-        <div class="absolute-bottom picture-text"><%- caption %></div>
+        <div class="picture-text"><%- caption %></div>
     <% } %>
     <% if (typeof videoUrl !== "undefined") { %>
         <span class="glyphicon glyphicon-play-circle video-icon" aria-hidden="true"></span>

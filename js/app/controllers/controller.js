@@ -284,13 +284,17 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 editPostDialog.modal("hide");
             });
             wall.listenTo(App.vent, "post:edited", function(changes){
+                // update display model
                 editPostModel.get("post").set(changes);
+
                 var onEditSuccess = function() {
                     FriendAdapter.saveManifests();
                     editPostView.destroy();
                     editPostDialog.modal("hide");
                 }.bind(this);
-                editPostModel.postModel.save(changes, {success: onEditSuccess, wait: true});
+                // update persisted model
+                $.when(PostAdapter.updatePost(editPostModel.postModel, changes)).done(onEditSuccess);
+
             });
             wall.listenTo(App.vent, "post:deleted", function(post) {
                 PostAdapter.deletePost(post);
@@ -319,7 +323,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                     return;
                 }
                 Dropbox.downloadUrl(content.get('dataUrl'))
-                    .then(Encryption.decryptImageDataAsync.bind(null, password))
+                    .then(Encryption.decryptDataAsync.bind(null, password))
                     .done(function(data) {
                         content.set("data", data);
                         startDownload(data, content.get("filename"));
@@ -456,7 +460,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
 
                 setupView.on("keys:loadFromDropbox", function(password){
                     $.when(Dropbox.downloadDropbox("encryb.keys")).done(function(encKeys){
-                        var jsonKeys = Encryption.decryptTextData(encKeys, password);
+                        var jsonKeys = Encryption.decryptText(encKeys, password);
                         var keys = JSON.parse(jsonKeys);
                         var forceSave = false;
 

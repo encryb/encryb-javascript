@@ -87,51 +87,63 @@ define([
                 var collection = this.model.get("content");
                 var isFirst = true;
                 collection.each(function (model, index) {
-                    if (model.has("thumbnail")) {
+                    if (model.has("thumbnailUrl")) {
                         var imageElement = $(this.postImageTemplate(model.attributes));
-                        imageElement.click(function () {
-                            this.showImage(index);
-                        }.bind(this));
 
-                        imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
-                        imageElement.css("background-size", "100% auto");
-                        var ratio = model.resizedWidth / model.resizedHeight;
                         var cols, rows;
-                        if (ratio > 2) {
-                            cols = 8;
-                            rows = 4;
-                        }
-                        else if (ratio < 1) {
-                            cols = 6;
+
+                        if (!model.has("thumbnail")) {
+                            cols = 10;
                             rows = 8;
+
+                            imageElement.css("background-color", "#ebebeb");
+
                         }
                         else {
-                            cols = 7;
-                            rows = 4;
-                        }
-                        if (collection.length == 1) {
-                            if (ratio >= 1) {
-                                cols = cols * 3;
-                                rows = rows * 3;
+                            imageElement.click(function () {
+                                this.showImage(index);
+                            }.bind(this));
+
+                            imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
+                            imageElement.css("background-size", "100% auto");
+                            var ratio = model.resizedWidth / model.resizedHeight;
+                            var cols, rows;
+                            if (ratio > 2) {
+                                cols = 8;
+                                rows = 4;
+                            }
+                            else if (ratio < 1) {
+                                cols = 6;
+                                rows = 8;
                             }
                             else {
-                                cols = cols * 2;
-                                rows = rows * 2;
+                                cols = 7;
+                                rows = 4;
                             }
-                        }
-                        else if (isFirst || collection.length == 2) {
-                            if (ratio >= 1) {
-                                cols = cols * 2;
-                                rows = rows * 2;
+                            if (collection.length == 1) {
+                                if (ratio >= 1) {
+                                    cols = cols * 3;
+                                    rows = rows * 3;
+                                }
+                                else {
+                                    cols = cols * 2;
+                                    rows = rows * 2;
+                                }
                             }
-                            isFirst = false;
+                            else if (isFirst || collection.length == 2) {
+                                if (ratio >= 1) {
+                                    cols = cols * 2;
+                                    rows = rows * 2;
+                                }
+                                isFirst = false;
+                            }
                         }
                         $.data(imageElement, 'grid-columns', cols);
                         $.data(imageElement, 'grid-rows', rows);
                         postImagesElement.append(imageElement);
                         imageChildren.push(imageElement);
                     }
-                    if (model.has("filename")) {
+                    else if (model.has("filename")) {
                         var fileElement = $(this.postFileTemplate(model.attributes));
                         fileElement.click(function () {
                             if (!model.has("data")) {

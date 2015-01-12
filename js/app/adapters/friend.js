@@ -114,7 +114,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
             //send trigger to controller to open a chat window if need be
             App.vent.trigger("chat:received", friend);
             var textBuffer = chatLine.get("text").buffer;
-            var text = Encryption.decryptTextData(textBuffer, Encryption.getKeys().secretKey);
+            var text = Encryption.decryptText(textBuffer, Encryption.getKeys().secretKey);
             var collection = App.state.chats[friend.get("userId")];
             var lastChat = collection.last();
 
@@ -358,7 +358,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
 
             Dropbox.downloadUrl(friendsManifest).done(function (data) {
 
-                var decryptedData = Encryption.decryptTextData(data, Encryption.getKeys().secretKey);
+                var decryptedData = Encryption.decryptText(data, Encryption.getKeys().secretKey);
                 var manifest = JSON.parse(decryptedData);
 
                 friendAdapter.updateCollection(friend, manifest);

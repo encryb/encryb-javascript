@@ -1,8 +1,10 @@
 <div class="gridItem pointer-hand">
-    <% if (typeof errors !== "undefined") { %>
-    <div class="picture-error"><%- errors %></div>
+    <% if (typeof removable !== "undefined") { %>
+        <span id="removeImage"  class="pull-right remove-icon glyphicon glyphicon-trash"></span>
     <% } %>
-
+    <% if (typeof errors !== "undefined") { %>
+        <div class="picture-error"><%- errors %></div>
+    <% } %>
     <% if (typeof caption !== "undefined") { %>
         <div class="picture-text"><%- caption %></div>
     <% } %>

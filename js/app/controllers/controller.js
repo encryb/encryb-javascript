@@ -265,22 +265,25 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
             var editPostDialog;
             var editPostView;
             var editPostModel;
+            var editPostRegion;
             wall.listenTo(App.vent, "post:edit", function(post) {
                 editPostDialog = Bootbox.dialog({
                     message: "<div id='bootbox'></div>",
                     closeButton: false
                 });
+                editPostRegion = new Backbone.Marionette.Region({
+                    el: "#bootbox"
+                });
                 editPostView = new EditPostView({
                     model: post.get("post"),
-                    permissions: perms,
-                    el: $('#bootbox')
+                    permissions: perms
                 });
-                editPostView.render();
+                editPostRegion.show(editPostView);
                 editPostModel = post;
             });
 
             wall.listenTo(App.vent, "post:edit:canceled", function() {
-                editPostView.destroy();
+                editPostRegion.reset();
                 editPostDialog.modal("hide");
             });
             wall.listenTo(App.vent, "post:edited", function(changes){

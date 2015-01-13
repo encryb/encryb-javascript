@@ -3,16 +3,18 @@ define([
     'underscore',
     'backbone',
     'marionette',
+    'cloudGrid',
     'selectize',
     'app/app',
     'app/adapters/post',
     'app/models/post',
     'compat/windowUrl',
     'utils/image',
-    'require-text!app/templates/editPost.html'
-
-], function($, _, Backbone, Marionette, Selectize, App,
-            PostAdapter, Post, WindowUrl, ImageUtil, EditPostTemplate){
+    'require-text!app/templates/editPost.html',
+    'require-text!app/templates/postFile.html',
+    'require-text!app/templates/postImage.html',
+], function($, _, Backbone, Marionette, CloudGrid, Selectize, App,
+            PostAdapter, Post, WindowUrl, ImageUtil, EditPostTemplate, PostFileTemplate, PostImageTemplate){
 
     var EditPostView = Marionette.CompositeView.extend({
         template: _.template( EditPostTemplate ),
@@ -30,7 +32,9 @@ define([
             editPostText: '#editPostText',
             permissions: "#permissions",
             loadingImage: ".loading-img",
-            buttons: '.btn-group'
+            buttons: '.btn-group',
+            editImages: '.editImages',
+            editFiles: '.editFiles'
         },
 
         events: {
@@ -38,8 +42,65 @@ define([
             'submit form': 'editPost'
         },
 
+        postImageTemplate: _.template(PostImageTemplate),
+        postFileTemplate: _.template(PostFileTemplate),
+
         onRender: function(){
             this.setupPermissionTags();
+        },
+
+        onShow: function() {
+            var editImagesElement = this.ui.editImages;
+            var editFilesElement = this.ui.editFiles;
+            var imageChildren = [];
+            var fileChildren = [];
+
+            if (this.model.has("content")) {
+                var password = this.model.get("password");
+                var collection = this.model.get("content");
+                collection.each(function (model, index) {
+                    var attrs = {};
+                    _.extend(attrs, model.attributes, {removable: true});
+                    if (model.has("thumbnailUrl")) {
+                        var imageElement = $(this.postImageTemplate(attrs));
+
+                        if (!model.has("thumbnail")) {
+                            imageElement.css("background-color", "#ebebeb");
+                        }
+                        else {
+                            imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
+                            imageElement.css("background-size", "100% auto");
+                        }
+                        $.data(imageElement, 'grid-columns', 6);
+                        $.data(imageElement, 'grid-rows', 4);
+                        editImagesElement.append(imageElement);
+                        imageChildren.push(imageElement);
+                    }
+                    else if (model.has("filename")) {
+                        var fileElement = $(this.postFileTemplate(attrs));
+                        $.data(fileElement, 'grid-columns', 8);
+                        $.data(fileElement, 'grid-rows', 3);
+                        editFilesElement.append(fileElement);
+                        fileChildren.push(fileElement);
+                    }
+                }, this);
+            }
+
+            // TODO: stupid DOM and timeout requirement
+            setTimeout(function() {
+                editImagesElement.cloudGrid({
+                    children: imageChildren,
+                    gridGutter: 3,
+                    gridSize: 25
+                });
+
+                editFilesElement.cloudGrid({
+                    children: fileChildren,
+                    gridGutter: 3,
+                    gridSize: 25
+                });
+            }, 500);
+
         },
 
         permissionAdded: function(permission) {

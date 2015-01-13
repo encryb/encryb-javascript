@@ -214,6 +214,24 @@ ul.collection-list li {
     cursor: hand;
 }
 
+.remove-icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+    cursor: hand;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 5px;
+    margin: 2px;
+}
+
+.remove-icon-black {
+    font-size: 1.5rem;
+    cursor: pointer;
+    cursor: hand;
+    color: #000000;
+    padding: 5px;
+}
+
 .password-icon {
     border: 2px solid #ddd;
     border-radius: 10px;
@@ -365,7 +383,7 @@ ul.collection-list li {
 .gridItem {
     border-radius: 3px;
     box-sizing: border-box;
-    padding: 5px;
+    padding: 3px;
     position: absolute;
 }
 
@@ -400,8 +418,7 @@ ul.collection-list li {
 }
 
 .border-file {
-    background-color: #fcfcfc;
-    border: 2px solid #909090;
+    border: 3px solid #909090;
 }
 
 /* http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
@@ -438,4 +455,38 @@ ul.collection-list li {
     font-size: 2rem;
     padding: 3rem;
     background-color: #f5f5f5;
+}
+
+.bottom-left {
+    position:absolute;
+    bottom: 0px;
+    left: 0px;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.filename {
+    font-size: 16px;
+}
+
+.deletedFile .filename {
+    text-decoration: line-through;
+}
+
+.removeFile {
+}
+.deletedFile .removeFile {
+    display: none;
+}
+
+.restoreFile {
+    display: none;
+}
+.deletedFile .restoreFile {
+    display: block;
+
 }

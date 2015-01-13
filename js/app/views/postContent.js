@@ -158,8 +158,8 @@ define([
                             fileElement.find(".downloadDoneImage").removeClass("hide");
                         });
 
-                        $.data(fileElement, 'grid-columns', 6);
-                        $.data(fileElement, 'grid-rows', 4);
+                        $.data(fileElement, 'grid-columns', 8);
+                        $.data(fileElement, 'grid-rows', 3);
                         postFilesElement.append(fileElement);
                         fileChildren.push(fileElement);
                     }

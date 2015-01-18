@@ -517,16 +517,14 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                         }
                     });
                 });
-                profileView.on("profile:create", function() {
-                    AppEngine.createProfile(profile, Dropbox.client.dropboxUid());
-                });
-                profileView.on('profile:updated', function(changes) {
+
+                var changeProfile = function(changes, _profile) {
                     var deferreds = [];
                     if ('name' in changes) {
-                        profile.set('name', changes['name']);
+                        _profile.set('name', changes['name']);
                     }
                     if ('intro' in changes) {
-                        profile.set('intro', changes['intro']);
+                        _profile.set('intro', changes['intro']);
                     }
                     if('picture' in changes) {
                         var resized = changes['picture'];
@@ -535,15 +533,33 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                         deferreds.push(deferred);
                         var picture = DataConvert.dataUriToTypedArray(resized);
                         Dropbox.uploadDropbox("profilePic",  picture['data']).then(Dropbox.shareDropbox).done(function(url) {
-                            console.log("URL", url);
-                            profile.set('pictureUrl', url);
+                            _profile.set('pictureUrl', url);
                             deferred.resolve();
                         });
                     }
                     var publicKey = Encryption.getEncodedKeys().publicKey;
-                    if (publicKey != profile.get("publicKey")) {
-                        profile.set("publicKey", publicKey);
-                    }
+                    profile.set("publicKey", publicKey);
+
+                    return deferreds;
+                }
+
+                profileView.on("profile:create", function(changes) {
+
+                    var deferreds = changeProfile(changes, profile);
+                    $.when.apply($, deferreds).done(function() {
+                        $.when(AppEngine.createProfile(profile)).done(function() {
+                            controller._setupState(profile);
+                            $.when(App.state.fetchAll()).done(function () {
+                                controller.showWall();
+                                App.appRouter.navigate("");
+                            });
+                        });
+                    });
+                });
+
+                profileView.on('profile:updated', function(changes) {
+
+                    var deferreds = changeProfile(changes, profile);
 
                     $.when.apply($, deferreds).done(function() {
                         var profileChanges = profile.changedAttributes();

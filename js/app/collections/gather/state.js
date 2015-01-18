@@ -30,8 +30,8 @@ define([
             this.listenTo(profile, "change:name", function(model){
                 this.myModel.set("name", model.get("name"));
             });
-            this.listenTo(profile,"change:profileUrl", function(model){
-                this.myModel.set("profileUrl", model.get("profileUrl"));
+            this.listenTo(profile,"change:pictureUrl", function(model){
+                this.myModel.set("pictureUrl", model.get("pictureUrl"));
             });
 
             this.myPosts = new PostColl();

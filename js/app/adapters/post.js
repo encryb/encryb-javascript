@@ -226,7 +226,7 @@ define([
                         else {
                             var fullImageUrl = content.get("imageUrl");
                             Storage.downloadUrl(fullImageUrl)
-                                .then(Encryption.decryptDataAsync.bind(null, [1]),
+                                .then(Encryption.decryptDataAsync.bind(null, password),
                                       setError.bind(null, content, "Image download error"))
                                 .done(function (fullImage) {
                                     if (!fullImage) {

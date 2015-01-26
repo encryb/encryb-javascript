@@ -16,7 +16,7 @@ define([
     // $CONFIG
     // If text is longer than x, store it in file, rather than in the datastore
     function hasLargeText(text) {
-        return (text && text.length > 2);
+        return ('undefined' !== typeof text && text.length > 200);
     }
 
     function getOrCreateFolder(model) {
@@ -36,7 +36,7 @@ define([
         }
     }
 
-    function _uploadContent(content, password, folderPath, contentNumber) {
+    function _uploadContent(content, password, folderPath) {
 
         var deferred = $.Deferred();
 
@@ -45,6 +45,7 @@ define([
         var image = content["image"];
         var video = content["video"];
         var data = content["data"];
+        var contentNumber = content["number"];
 
         var uploadCaption = null;
         if (caption) {
@@ -307,7 +308,8 @@ define([
                 if (contentList) {
                     for(var i=0; i<contentList.length; i++) {
                         var content = contentList[i];
-                        var upload = _uploadContent(content, password, folderPath, i);
+                        content["number"] = i;
+                        var upload = _uploadContent(content, password, folderPath);
                         uploads.push(upload);
                     }
                 }
@@ -327,24 +329,34 @@ define([
             }
         },
 
-        updatePost: function(model, changes) {
+        updatePost: function(model, changes, addedContent, removedContent) {
 
             var deferred = $.Deferred();
-            var deferreds = [];
-            if (changes.hasOwnProperty("text")) {
-                // remove existing text
-                if (model.has("textUrl")) {
-                    var textPath = Storage.getTextPath(FOLDER_POSTS + model.get("folderId"));
-                    model.unset("textUrl");
-                    Storage.remove(textPath);
+            var password = Sjcl.codec.bytes.toBits(model.get("password"));
+
+            var setupTasks = [];
+            if (!model.has("folderId")) {
+                if (addedContent.length > 0 || hasLargeText(changes["text"])) {
+                    setupTasks.push(getOrCreateFolder(model));
                 }
+            }
 
-                if (hasLargeText(changes["text"])) {
+            $.when.apply($, setupTasks).done(function() {
 
-                    $.when(getOrCreateFolder(model)).done( function () {
-                        var password = Sjcl.codec.bytes.toBits(model.get("password"));
+                var uploads = [];
+
+                // deal with text changes
+                if (changes.hasOwnProperty("text")) {
+                    // remove existing text
+                    if (model.has("textUrl")) {
+                        var oldTextPath = Storage.getTextPath(FOLDER_POSTS + model.get("folderId"));
+                        model.unset("textUrl");
+                        Storage.remove(oldTextPath);
+                    }
+
+                    if (hasLargeText(changes["text"])) {
+                        var textPath = Storage.getTextPath(FOLDER_POSTS + model.get("folderId"));
                         var encText = Encryption.encrypt(password, "plain/text", changes["text"]);
-
                         var setTextUrl = function(url) {
                             model.set("textUrl", url);
                         };
@@ -353,19 +365,39 @@ define([
                             .then(Storage.shareDropbox)
                             .then(setTextUrl);
 
-                        deferreds.push(uploadText);
-                    });
+                        uploads.push(uploadText);
+                    }
                 }
-            }
 
 
+                if (addedContent.length > 0) {
+                    var contentArray = model.get("content");
 
-            $.when.apply($, deferreds).done(function() {
-                model.save(changes, {success: function() {
+                    // find the highest current content number. We will use use
+                    // that as starting point for added content
+                    var highestContentNumber = 0;
+                    for (var i=0; i<contentArray.length; i++) {
+                        var contentAttributes = JSON.parse(contentArray[i]);
+                        if (contentAttributes.number >= highestContentNumber) {
+                            highestContentNumber = contentAttributes.number + 1;
+                        }
+                    }
+
+                    // need to figure out how to update content list
+
+                    for(var i=0; i < addedContent.length; i++) {
+                        var content = addedContent[i];
+                        content["number"] = i + highestContentNumber;
+                        var upload = _uploadContent(content, password, FOLDER_POSTS + model.get("folderId"));
+                        uploads.push(upload);
+                    }
+                }
+
+                $.when.apply($, uploads).done(function() {
                     deferred.resolve();
-                }});
-            });
+                });
 
+            });
             return deferred;
 
         },

@@ -248,12 +248,13 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 var upload = PostAdapter.uploadPost(postModel);
                 $.when(upload).done(function() {
 
-                    var filteredContent = PostAdapter.contentToJson(contentList);
-                    postModel.set("content", filteredContent);
+                    var jsonContent = PostAdapter.contentToJson(contentList);
+                    postModel.set("content", jsonContent);
                     App.state.myPosts.add(postModel);
                     uiNotifyDeferred.resolve();
 
                     // made sure we get get Id for this post before we save
+                    // $BUG: (Why bind?)
                     var onSuccess = function(){
                         FriendAdapter.saveManifests();
                     }.bind(this);
@@ -286,17 +287,27 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 editPostRegion.reset();
                 editPostDialog.modal("hide");
             });
-            wall.listenTo(App.vent, "post:edited", function(changes){
-                // update display model
-                editPostModel.get("post").set(changes);
+            wall.listenTo(App.vent, "post:edited", function(changes, addedContent, removedContent){
+                var persistModel = editPostModel.postModel;
+
 
                 var onEditSuccess = function() {
-                    FriendAdapter.saveManifests();
-                    editPostView.destroy();
-                    editPostDialog.modal("hide");
+                    // update display model
+                    editPostModel.updateDisplayModel(changes, addedContent, removedContent);
+
+                    var currentContent = persistModel.get("content");
+                    var updatedContent = currentContent.concat(PostAdapter.contentToJson(addedContent));
+                    changes["content"] = updatedContent;
+
+                    persistModel.save(changes, {success: function() {
+                        FriendAdapter.saveManifests();
+                        editPostView.destroy();
+                        editPostDialog.modal("hide");
+                    }});
                 }.bind(this);
                 // update persisted model
-                $.when(PostAdapter.updatePost(editPostModel.postModel, changes)).done(onEditSuccess);
+                $.when(PostAdapter.updatePost(persistModel, changes, addedContent, removedContent))
+                    .done(onEditSuccess);
 
             });
             wall.listenTo(App.vent, "post:deleted", function(post) {

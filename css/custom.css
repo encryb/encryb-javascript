@@ -418,7 +418,7 @@ ul.collection-list li {
 }
 
 .border-file {
-    border: 3px solid #909090;
+    border: 2px solid #909090;
 }
 
 /* http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
@@ -473,20 +473,6 @@ ul.collection-list li {
     font-size: 16px;
 }
 
-.deletedFile .filename {
+.strike {
     text-decoration: line-through;
-}
-
-.removeFile {
-}
-.deletedFile .removeFile {
-    display: none;
-}
-
-.restoreFile {
-    display: none;
-}
-.deletedFile .restoreFile {
-    display: block;
-
 }

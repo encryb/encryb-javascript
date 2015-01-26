@@ -9,13 +9,13 @@ define([
     'autolinker',
     'app/app',
     'app/adapters/post',
+    'app/views/fileThumbnail',
+    'app/views/imageThumbnail',
     'utils/misc',
-    'require-text!app/templates/postImage.html',
-    'require-text!app/templates/postFile.html',
     'require-text!app/templates/postContent.html'
-], function($, _, Backbone, Bootsrap, Marionette, CloudGrid, Swipebox, Autolinker, App, PostAdapter, MiscUtils,
-            PostImageTemplate, PostFileTemplate, PostContentTemplate){
-
+], function($, _, Backbone, Bootsrap, Marionette, CloudGrid, Swipebox, Autolinker, App, PostAdapter,
+            FileThumbnailView, ImageThumbnailView,
+            MiscUtils, PostContentTemplate){
 
     var PostContentView = Marionette.ItemView.extend({
 
@@ -56,6 +56,8 @@ define([
 
         initialize: function() {
             this.listenTo(this.model.get("poster"), "change", this.render);
+            this.listenTo(this.model.get("content"), "add", this.render);
+            this.listenTo(this.model.get("content"), "remove", this.render);
 
 
             var onResize = function() {
@@ -72,9 +74,6 @@ define([
 
         },
 
-        postFileTemplate: _.template(PostFileTemplate),
-        postImageTemplate: _.template(PostImageTemplate),
-
         onRender: function() {
 
             var postImagesElement = this.ui.postImages;
@@ -88,24 +87,22 @@ define([
                 var isFirst = true;
                 collection.each(function (model, index) {
                     if (model.has("thumbnailUrl")) {
-                        var imageElement = $(this.postImageTemplate(model.attributes));
+
+                        var imageView = new ImageThumbnailView({model: model});
+                        var imageElement = imageView.render().el;
 
                         var cols, rows;
 
                         if (!model.has("thumbnail")) {
                             cols = 10;
                             rows = 8;
-
-                            imageElement.css("background-color", "#ebebeb");
-
                         }
                         else {
-                            imageElement.click(function () {
+
+                            $(imageElement).click(function () {
                                 this.showImage(index);
                             }.bind(this));
 
-                            imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
-                            imageElement.css("background-size", "100% auto");
                             var ratio = model.resizedWidth / model.resizedHeight;
                             var cols, rows;
                             if (ratio > 2) {
@@ -144,7 +141,8 @@ define([
                         imageChildren.push(imageElement);
                     }
                     else if (model.has("filename")) {
-                        var fileElement = $(this.postFileTemplate(model.attributes));
+                        var fileView = new FileThumbnailView({model: model});
+                        var fileElement = fileView.render().el;
                         fileElement.click(function () {
                             if (!model.has("data")) {
                                 fileElement.find(".downloadImage").addClass("hide");

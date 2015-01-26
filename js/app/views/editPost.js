@@ -2,29 +2,35 @@ define([
     'jquery',
     'underscore',
     'backbone',
+    'bootbox',
+    'dropzone',
     'marionette',
     'cloudGrid',
     'selectize',
     'app/app',
     'app/adapters/post',
     'app/models/post',
+    'app/views/fileThumbnail',
+    'app/views/imageThumbnail',
+    'app/views/elements/dropzone',
     'compat/windowUrl',
     'utils/image',
-    'require-text!app/templates/editPost.html',
-    'require-text!app/templates/postFile.html',
-    'require-text!app/templates/postImage.html',
-], function($, _, Backbone, Marionette, CloudGrid, Selectize, App,
-            PostAdapter, Post, WindowUrl, ImageUtil, EditPostTemplate, PostFileTemplate, PostImageTemplate){
+    'require-text!app/templates/editPost.html'
+], function($, _, Backbone, Bootbox, Dropzone, Marionette, CloudGrid, Selectize, App,
+            PostAdapter, Post, FileThumbnailView, ImageThumbnailView, DropzoneView, WindowUrl, ImageUtil, EditPostTemplate){
 
-    var EditPostView = Marionette.CompositeView.extend({
+
+    var EditPostView = Marionette.LayoutView.extend({
         template: _.template( EditPostTemplate ),
+
+        regions: {
+            "dropzone": ".dropzoneRegion"
+        },
 
         initialize: function() {
             console.log("this.model", this.model);
             this.listenTo(this.options.permissions, "add", this.permissionAdded);
             this.listenTo(this.options.permissions, "remove", this.permissionRemoved);
-
-            console.log("perm1" , this.model.get("permissions"));
         },
 
         ui: {
@@ -42,14 +48,15 @@ define([
             'submit form': 'editPost'
         },
 
-        postImageTemplate: _.template(PostImageTemplate),
-        postFileTemplate: _.template(PostFileTemplate),
-
         onRender: function(){
             this.setupPermissionTags();
         },
 
         onShow: function() {
+
+            this.dropzoneView = new DropzoneView();
+            this.dropzone.show(this.dropzoneView);
+
             var editImagesElement = this.ui.editImages;
             var editFilesElement = this.ui.editFiles;
             var imageChildren = [];
@@ -59,25 +66,18 @@ define([
                 var password = this.model.get("password");
                 var collection = this.model.get("content");
                 collection.each(function (model, index) {
-                    var attrs = {};
-                    _.extend(attrs, model.attributes, {removable: true});
                     if (model.has("thumbnailUrl")) {
-                        var imageElement = $(this.postImageTemplate(attrs));
+                        var imageView = new ImageThumbnailView({model: model, removable: true});
+                        var imageElement = imageView.render().el;
 
-                        if (!model.has("thumbnail")) {
-                            imageElement.css("background-color", "#ebebeb");
-                        }
-                        else {
-                            imageElement.css("background-image", "url(" + model.escape("thumbnail") + ")");
-                            imageElement.css("background-size", "100% auto");
-                        }
                         $.data(imageElement, 'grid-columns', 6);
                         $.data(imageElement, 'grid-rows', 4);
                         editImagesElement.append(imageElement);
                         imageChildren.push(imageElement);
                     }
                     else if (model.has("filename")) {
-                        var fileElement = $(this.postFileTemplate(attrs));
+                        var fileView = new FileThumbnailView({model: model, removable: true});
+                        var fileElement = fileView.render().el;
                         $.data(fileElement, 'grid-columns', 8);
                         $.data(fileElement, 'grid-rows', 3);
                         editFilesElement.append(fileElement);
@@ -130,7 +130,6 @@ define([
 
         _createPost: function() {
 
-
             var selectize = this.ui.permissions[0].selectize;
             var permissions = selectize.getValue();
 
@@ -145,7 +144,18 @@ define([
                 changes['text'] = text;
             }
 
-            App.vent.trigger("post:edited", changes);
+            var deletedContentList = [];
+            if (this.model.has("content")) {
+                this.model.get("content").each(function(content){
+                    if (content.get("deleted")) {
+                        deletedContentList.push(content);
+                    }
+                });
+            }
+
+            $.when(this.dropzoneView.getContent()).done(function(addedContentList) {
+                App.vent.trigger("post:edited", changes, addedContentList, deletedContentList);
+            });
         },
 
         cancelEdit: function () {

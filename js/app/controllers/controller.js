@@ -248,7 +248,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 var upload = PostAdapter.uploadPost(postModel);
                 $.when(upload).done(function() {
 
-                    var jsonContent = PostAdapter.contentToJson(contentList);
+                    var jsonContent = PostAdapter.removeNonPersistentFields(contentList);
                     postModel.set("content", jsonContent);
                     App.state.myPosts.add(postModel);
                     uiNotifyDeferred.resolve();
@@ -287,6 +287,8 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 editPostRegion.reset();
                 editPostDialog.modal("hide");
             });
+            // addedContent is an array of JSON objects
+            // removedContent is an array of Backbone Models
             wall.listenTo(App.vent, "post:edited", function(changes, addedContent, removedContent){
                 var persistModel = editPostModel.postModel;
 
@@ -295,9 +297,24 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                     // update display model
                     editPostModel.updateDisplayModel(changes, addedContent, removedContent);
 
+                    // content is array of JSON objects
                     var currentContent = persistModel.get("content");
-                    var updatedContent = currentContent.concat(PostAdapter.contentToJson(addedContent));
+
+                    var contentAfterRemoval = $.grep(currentContent, function(searchContent) {
+                        // only return values that are not part of removedContent collection
+                        var foundRemoval = $.grep(removedContent, function(searchRemoved) {
+                            if (searchContent.number == searchRemoved.get("number")) {
+                                return true;
+                            }
+                        });
+                        if (foundRemoval.length == 0) {
+                            return true;
+                        }
+                    });
+
+                    var updatedContent = contentAfterRemoval.concat(PostAdapter.removeNonPersistentFields(addedContent));
                     changes["content"] = updatedContent;
+
 
                     persistModel.save(changes, {success: function() {
                         FriendAdapter.saveManifests();

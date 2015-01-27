@@ -36,6 +36,51 @@ define([
         }
     }
 
+    function _removeContent(content, folderPath) {
+
+        var deferred = $.Deferred();
+
+        var caption = content["captionUrl"];
+        var thumbnail = content["thumbnailUrl"];
+        var image = content["imageUrl"];
+        var video = content["videoUrl"];
+        var data = content["dataUrl"];
+        var contentNumber = content["number"];
+
+        var removeCaption = null;
+        if (caption) {
+            var captionPath = Storage.getCaptionPath(folderPath, contentNumber);
+            removeCaption = Storage.remove(captionPath);
+        }
+        var removeThumbnail = null;
+        if (thumbnail) {
+            var thumbnailPath = Storage.getThumbnailPath(folderPath, contentNumber);
+            removeThumbnail = Storage.remove(thumbnailPath);
+        }
+        var removeImage = null;
+        if (image) {
+            var imagePath = Storage.getImagePath(folderPath, contentNumber);
+            removeImage = Storage.remove(imagePath);
+        }
+        var removeVideo = null;
+        if (video) {
+            var videoPath = Storage.getImagePath(folderPath, contentNumber);
+            removeVideo = Storage.remove(videoPath);
+        }
+        var removeData = null;
+        if (data) {
+            var dataPath = Storage.getDataPath(folderPath, contentNumber);
+            removeData = Storage.remove(dataPath);
+        }
+
+
+        $.when(removeCaption, removeThumbnail, removeImage, removeVideo, removeData).done(function () {
+            deferred.resolve();
+        });
+        return deferred.promise();
+    }
+
+
     function _uploadContent(content, password, folderPath) {
 
         var deferred = $.Deferred();
@@ -329,6 +374,8 @@ define([
             }
         },
 
+        // addedContent is an array of JSON objects
+        // removedContent is an array of Backbone Models
         updatePost: function(model, changes, addedContent, removedContent) {
 
             var deferred = $.Deferred();
@@ -343,7 +390,7 @@ define([
 
             $.when.apply($, setupTasks).done(function() {
 
-                var uploads = [];
+                var actions = [];
 
                 // deal with text changes
                 if (changes.hasOwnProperty("text")) {
@@ -365,7 +412,7 @@ define([
                             .then(Storage.shareDropbox)
                             .then(setTextUrl);
 
-                        uploads.push(uploadText);
+                        actions.push(uploadText);
                     }
                 }
 
@@ -377,7 +424,7 @@ define([
                     // that as starting point for added content
                     var highestContentNumber = 0;
                     for (var i=0; i<contentArray.length; i++) {
-                        var contentAttributes = JSON.parse(contentArray[i]);
+                        var contentAttributes = contentArray[i];
                         if (contentAttributes.number >= highestContentNumber) {
                             highestContentNumber = contentAttributes.number + 1;
                         }
@@ -389,11 +436,17 @@ define([
                         var content = addedContent[i];
                         content["number"] = i + highestContentNumber;
                         var upload = _uploadContent(content, password, FOLDER_POSTS + model.get("folderId"));
-                        uploads.push(upload);
+                        actions.push(upload);
                     }
                 }
 
-                $.when.apply($, uploads).done(function() {
+                for(var i=0; i < removedContent.length; i++) {
+                    var content = removedContent[i];
+                    var remove = _removeContent(content.toJSON(), FOLDER_POSTS + model.get("folderId"));
+                    actions.push(remove);
+                }
+
+                $.when.apply($, actions).done(function() {
                     deferred.resolve();
                 });
 
@@ -402,13 +455,13 @@ define([
 
         },
 
-        contentToJson: function(contentList) {
+        removeNonPersistentFields: function(contentList) {
 
             var filteredContentList = [];
             for(var i=0; i<contentList.length; i++) {
                 var content = contentList[i];
                 var filteredContent = _.omit(content, EXCLUDE_CONTENT_KEYS);
-                filteredContentList.push(JSON.stringify(filteredContent));
+                filteredContentList.push(filteredContent);
             }
             return filteredContentList;
         }

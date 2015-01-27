@@ -3,11 +3,15 @@ define([
 ], function (Backbone) {
 
 
-    var contentStringsToCollection = function(contentArray){
+    var contentJsonToCollection = function(contentArray){
         var collection = new Backbone.Collection();
 
         for (var i=0; i<contentArray.length; i++) {
-            var contentAttributes = JSON.parse(contentArray[i]);
+            var contentAttributes = contentArray[i];
+            // $LEGACY
+            if (typeof contentAttributes === "string") {
+                contentAttributes = JSON.parse(contentAttributes);
+            }
             var model = new Backbone.Model(contentAttributes);
             collection.add(model);
         }
@@ -81,7 +85,10 @@ define([
                 attr["content"] = new Backbone.Collection(postModel["contentList"]);
             }
             else if (attr.hasOwnProperty("content")) {
-                attr["content"] = contentStringsToCollection(attr["content"]);
+                attr["content"] = contentJsonToCollection(attr["content"]);
+            }
+            else {
+                attr["content"] = new Backbone.Collection();
             }
             var model = new Backbone.Model(attr);
             this.set("post", model);
@@ -93,7 +100,10 @@ define([
         setFriendsPost: function(postModel, friend) {
             var attr = _.extend(_.clone(postModel.attributes), {poster: friend, myPost: false});
             if (attr.hasOwnProperty("content")) {
-                attr["content"] = contentStringsToCollection(attr["content"]);
+                attr["content"] = contentJsonToCollection(attr["content"]);
+            }
+            else {
+                attr["content"] = new Backbone.Collection();
             }
             var model = new Backbone.Model(attr);
             this.set("post", model);

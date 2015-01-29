@@ -17,9 +17,9 @@ require.config({
 	},
 
 	shim: {
-		jquery: {
-			exports: '$'
-		},
+        jquery: {
+            exports: '$'
+        },
         jcrop: {
             deps: ['jquery'],
             exports: 'jQuery.fn.Jcrop'
@@ -30,12 +30,12 @@ require.config({
         },
 
         underscore: {
-			exports: '_'
-		},
-		backbone: {
-			deps: ['jquery', 'underscore'],
-			exports: 'Backbone'
-		},
+            exports: '_'
+        },
+        backbone: {
+            deps: ['jquery', 'underscore'],
+            exports: 'Backbone'
+        },
         dropboxdatastore: {
             deps: ['backbone'],
             exports: 'Backbone'
@@ -46,29 +46,32 @@ require.config({
         },
 
         sjcl: {
-			exports: 'sjcl'
-		},
+            exports: 'sjcl'
+        },
         dropbox: {
             exports: 'Dropbox'
         },
-		bootstrap: {
+        bootstrap: {
             deps: ["jquery"]
         },
-        'backbone-forms-bootstrap3' : {
+        'backbone-forms-bootstrap3': {
             deps: ["backbone-forms"],
             exports: 'Backbone.Form'
         },
-        'backbone.bootstrap-modal' : {
+        'backbone.bootstrap-modal': {
             deps: ["bootstrap"]
         },
-        marionette : {
-            deps : ['jquery', 'underscore', 'backbone'],
-            exports : 'Marionette'
+        marionette: {
+            deps: ['jquery', 'underscore', 'backbone'],
+            exports: 'Marionette'
         },
         visibility: {
             exports: 'Visibility'
         },
-	}
+        cloudGrid: {
+            deps: ['jquery']
+        }
+    }
 });
 
 require([

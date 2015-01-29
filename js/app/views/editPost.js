@@ -28,7 +28,6 @@ define([
         },
 
         initialize: function() {
-            console.log("this.model", this.model);
             this.listenTo(this.options.permissions, "add", this.permissionAdded);
             this.listenTo(this.options.permissions, "remove", this.permissionRemoved);
         },

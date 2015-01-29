@@ -241,14 +241,7 @@ define([
                             }
                             else {
                                 content.set("thumbnail", resizedImage);
-
-                                var img = new Image();
-                                img.onload = function () {
-                                    content.resizedWidth = this.width;
-                                    content.resizedHeight = this.height;
-                                    deferred.resolve();
-                                };
-                                img.src = resizedImage;
+                                deferred.resolve();
                             }
                             return deferred.promise();
                         }

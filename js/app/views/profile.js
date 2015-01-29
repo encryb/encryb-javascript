@@ -122,21 +122,22 @@ define([
             this.needsCrop = true;
             var view = this;
             var image = this.ui.newProfilePicture.children();
-            var size = ImageUtil.getNaturalSize(image);
-            var vertGap = size.width / 10;
-            var horzGap = size.height / 10;
-            image.Jcrop({
-                aspectRatio: 1.2,
-                setSelect: [vertGap, horzGap, size.width - vertGap, size.height - horzGap],
-                trueSize: [size.width, size.height],
-                onRelease: function() {
-                    var select = view.jcrop_profile.tellSelect();
-                    if (select.w == 0 || select.h == 0) {
-                        view.jcrop_profile.setSelect([vertGap, horzGap, size.width - vertGap, size.height - horzGap])
+            $.when(ImageUtil.getNaturalSize(image.attr("src"))).done(function(size){
+                var vertGap = size.width / 10;
+                var horzGap = size.height / 10;
+                image.Jcrop({
+                    aspectRatio: 1.2,
+                    setSelect: [vertGap, horzGap, size.width - vertGap, size.height - horzGap],
+                    trueSize: [size.width, size.height],
+                    onRelease: function() {
+                        var select = view.jcrop_profile.tellSelect();
+                        if (select.w == 0 || select.h == 0) {
+                            view.jcrop_profile.setSelect([vertGap, horzGap, size.width - vertGap, size.height - horzGap])
+                        }
                     }
-                }
-            },function(){
-                view.jcrop_profile = this;
+                },function(){
+                    view.jcrop_profile = this;
+                });
             });
         }
     });

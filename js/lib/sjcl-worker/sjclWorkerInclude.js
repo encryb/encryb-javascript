@@ -54,12 +54,13 @@ define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
 					worker.postMessage(message, [message.content], callback);
 				});
 			},
-			decrypt: function (encryptedContent, password, callback) {
+			decrypt: function (encryptedContent, isBinary, password, callback) {
 				workers.getFreeWorker(function (err, worker) {
 					var message = {
 						"password": password,
 						"encryptedContent": encryptedContent,
-						"decrypt": true
+						"decrypt": true,
+                        "isBinary": isBinary
 					};
 
 					worker.postMessage(message, [encryptedContent], callback);

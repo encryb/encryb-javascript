@@ -3,204 +3,190 @@ define([
     'sjcl',
     'app/services/dropbox',
     'app/encryption',
+    'compat/windowUrl',
     'utils/data-convert',
+    'utils/encoding',
     'utils/misc'
-
-], function (Backbone, Sjcl, Storage, Encryption, DataConvert, MiscUtils) {
+], function (Backbone, Sjcl, Storage, Encryption, WindowUrl, DataConvert, Encoding, MiscUtils) {
 
     // $CONFIG
     var FOLDER_POSTS = "posts/";
+    var FILED_CONTENT_FIELDS = ["thumbnail", "videoFrames", "image", "video", "data"];
 
-    var EXCLUDE_CONTENT_KEYS = [ "caption", "thumbnail", "image", "video", "data"];
 
-    // $CONFIG
-    // If text is longer than x, store it in file, rather than in the datastore
-    function hasLargeText(text) {
-        return ('undefined' !== typeof text && text.length > 200);
-    }
-
-    function getOrCreateFolder(model) {
-        var deferred = $.Deferred();
-        if (model.has("folderId")) {
-            deferred.resolve(model.get("folderId"));
-        }
-        else {
-            var folderId = MiscUtils.makeId();
-            model.set("folderId", folderId);
-            var folderPath = FOLDER_POSTS + folderId;
-
-            $.when(Storage.createFolder(folderPath)).done(function (stats) {
-                deferred.resolve(stats);
-            });
+    var fetchHelper = {
+        fetchToUrlObject: function(model, key, objectType, password) {
+            if (!model.has(key) && model.has(key + "Url")) {
+                var url = model.get(key + "Url");
+                var decryptFunc;
+                if (objectType === "binary") {
+                    decryptFunc = Encryption.decryptDataAsync.bind(null, password);
+                }
+                else if (objectType === "text"){
+                    decryptFunc = Encryption.decryptTextAsync.bind(null, password);
+                }
+                else if (objectType === "array") {
+                    decryptFunc = Encryption.decryptArrayAsync.bind(null, password);
+                }
+                var deferred = Storage.downloadUrl(url)
+                    .then(
+                    decryptFunc,
+                    setError.bind(null, model, key + " download error")
+                )
+                    .then(
+                    function(value) {
+                        if (value) {
+                            model.set(key, value);
+                        }
+                    },
+                    setError.bind(null, model, key + " decryption error")
+                );
+            }
             return deferred;
+        },
+
+        getOrFetchToUrlObject: function (content, type, password) {
+            var deferred = $.Deferred();
+            if (content.has(type)) {
+                deferred.resolve(content.get(type));
+            }
+            else {
+                var url = content.get(type + "Url");
+                Storage.downloadUrl(url)
+                    .then(Encryption.decryptDataAsync.bind(null, password),
+                    setError.bind(null, content, type + " download error"))
+                    .done(function (data) {
+                        if (!data) {
+                            deferred.reject(content.get("errors"));
+                            return;
+                        }
+                        content.set(type, data);
+                        deferred.resolve(data);
+                    })
+                    .fail(function(error) {
+                        setError(content, type + " decryption error", error);
+                        deferred.reject(content.get("errors"));
+                    });
+            }
+            return deferred.promise();
         }
-    }
+    };
 
-    function _removeContent(content, folderPath) {
+    var createHelper = {
 
+        getOrCreateFolder: function (model) {
+            var deferred = $.Deferred();
+            if (model.has("folderId")) {
+                deferred.resolve(model.get("folderId"));
+            }
+            else {
+                var folderId = MiscUtils.makeId();
+                model.set("folderId", folderId);
+                var folderPath = FOLDER_POSTS + folderId;
+
+                $.when(Storage.createFolder(folderPath)).done(function (stats) {
+                    deferred.resolve(stats);
+                });
+            }
+            return deferred.promise();
+        },
+
+        convertAssetToBuffer: function (asset) {
+            var deferred = $.Deferred();
+
+            if (asset.constructor === Array) {
+                var conversions = [];
+                var i;
+                for (i = 0; i < asset.length; i++) {
+                    conversions.push(createHelper.convertAssetToBuffer(asset[i]));
+                }
+                $.when.apply($, conversions).done(function (results) {
+                    var buffers = [];
+                    var mimeType;
+                    for (i = 0; i < results.length; i++) {
+                        var result = results[i];
+                        buffers.push(result[0]);
+                        mimeType = result[1];
+                    }
+                    var combinedBuffer = Encoding.combineBuffers(buffers);
+                    deferred.resolve(combinedBuffer, mimeType);
+                });
+            }
+            else if (asset instanceof File) {
+                var fileReader = new FileReader();
+                fileReader.onload = function () {
+                    deferred.resolve(fileReader.result, asset.type);
+                };
+                fileReader.readAsArrayBuffer(asset);
+            }
+            else {
+                var typedArray = DataConvert.dataUriToTypedArray(asset);
+                deferred.resolve(typedArray['data'].buffer, typedArray['mimeType']);
+            }
+            return deferred.promise();
+        },
+        uploadAsset: function(content, key, folderPath, password) {
+            if (!content.hasOwnProperty(key)) {
+                return null;
+            }
+
+            var deferred = $.Deferred();
+            var asset = content[key];
+            var path = Storage.getPath(key, folderPath, content["number"]);
+            $.when(this.convertAssetToBuffer(asset)).done(function(buffer, mimeType) {
+                return Encryption.encryptAsync(password, mimeType, buffer)
+                    .then(Storage.uploadDropbox.bind(null, path))
+                    .then(Storage.shareDropbox)
+                    .then(function(url) {
+                        if (url) {
+                            content[key + "Url"] = url;
+                        }
+                    })
+                    .done(function() {
+                        deferred.resolve();
+                    });
+
+            });
+            return deferred.promise();
+        }
+    };
+
+    function _uploadContent(content, password, folderPath) {
         var deferred = $.Deferred();
-
-        var caption = content["captionUrl"];
-        var thumbnail = content["thumbnailUrl"];
-        var image = content["imageUrl"];
-        var video = content["videoUrl"];
-        var data = content["dataUrl"];
-        var contentNumber = content["number"];
-
-        var removeCaption = null;
-        if (caption) {
-            var captionPath = Storage.getCaptionPath(folderPath, contentNumber);
-            removeCaption = Storage.remove(captionPath);
-        }
-        var removeThumbnail = null;
-        if (thumbnail) {
-            var thumbnailPath = Storage.getThumbnailPath(folderPath, contentNumber);
-            removeThumbnail = Storage.remove(thumbnailPath);
-        }
-        var removeImage = null;
-        if (image) {
-            var imagePath = Storage.getImagePath(folderPath, contentNumber);
-            removeImage = Storage.remove(imagePath);
-        }
-        var removeVideo = null;
-        if (video) {
-            var videoPath = Storage.getImagePath(folderPath, contentNumber);
-            removeVideo = Storage.remove(videoPath);
-        }
-        var removeData = null;
-        if (data) {
-            var dataPath = Storage.getDataPath(folderPath, contentNumber);
-            removeData = Storage.remove(dataPath);
-        }
-
-
-        $.when(removeCaption, removeThumbnail, removeImage, removeVideo, removeData).done(function () {
+        var uploads = FILED_CONTENT_FIELDS.map(function(type) {
+            return createHelper.uploadAsset(content, type, folderPath, password);
+        });
+        $.when.apply($, uploads).done(function() {
             deferred.resolve();
         });
         return deferred.promise();
     }
 
-
-    function _uploadContent(content, password, folderPath) {
-
+    function _removeContent(content, folderPath) {
         var deferred = $.Deferred();
 
-        var caption = content["caption"];
-        var thumbnail = content["thumbnail"];
-        var image = content["image"];
-        var video = content["video"];
-        var data = content["data"];
-        var contentNumber = content["number"];
-
-        var uploadCaption = null;
-        if (caption) {
-            var captionPath = Storage.getCaptionPath(folderPath, contentNumber);
-            var encCaption = Encryption.encrypt(password, "plain/text", caption);
-
-            var setCaptionUrl = function(url) {
-                content["captionUrl"] = url;
-            };
-
-            uploadCaption = Storage.uploadDropbox(captionPath, encCaption)
-                        .then(Storage.shareDropbox)
-                        .then(setCaptionUrl);
-        }
-
-
-        var uploadAsset = function(asset, path, setUrl) {
-            if (asset instanceof File) {
-                return uploadFileAsset(asset, path, setUrl);
+        var removals = FILED_CONTENT_FIELDS.map(function(type) {
+            if (!content.hasOwnProperty(type + "Url")) {
+                return null;
             }
-            var typedArray = DataConvert.dataUriToTypedArray(asset);
-            return Encryption.encryptAsync(password, typedArray['mimeType'], typedArray['data'].buffer)
-                .then(Storage.uploadDropbox.bind(null, path))
-                .then(Storage.shareDropbox)
-                .then(setUrl);
-        }
+            var path = Storage.getPath(type, folderPath, content["number"]);
+            return Storage.remove(path);
+        });
 
-        var uploadFileAsset = function(file, path, setUrl) {
-
-            var deferred = $.Deferred();
-            var fileReader = new FileReader();
-            fileReader.onload = function() {
-                var buffer = fileReader.result;
-                Encryption.encryptAsync(password, file.type, buffer)
-                    .then(Storage.uploadDropbox.bind(null, path))
-                    .then(Storage.shareDropbox)
-                    .then(setUrl).done( function() {
-                        deferred.resolve(arguments);
-                    });
-            }
-            fileReader.readAsArrayBuffer(file);
-            return deferred.promise();
-        }
-
-
-        var uploadThumbnail = null;
-        if (thumbnail) {
-
-            var thumbPath = Storage.getThumbnailPath(folderPath, contentNumber);
-            var setThumbnailUrl = function(url) {
-                content["thumbnailUrl"] = url;
-            };
-            uploadThumbnail = uploadAsset(thumbnail, thumbPath, setThumbnailUrl);
-
-        }
-
-        var uploadImage = null;
-        if (image) {
-            var imagePath = Storage.getImagePath(folderPath, contentNumber);
-            var setImageUrl = function(url) {
-                content["imageUrl"] = url;
-            };
-
-            uploadImage = uploadAsset(image, imagePath, setImageUrl);
-        }
-
-        var uploadVideo = null;
-        if (video) {
-            var videoPath = Storage.getImagePath(folderPath, contentNumber);
-            var setVideoUrl = function(url) {
-                content["videoUrl"] = url;
-            };
-
-            uploadVideo = uploadAsset(video, videoPath, setVideoUrl);
-        }
-
-        var uploadData = null;
-        if (data) {
-            var dataPath = Storage.getDataPath(folderPath, contentNumber);
-            var setDataUrl = function(url) {
-                content["dataUrl"] = url;
-            };
-
-            uploadData = uploadAsset(data, dataPath, setDataUrl);
-        }
-
-        $.when(uploadCaption, uploadThumbnail, uploadImage, uploadVideo, uploadData).done(function() {
+        $.when.apply($, removals).done(function() {
             deferred.resolve();
         });
         return deferred.promise();
     }
 
     var setError = function(model, errorType, errorMsg) {
-        console.log("Error", model, errorType, errorMsg);
         var deferred = $.Deferred();
         var messeges = model.get("errors") || [];
         messeges.push(errorType + ": " + errorMsg);
         model.set("errors", messeges);
         deferred.resolve();
         return deferred.promise();
-    }
-
-    var setValue = function(model, key, value) {
-        var deferred = $.Deferred();
-        if (value) {
-            model.set(key, value);
-        }
-        deferred.resolve();
-        return deferred.promise();
-    }
+    };
 
 
     var PostAdapter = {
@@ -209,100 +195,26 @@ define([
 
             var deferred = $.Deferred();
             var password = post.get('password');
-            var deferreds = [];
-
-            if (!post.has('text') && post.has('textUrl')) {
-                var textDeferred = Storage.downloadUrl(post.get('textUrl'))
-                    .then(Encryption.decryptTextAsync.bind(null, password),
-                          setError.bind(null, post, "Download error"))
-                    .then(setValue.bind(null, post, "text"),
-                          setError.bind(null, post, "Decryption error"));
-                deferreds.push(textDeferred);
-            }
+            var fetches = [];
 
             if (post.has("content")) {
                 var contentList = post.get("content");
                 contentList.each(function (content) {
-                    if (!content.has("caption") && content.has("captionUrl")) {
-                        var captionUrl = content.get("captionUrl");
-                        var captionDeferred = Storage.downloadUrl(captionUrl)
-                            .then(Encryption.decryptTextAsync.bind(null, password),
-                                  setError.bind(null, post, "Caption download error"))
-                            .then(setValue.bind(null, content, "caption"),
-                                  setError.bind(null, post, "Caption decryption error"));
-                        deferreds.push(captionDeferred);
-                    }
 
-                    if (!content.has("thumbnail") && content.has("thumbnailUrl")) {
-                        var setImage = function(content, resizedImage) {
-                            var deferred = $.Deferred();
-                            if (!resizedImage) {
-                                deferred.resolve();
-                            }
-                            else {
-                                content.set("thumbnail", resizedImage);
-                                deferred.resolve();
-                            }
-                            return deferred.promise();
-                        }
+                    // automatic downloads
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "caption", "text", password));
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "videoFrames", "array", password));
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "thumbnail", "binary", password));
 
-                        var resizedImageUrl = content.get("thumbnailUrl");
-                        var resizedImageDeferred = Storage.downloadUrl(resizedImageUrl)
-                                             .then(Encryption.decryptDataAsync.bind(null, password),
-                                                   setError.bind(null, content, "Thumbnail download error"))
-                                             .then(setImage.bind(null, content),
-                                                   setError.bind(null, content, "Thumbnail decryption error"));
 
-                        deferreds.push(resizedImageDeferred);
-                    }
-
-                    // setup a function that fetches the full size image and attach it directly to content object
-                    content.getFullImage = function () {
-                        var deferred = $.Deferred();
-                        if (content.has("image")) {
-                            deferred.resolve(content.get("image"));
-                        }
-                        else {
-                            var fullImageUrl = content.get("imageUrl");
-                            Storage.downloadUrl(fullImageUrl)
-                                .then(Encryption.decryptDataAsync.bind(null, password),
-                                      setError.bind(null, content, "Image download error"))
-                                .done(function (fullImage) {
-                                    if (!fullImage) {
-                                        deferred.reject(content.get("errors"));
-                                    }
-                                    content.set("image", fullImage);
-                                    deferred.resolve(fullImage);
-                                })
-                                .fail(function(error) {
-                                   setError(content, "Image decryption error", error);
-                                   deferred.reject(content.get("errors"));
-                                });
-                        }
-                        return deferred.promise();
-                    }
-
-                    // setup a function that fetches the full size image and attach it directly to content object
-                    content.getVideo = function () {
-                        var deferred = $.Deferred();
-                        if (content.has("video")) {
-                            deferred.resolve(content.get("video"));
-                        }
-                        else {
-                            var videoUrl = content.get("videoUrl");
-                            Storage.downloadUrl(videoUrl)
-                                .then(Encryption.decryptDataAsync.bind(null, password))
-                                .done(function (video) {
-                                    content.set("video", video);
-                                    deferred.resolve(video);
-                                });
-                        }
-                        return deferred.promise();
-                    }
+                    //on demand downloads
+                    content.getFullImage = fetchHelper.getOrFetchToUrlObject.bind(null, content, "image", password);
+                    content.getVideo = fetchHelper.getOrFetchToUrlObject.bind(null, content, "video", password);
+                    content.getData = fetchHelper.getOrFetchToUrlObject.bind(null, content, "data", password);
                 });
             }
 
-            $.when.apply($, deferreds).done(function() {
+            $.when.apply($, fetches).done(function() {
                 deferred.resolve();
             });
 
@@ -315,34 +227,14 @@ define([
             var password = Sjcl.random.randomWords(8,1);
             var uploads = [];
 
-            var haveLargeText = hasLargeText(post.get("text"));
-
             var contentList = post.contentList;
             // we have nothing to upload
-            if (!haveLargeText && (!contentList || contentList.length == 0)) {
+            if (!contentList || contentList.length == 0) {
                 return;
             }
 
-            $.when(getOrCreateFolder(post)).done( function () {
-
+            $.when(createHelper.getOrCreateFolder(post)).done( function () {
                 var folderPath = FOLDER_POSTS + post.get("folderId");
-
-                var uploadText = null;
-                if (haveLargeText) {
-                    var text = post.get("text");
-                    var textPath = Storage.getTextPath(folderPath);
-                    var encText = Encryption.encrypt(password, "plain/text", text);
-
-                    var setTextUrl = function(url) {
-                        post.set("textUrl", url);
-                    };
-
-                    uploadText = Storage.uploadDropbox(textPath, encText)
-                        .then(Storage.shareDropbox)
-                        .then(setTextUrl);
-                    uploads.push(uploadText);
-                }
-
                 if (contentList) {
                     for(var i=0; i<contentList.length; i++) {
                         var content = contentList[i];
@@ -376,47 +268,20 @@ define([
 
             var setupTasks = [];
             if (!model.has("folderId")) {
-                if (addedContent.length > 0 || hasLargeText(changes["text"])) {
-                    setupTasks.push(getOrCreateFolder(model));
+                if (addedContent.length > 0) {
+                    setupTasks.push(createHelper.getOrCreateFolder(model));
                 }
             }
-
+            var i;
             $.when.apply($, setupTasks).done(function() {
-
                 var actions = [];
-
-                // deal with text changes
-                if (changes.hasOwnProperty("text")) {
-                    // remove existing text
-                    if (model.has("textUrl")) {
-                        var oldTextPath = Storage.getTextPath(FOLDER_POSTS + model.get("folderId"));
-                        model.unset("textUrl");
-                        Storage.remove(oldTextPath);
-                    }
-
-                    if (hasLargeText(changes["text"])) {
-                        var textPath = Storage.getTextPath(FOLDER_POSTS + model.get("folderId"));
-                        var encText = Encryption.encrypt(password, "plain/text", changes["text"]);
-                        var setTextUrl = function(url) {
-                            model.set("textUrl", url);
-                        };
-
-                        var uploadText = Storage.uploadDropbox(textPath, encText)
-                            .then(Storage.shareDropbox)
-                            .then(setTextUrl);
-
-                        actions.push(uploadText);
-                    }
-                }
-
-
                 if (addedContent.length > 0) {
                     var contentArray = model.get("content");
 
                     // find the highest current content number. We will use use
                     // that as starting point for added content
                     var highestContentNumber = 0;
-                    for (var i=0; i<contentArray.length; i++) {
+                    for (i=0; i<contentArray.length; i++) {
                         var contentAttributes = contentArray[i];
                         if (contentAttributes.number >= highestContentNumber) {
                             highestContentNumber = contentAttributes.number + 1;
@@ -424,8 +289,7 @@ define([
                     }
 
                     // need to figure out how to update content list
-
-                    for(var i=0; i < addedContent.length; i++) {
+                    for(i=0; i < addedContent.length; i++) {
                         var content = addedContent[i];
                         content["number"] = i + highestContentNumber;
                         var upload = _uploadContent(content, password, FOLDER_POSTS + model.get("folderId"));
@@ -433,9 +297,8 @@ define([
                     }
                 }
 
-                for(var i=0; i < removedContent.length; i++) {
-                    var content = removedContent[i];
-                    var remove = _removeContent(content.toJSON(), FOLDER_POSTS + model.get("folderId"));
+                for(i=0; i < removedContent.length; i++) {
+                    var remove = _removeContent(removedContent[i].toJSON(), FOLDER_POSTS + model.get("folderId"));
                     actions.push(remove);
                 }
 
@@ -445,15 +308,13 @@ define([
 
             });
             return deferred;
-
         },
 
         removeNonPersistentFields: function(contentList) {
-
             var filteredContentList = [];
             for(var i=0; i<contentList.length; i++) {
                 var content = contentList[i];
-                var filteredContent = _.omit(content, EXCLUDE_CONTENT_KEYS);
+                var filteredContent = _.omit(content, FILED_CONTENT_FIELDS);
                 filteredContentList.push(filteredContent);
             }
             return filteredContentList;

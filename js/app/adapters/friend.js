@@ -357,11 +357,20 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
             var friendAdapter = this;
 
             Dropbox.downloadUrl(friendsManifest).done(function (data) {
+                $.when(Encryption.decryptTextAsync({privateKey: Encryption.getEncodedKeys().secretKey}, data))
+                    .done(function(decryptedData){
+                        try {
+                            var manifest = JSON.parse(decryptedData);
+                            friendAdapter.updateCollection(friend, manifest);
+                        }
+                        catch (e) {
+                            console.error("Failed to parse " + friend.get("name") + "'s manifest:", e.message);
+                        }
+                    })
+                    .fail (function(error) {
+                        console.error("Failed to decode " + friend.get("name") + "'s manifest:", error);
+                    });
 
-                var decryptedData = Encryption.decryptText(data, Encryption.getKeys().secretKey);
-                var manifest = JSON.parse(decryptedData);
-
-                friendAdapter.updateCollection(friend, manifest);
             });
         },
 

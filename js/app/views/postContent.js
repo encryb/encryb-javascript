@@ -125,7 +125,7 @@ define([
                                         cols = 7;
                                         rows = 4;
                                     }
-                                    if (collection.length == 1) {
+                                    if (collection.length == 1 && size.width > 300) {
                                         if (ratio >= 1) {
                                             cols = cols * 3;
                                             rows = rows * 3;
@@ -136,7 +136,7 @@ define([
                                         }
                                     }
                                     else if (isFirst || collection.length == 2) {
-                                        if (ratio >= 1) {
+                                        if (ratio >= 1 && size.width > 300) {
                                             cols = cols * 2;
                                             rows = rows * 2;
                                         }

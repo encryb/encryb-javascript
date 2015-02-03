@@ -347,18 +347,10 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                     FriendAdapter.saveManifests();
                 }
             });
-            wall.listenTo(App.vent, "file:download", function(content, password){
-
-                if (content.has("data")) {
-                    startDownload(content.get("data"), content.get("filename"));
-                    return;
-                }
-                Dropbox.downloadUrl(content.get('dataUrl'))
-                    .then(Encryption.decryptDataAsync.bind(null, password))
-                    .done(function(data) {
-                        content.set("data", data);
-                        startDownload(data, content.get("filename"));
-                    });
+            wall.listenTo(App.vent, "file:download", function(content){
+                $.when(content.getData()).done(function(data){
+                    startDownload(data, content.get("filename"));
+                });
             });
 
             $.when(App.state.fetchAll()).done(function(){

@@ -104,7 +104,7 @@ define([
                                 var frame = ImageUtil.captureFrame(_video, 480, 360);
                                 WindowUrl.revokeObjectURL(video.src);
                                 _content['video'] = _file;
-                                _content['thumbnail'] = frame;
+                                _content['videoFrames'] = [frame, frame, frame];
                                 _loadDeferred.resolve();
                             });
                             _video.currentTime = _video.duration / 3;

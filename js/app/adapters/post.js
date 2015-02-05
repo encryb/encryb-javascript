@@ -47,8 +47,20 @@ define([
 
         getOrFetchToUrlObject: function (content, type, password) {
             var deferred = $.Deferred();
+            if (content.has(type + "Cached")) {
+                return content.get(type + "Cached");
+            }
             if (content.has(type)) {
-                deferred.resolve(content.get(type));
+                var asset = content.get(type);
+                var url;
+                if (asset instanceof File) {
+                    url = WindowUrl.createObjectURL(asset);
+                }
+                else {
+                    url = content.get(type);
+                }
+                content.set(type + "Cached", url);
+                deferred.resolve(url);
             }
             else {
                 var url = content.get(type + "Url");
@@ -60,7 +72,7 @@ define([
                             deferred.reject(content.get("errors"));
                             return;
                         }
-                        content.set(type, data);
+                        content.set(type + "Cached", data);
                         deferred.resolve(data);
                     })
                     .fail(function(error) {

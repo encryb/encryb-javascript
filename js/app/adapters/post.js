@@ -112,28 +112,30 @@ define([
                 for (i = 0; i < asset.length; i++) {
                     conversions.push(createHelper.convertAssetToBuffer(asset[i]));
                 }
-                $.when.apply($, conversions).done(function (results) {
+                //TODO when conversions length is one, arguments doesn't work!
+                $.when.apply($, conversions).done(function () {
+                    var results = arguments;
                     var buffers = [];
                     var mimeType;
                     for (i = 0; i < results.length; i++) {
                         var result = results[i];
-                        buffers.push(result[0]);
-                        mimeType = result[1];
+                        buffers.push(result.buffer);
+                        mimeType = result.mimeType;
                     }
                     var combinedBuffer = Encoding.combineBuffers(buffers);
-                    deferred.resolve(combinedBuffer, mimeType);
+                    deferred.resolve({buffer: combinedBuffer, mimeType: mimeType});
                 });
             }
             else if (asset instanceof File) {
                 var fileReader = new FileReader();
                 fileReader.onload = function () {
-                    deferred.resolve(fileReader.result, asset.type);
+                    deferred.resolve({buffer: fileReader.result, mimeType: asset.type});
                 };
                 fileReader.readAsArrayBuffer(asset);
             }
             else {
                 var typedArray = DataConvert.dataUriToTypedArray(asset);
-                deferred.resolve(typedArray['data'].buffer, typedArray['mimeType']);
+                deferred.resolve({buffer: typedArray['data'].buffer, mimeType: typedArray['mimeType']});
             }
             return deferred.promise();
         },
@@ -145,8 +147,8 @@ define([
             var deferred = $.Deferred();
             var asset = content[key];
             var path = Storage.getPath(key, folderPath, content["number"]);
-            $.when(this.convertAssetToBuffer(asset)).done(function(buffer, mimeType) {
-                return Encryption.encryptAsync(password, mimeType, buffer)
+            $.when(this.convertAssetToBuffer(asset)).done(function(result) {
+                return Encryption.encryptAsync(password, result.mimeType, result.buffer, true)
                     .then(Storage.uploadDropbox.bind(null, path))
                     .then(Storage.shareDropbox)
                     .then(function(url) {

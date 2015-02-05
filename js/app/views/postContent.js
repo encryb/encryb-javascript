@@ -89,7 +89,7 @@ define([
                 var collection = this.model.get("content");
                 var isFirst = true;
                 collection.each(function (model, index) {
-                    if (model.has("thumbnailUrl")) {
+                    if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
 
                         var imageView = new ImageThumbnailView({model: model});
                         var imageElement = imageView.render().el;
@@ -102,8 +102,8 @@ define([
 
                         // we have this in case of error downloading thumbnail
                         if (!model.has("thumbnail")) {
-                            $.data(imageElement, 'grid-columns', 10);
-                            $.data(imageElement, 'grid-rows', 8);
+                            $.data(imageElement, 'grid-columns', 20);
+                            $.data(imageElement, 'grid-rows', 12);
                         }
                         else {
 

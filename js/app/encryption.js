@@ -34,9 +34,9 @@ define([
         return buf;
     };
 
-    exports.encryptAsync = function(key, mimeType, data) {
+    exports.encryptAsync = function(key, mimeType, data, isBinary) {
         var deferred = $.Deferred();
-        SjclWorker.sym.encrypt(data, mimeType, key, function(error, encrypted) {
+        SjclWorker.sym.encrypt(data, mimeType, key, isBinary, function(error, encrypted) {
             deferred.resolve(encrypted.packedData);
         });
         return deferred.promise();
@@ -97,10 +97,8 @@ define([
     };
 
     exports.publicHexToKey = function(publicKeyEncoded) {
-
         var publicKeyBits = Sjcl.codec.hex.toBits(publicKeyEncoded);
         var publicKey = new Sjcl.ecc.elGamal.publicKey(Sjcl.ecc.curves.c384, publicKeyBits);
-
         return publicKey;
     };
 
@@ -108,7 +106,6 @@ define([
         var secretKeyBits = new Sjcl.bn(secretKeyEncoded);
         var secretKey = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
         return secretKey;
-
     };
 
     exports.getKeys = function() {
@@ -191,18 +188,22 @@ define([
         SjclWorker.sym.decrypt(packedData, true, password, function(error, decrypted) {
             if (error) {
                 deferred.reject(error.message);
+                return;
             }
-            else {
-                var datas = Encoding.splitBuffers(decrypted.data);
-                var objects =[];
-                for(var i=0; i<datas.length; i++) {
-                    var data = datas[i];
-                    var blob = new Blob([data], {type: decrypted.mimeType});
-                    var objectUrl = WindowUrl.createObjectURL(blob);
-                    objects.push(objectUrl);
-                }
-                deferred.resolve(objects);
+
+            var datas = Encoding.splitBuffers(decrypted.data);
+            if (!datas) {
+                deferred.reject("Could not split assets");
+                return;
             }
+            var objects =[];
+            for(var i=0; i<datas.length; i++) {
+                var data = datas[i];
+                var blob = new Blob([data], {type: decrypted.mimeType});
+                var objectUrl = WindowUrl.createObjectURL(blob);
+                objects.push(objectUrl);
+            }
+            deferred.resolve(objects);
         });
 
         return deferred.promise();

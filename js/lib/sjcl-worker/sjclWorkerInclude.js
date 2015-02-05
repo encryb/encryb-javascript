@@ -42,16 +42,24 @@ define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
 
 	var sjclWorker = {
 		sym: {
-			encrypt: function (content, mimeType, password, callback) {
+			encrypt: function (content, mimeType, password, isBinary, callback) {
 				workers.getFreeWorker(function (err, worker) {
 					var message = {
 						"password": password,
 						"mimeType": mimeType,
 						"content": content,
+                        "isBinary": isBinary,
 						"encrypt": true
 					};
 
-					worker.postMessage(message, [message.content], callback);
+                    var tranferable = [];
+                    if (content instanceof ArrayBuffer ){
+                        tranferable.push(content);
+                    }
+                    else {
+                        console.log("content is not ArrayBuffer", content);
+                    }
+					worker.postMessage(message, tranferable, callback);
 				});
 			},
 			decrypt: function (encryptedContent, isBinary, password, callback) {
@@ -59,8 +67,8 @@ define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
 					var message = {
 						"password": password,
 						"encryptedContent": encryptedContent,
-						"decrypt": true,
-                        "isBinary": isBinary
+                        "isBinary": isBinary,
+						"decrypt": true
 					};
 
 					worker.postMessage(message, [encryptedContent], callback);

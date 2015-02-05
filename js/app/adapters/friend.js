@@ -341,14 +341,14 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
             manifest['comments'] = App.state.myComments.toJSON();
             manifest['friends'] = App.state.myFriends.toManifest(friend);
 
-            var encText = Encryption.encryptWithEcc(friend.get('publicKey'),  "plain/text", JSON.stringify(manifest), false);
-            Dropbox.uploadDropbox(friend.get('manifestFile'), encText).done(function(stats) {
-                deferred.resolve(stats);
-                FriendAdapter.notifyFriend(friend);
+            var key = {publicKey: friend.get("publicKey")};
+            $.when(Encryption.encryptAsync(key, "plain/json", JSON.stringify(manifest), false)).done(function(encText){
+                Dropbox.uploadDropbox(friend.get('manifestFile'), encText).done(function (stats) {
+                    deferred.resolve(stats);
+                    FriendAdapter.notifyFriend(friend);
 
+                });
             });
-
-
             return deferred;
         },
 

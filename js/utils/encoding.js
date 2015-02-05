@@ -22,14 +22,14 @@ var Encoding = {
     combineBuffers: function(buffers) {
         var dataLenght = 0;
         for (var i=0; i<buffers.length; i++) {
-            var buffer = buffers[i];;
-            dataLenght += buffer.byteLength;
+            dataLenght += buffers[i].byteLength;
         }
 
         // create combined array whose size is
         // 1 bytes for encoding version +
+        // 4 bytes per each element for size +
         // sum of size for all arrays
-        var combinedArray = new Uint8Array(1 + dataLenght);
+        var combinedArray = new Uint8Array(1 + (buffers.length * 4) + dataLenght);
         var view = new DataView(combinedArray.buffer);
 
         var offset = 0;
@@ -40,7 +40,7 @@ var Encoding = {
         for (var i=0; i<buffers.length; i++) {
             view.setUint32(offset, buffers[i].byteLength);
             combinedArray.set(new Uint8Array(buffers[i]), offset + 4);
-            offset += buffer.byteLength + 4;
+            offset += buffers[i].byteLength + 4;
         }
         return combinedArray.buffer;
 
@@ -54,7 +54,8 @@ var Encoding = {
         var version = view.getUint8(offset);
         offset += 1;
 
-        while (offset < combinedBuffer.byteLength) {
+        while (offset < combinedBuffer.byteLength-1) {
+
 
             var size = view.getUint32(offset);
             offset += 4;

@@ -649,10 +649,10 @@ sjcl.codec.bytes = {
 /** @namespace ArrayBuffer */
 sjcl.codec.arrayBuffer = {
   /** Convert from a bitArray to an ArrayBuffer.
-   * Will default to 8byte padding if padding is undefined*/
+   * Will default to no padding if padding is undefined*/
   fromBits: function (arr, padding, padding_count) {
     var out, i, ol, tmp, smallest;
-    padding = padding == undefined ? true : padding
+    padding = padding == undefined ? false : padding
     padding_count = padding_count || 8
 
     ol = sjcl.bitArray.bitLength(arr) / 8

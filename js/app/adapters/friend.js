@@ -114,18 +114,20 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
             //send trigger to controller to open a chat window if need be
             App.vent.trigger("chat:received", friend);
             var textBuffer = chatLine.get("text").buffer;
-            var text = Encryption.decryptText(textBuffer, Encryption.getKeys().secretKey);
-            var collection = App.state.chats[friend.get("userId")];
-            var lastChat = collection.last();
+            var key = {secretKey: Encryption.getEncodedKeys().secretKey};
+            $.when(Encryption.decryptTextAsync(key, textBuffer)).done(function(text){
+                var collection = App.state.chats[friend.get("userId")];
+                var lastChat = collection.last();
 
-            if (lastChat && !lastChat.get("isMine") &&
-                (chatLine.get("time") - lastChat.get("time") < 30000)) {
-                lastChat.set("text", lastChat.get("text") + "\n" + text);
-            }
-            else {
-                var newChat = new Backbone.Model({time: chatLine.get("time"), text: text});
-                collection.add(newChat);
-            }
+                if (lastChat && !lastChat.get("isMine") &&
+                    (chatLine.get("time") - lastChat.get("time") < 30000)) {
+                    lastChat.set("text", lastChat.get("text") + "\n" + text);
+                }
+                else {
+                    var newChat = new Backbone.Model({time: chatLine.get("time"), text: text});
+                    collection.add(newChat);
+                }
+            });
         },
 
         clearReceivedChats: function(friend, receivedTime) {
@@ -175,9 +177,11 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
         sendChat: function(friend, text) {
             var time = new Date().getTime();
             $.when(this._getOutgoingChatCollection(friend)).done(function(chats){
-                var encText = Encryption.encryptWithEcc(friend.get('publicKey'),  "plain/text", text);
-                var encArray = new Uint8Array(encText);
-                chats.create({time:time, text: encArray});
+                var key = {publicKey: friend.get("publicKey")};
+                $.when(Encryption.encryptAsync(key, "plain/json", text, false)).done(function(encText) {
+                    var encArray = new Uint8Array(encText);
+                    chats.create({time: time, text: encArray});
+                });
             });
             var chat = new Backbone.Model({isMine: true, time:time, text: text});
 
@@ -355,10 +359,9 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
         getManifest: function(friend, friendsManifest) {
 
             var friendAdapter = this;
-
             Dropbox.downloadUrl(friendsManifest).done(function (data) {
-                $.when(Encryption.decryptTextAsync({privateKey: Encryption.getEncodedKeys().secretKey}, data))
-                    .done(function(decryptedData){
+                var key = {secretKey: Encryption.getEncodedKeys().secretKey};
+                $.when(Encryption.decryptTextAsync(key, data)).done(function(decryptedData){
                         try {
                             var manifest = JSON.parse(decryptedData);
                             friendAdapter.updateCollection(friend, manifest);

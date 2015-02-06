@@ -42,12 +42,6 @@ define([
         return deferred.promise();
     },
 
-    exports.encryptWithEcc = function(keyString, mimeType, data, isBinary) {
-
-        var key = exports.publicHexToKey(keyString);
-        return exports.encrypt(key, mimeType, data, isBinary);
-    };
-
     exports.createKeys = function() {
         var keys = Sjcl.ecc.elGamal.generateKeys(384);
 

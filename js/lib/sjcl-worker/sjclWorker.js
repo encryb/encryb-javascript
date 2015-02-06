@@ -13,8 +13,8 @@ function (Sjcl, Encoding, SjclConvert) {
         if (password instanceof Array) {
 			key = Sjcl.codec.bytes.toBits(password);
 		}
-        else if (password.hasOwnProperty("privateKey")) {
-            var secretKeyBits = new Sjcl.bn(password.privateKey);
+        else if (password.hasOwnProperty("secretKey")) {
+            var secretKeyBits = new Sjcl.bn(password.secretKey);
             key = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
         }
         else {

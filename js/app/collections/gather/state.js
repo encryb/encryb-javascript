@@ -101,40 +101,42 @@ define([
         },
 
         onMyPostAdded: function(post) {
+            var propagateAdd = function(post) {
+                var wrapper = new PostWrapper();
+                wrapper.setMyPost(post, this.myModel);
+                this.posts.add(wrapper);
+                var postComments = this.comments.where({postId: wrapper.get("postId")});
+
+                var i;
+                for (i=0; i<postComments.length; i++) {
+                    var comment = postComments[i];
+                    wrapper.addComment(comment);
+                }
+                var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
+                for (i=0; i<postUpvotes.length; i++) {
+                    var upvote = postUpvotes[i];
+                    if (upvote.get("myUpvote")) {
+                        wrapper.addMyUpvote();
+                    }
+                    else {
+                        wrapper.addFriendsUpvote(upvote.get("friend"));
+                    }
+                    this.updateScore(upvote, 1);
+                }
+            }
+
             // if post was just created, it might not have id (assigned by the datastore)
             // in that case, save the post first.
             if (post.has("id")){
-                return this._onMyPostAdded(post);
+                propagateAdd(post);
+                return;
             }
             var onSuccess = function(){
-                this._onMyPostAdded(post);
+                propagateAdd(post);
             }.bind(this);
 
             post.save(null, {wait:true, success: onSuccess});
 
-        },
-        _onMyPostAdded: function(post) {
-            var wrapper = new PostWrapper();
-            wrapper.setMyPost(post, this.myModel);
-            this.posts.add(wrapper);
-            var postComments = this.comments.where({postId: wrapper.get("postId")});
-
-            var i;
-            for (i=0; i<postComments.length; i++) {
-                var comment = postComments[i];
-                wrapper.addComment(comment);
-            }
-            var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
-            for (i=0; i<postUpvotes.length; i++) {
-                var upvote = postUpvotes[i];
-                if (upvote.get("myUpvote")) {
-                    wrapper.addMyUpvote();
-                }
-                else {
-                    wrapper.addFriendsUpvote(upvote.get("friend"));
-                }
-                this.updateScore(upvote, 1);
-            }
         },
         onMyPostRemoved: function(post) {
             var postId = this.myId + ":" + post.get("id");
@@ -300,6 +302,7 @@ define([
             }
             this.updateScore(upvote, -1);
         },
+
         updateScore: function(upvote, value) {
 
             var postId = upvote.get("postId");
@@ -323,12 +326,21 @@ define([
             friend.set("score", friend.get("score") + value);
         },
 
-
         filterByUser: function(userId) {
             this.filteredPosts.setFilter(function(post) { return post.get('userId') == userId});
         },
         unsetFilter: function() {
             this.filteredPosts.setFilter(false);
+        },
+
+        toManifest: function(friend) {
+            var manifest = {
+                posts: this.myPosts.toManifest(friend),
+                upvotes: this.myUpvotes.toJSON(),
+                comments: this.myComments.toJSON(),
+                friends: this.myFriends.toManifest(friend)
+            }
+            return manifest;
         }
 
 

@@ -338,12 +338,7 @@ function ($, Backbone, Marionette, App, Encryption, Dropbox, RemoteManifest, Mis
         saveManifest: function(friend) {
             var deferred = $.Deferred();
 
-            var manifest = {};
-
-            manifest['posts'] = App.state.myPosts.toManifest(friend);
-            manifest['upvotes'] = App.state.myUpvotes.toJSON();
-            manifest['comments'] = App.state.myComments.toJSON();
-            manifest['friends'] = App.state.myFriends.toManifest(friend);
+            var manifest = App.state.toManifest(friend);
 
             var key = {publicKey: friend.get("publicKey")};
             $.when(Encryption.encryptAsync(key, "plain/json", JSON.stringify(manifest), false)).done(function(encText){

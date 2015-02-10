@@ -56,9 +56,6 @@ define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
                     if (content instanceof ArrayBuffer ){
                         tranferable.push(content);
                     }
-                    else {
-                        console.log("content is not ArrayBuffer", content);
-                    }
 					worker.postMessage(message, tranferable, callback);
 				});
 			},

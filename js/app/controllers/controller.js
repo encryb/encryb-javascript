@@ -250,16 +250,11 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
 
                     var jsonContent = PostAdapter.removeNonPersistentFields(contentList);
                     postModel.set("content", jsonContent);
-                    App.state.myPosts.add(postModel);
-                    uiNotifyDeferred.resolve();
 
-                    // made sure we get get Id for this post before we save
-                    // $BUG: (Why bind?)
-                    var onSuccess = function(){
+                    $.when(App.state.createMyPost(postModel, contentList)).done(function(){
                         FriendAdapter.saveManifests();
-                    }.bind(this);
-
-                    postModel.save(null, {wait:true, success: onSuccess});
+                        uiNotifyDeferred.resolve();
+                    });
                 });
             });
 

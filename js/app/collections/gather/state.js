@@ -101,42 +101,27 @@ define([
         },
 
         onMyPostAdded: function(post) {
-            var propagateAdd = function(post) {
-                var wrapper = new PostWrapper();
-                wrapper.setMyPost(post, this.myModel);
-                this.posts.add(wrapper);
-                var postComments = this.comments.where({postId: wrapper.get("postId")});
+            var wrapper = new PostWrapper();
+            wrapper.setMyPost(post, this.myModel);
+            this.posts.add(wrapper);
+            var postComments = this.comments.where({postId: wrapper.get("postId")});
 
-                var i;
-                for (i=0; i<postComments.length; i++) {
-                    var comment = postComments[i];
-                    wrapper.addComment(comment);
-                }
-                var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
-                for (i=0; i<postUpvotes.length; i++) {
-                    var upvote = postUpvotes[i];
-                    if (upvote.get("myUpvote")) {
-                        wrapper.addMyUpvote();
-                    }
-                    else {
-                        wrapper.addFriendsUpvote(upvote.get("friend"));
-                    }
-                    this.updateScore(upvote, 1);
-                }
+            var i;
+            for (i=0; i<postComments.length; i++) {
+                var comment = postComments[i];
+                wrapper.addComment(comment);
             }
-
-            // if post was just created, it might not have id (assigned by the datastore)
-            // in that case, save the post first.
-            if (post.has("id")){
-                propagateAdd(post);
-                return;
+            var postUpvotes = this.upvotes.where({postId: wrapper.get("postId")});
+            for (i=0; i<postUpvotes.length; i++) {
+                var upvote = postUpvotes[i];
+                if (upvote.get("myUpvote")) {
+                    wrapper.addMyUpvote();
+                }
+                else {
+                    wrapper.addFriendsUpvote(upvote.get("friend"));
+                }
+                this.updateScore(upvote, 1);
             }
-            var onSuccess = function(){
-                propagateAdd(post);
-            }.bind(this);
-
-            post.save(null, {wait:true, success: onSuccess});
-
         },
         onMyPostRemoved: function(post) {
             var postId = this.myId + ":" + post.get("id");
@@ -341,6 +326,15 @@ define([
                 friends: this.myFriends.toManifest(friend)
             }
             return manifest;
+        },
+        createMyPost: function(postModel){
+            var deferred = $.Deferred();
+            var onSuccess = function() {
+                console.log("Winning!");
+                deferred.resolve();
+            }
+            var postModel = this.myPosts.create(postModel, {wait:true, success: onSuccess});
+            return deferred.promise();
         }
 
 

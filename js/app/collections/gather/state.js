@@ -330,10 +330,9 @@ define([
         createMyPost: function(postModel){
             var deferred = $.Deferred();
             var onSuccess = function() {
-                console.log("Winning!");
                 deferred.resolve();
             }
-            var postModel = this.myPosts.create(postModel, {wait:true, success: onSuccess});
+            this.myPosts.create(postModel, {wait:true, success: onSuccess});
             return deferred.promise();
         }
 

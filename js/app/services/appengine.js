@@ -2,10 +2,9 @@ define([
     'jquery',
     'backbone',
     'marionette',
-    'app/app',
-    'app/encryption'
+    'app/app'
 ],
-function ($, Backbone, Marionette, App, Encryption) {
+function ($, Backbone, Marionette, App) {
 
     var AppEngineService = {
 

@@ -80,7 +80,7 @@ define([], function () {
 			var that = this;
 			var setup = true;
 
-			var theWorker = new Worker("js/lib/sjcl-worker/generalWorker.js");
+			var theWorker = new Worker("js/app/encryption/webworker/commonWorker.js");
 
 			this.busy = true;
 			var listener = function () {};

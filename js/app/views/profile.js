@@ -4,11 +4,10 @@ define([
     'backbone',
     'jcrop',
     'marionette',
-    'app/encryption',
     'utils/image',
     'require-text!app/templates/profile.html'
 
-], function($, _, Backbone, Jcrop, Marionette, Encryption, ImageUtil, ProfileTemplate){
+], function($, _, Backbone, Jcrop, Marionette, ImageUtil, ProfileTemplate){
 
     var ProfileView = Marionette.ItemView.extend({
 

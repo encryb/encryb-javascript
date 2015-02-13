@@ -2,12 +2,12 @@ define([
     'backbone',
     'sjcl',
     'app/services/dropbox',
-    'app/encryption',
+    'app/encryption/async',
     'compat/windowUrl',
     'utils/data-convert',
     'utils/encoding',
     'utils/misc'
-], function (Backbone, Sjcl, Storage, Encryption, WindowUrl, DataConvert, Encoding, MiscUtils) {
+], function (Backbone, Sjcl, Storage, EncryptionAsync, WindowUrl, DataConvert, Encoding, MiscUtils) {
 
     // $CONFIG
     var FOLDER_POSTS = "posts/";
@@ -20,27 +20,27 @@ define([
                 var url = model.get(key + "Url");
                 var decryptFunc;
                 if (objectType === "binary") {
-                    decryptFunc = Encryption.decryptDataAsync.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptData.bind(null, password);
                 }
                 else if (objectType === "text"){
-                    decryptFunc = Encryption.decryptTextAsync.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptText.bind(null, password);
                 }
                 else if (objectType === "array") {
-                    decryptFunc = Encryption.decryptArrayAsync.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptArray.bind(null, password);
                 }
                 var deferred = Storage.downloadUrl(url)
                     .then(
-                    decryptFunc,
-                    setError.bind(null, model, key + " download error")
-                )
+                        decryptFunc,
+                        setError.bind(null, model, key + " download error")
+                    )
                     .then(
-                    function(value) {
-                        if (value) {
-                            model.set(key, value);
-                        }
-                    },
-                    setError.bind(null, model, key + " decryption error")
-                );
+                        function(value) {
+                            if (value) {
+                                model.set(key, value);
+                            }
+                        },
+                        setError.bind(null, model, key + " decryption error")
+                    );
             }
             return deferred;
         },
@@ -50,9 +50,9 @@ define([
             if (content.has(type + "Cached")) {
                 return content.get(type + "Cached");
             }
+            var url;
             if (content.has(type)) {
                 var asset = content.get(type);
-                var url;
                 if (asset instanceof File) {
                     url = WindowUrl.createObjectURL(asset);
                 }
@@ -63,9 +63,9 @@ define([
                 deferred.resolve(url);
             }
             else {
-                var url = content.get(type + "Url");
+                url = content.get(type + "Url");
                 Storage.downloadUrl(url)
-                    .then(Encryption.decryptDataAsync.bind(null, password),
+                    .then(EncryptionAsync.decryptData.bind(null, password),
                     setError.bind(null, content, type + " download error"))
                     .done(function (data) {
                         if (!data) {
@@ -148,7 +148,7 @@ define([
             var asset = content[key];
             var path = Storage.getPath(key, folderPath, content["number"]);
             $.when(this.convertAssetToBuffer(asset)).done(function(result) {
-                return Encryption.encryptAsync(password, result.mimeType, result.buffer, true)
+                return EncryptionAsync.encrypt(password, result.mimeType, result.buffer, true)
                     .then(Storage.uploadDropbox.bind(null, path))
                     .then(Storage.shareDropbox)
                     .then(function(url) {

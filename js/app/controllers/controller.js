@@ -17,7 +17,8 @@ define([
     'app/views/headerPanel',
     'app/views/invites',
     'app/views/chats',
-    'app/encryption',
+    'app/encryption/sync',
+    'app/encryption/keys',
     'app/services/appengine',
     'app/services/dropbox',
     'utils/collection-paged',
@@ -25,7 +26,7 @@ define([
     ],
 function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
-          Encryption, AppEngine, Dropbox, CollectionPaged, DataConvert) {
+          Encryption, Keys, AppEngine, Dropbox, CollectionPaged, DataConvert) {
 
 
     function startDownload(uri, name) {
@@ -40,7 +41,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
 
 
         _checkSettings: function() {
-            var keysLoaded = (Encryption.getKeys() != null);
+            var keysLoaded = (Keys.getKeys() != null);
             var dropboxAuthenticated = Dropbox.client.isAuthenticated();
 
             if (!keysLoaded || !dropboxAuthenticated) {
@@ -59,7 +60,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                     this._profile(profile);
                     return;
                 }
-                var publicKey = Encryption.getEncodedKeys().publicKey;
+                var publicKey = Keys.getEncodedKeys().publicKey;
                 if (publicKey != profile.get("publicKey")) {
                     this._profile(profile);
                     return;
@@ -416,7 +417,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
             var controller = this;
             var model = new Backbone.Model();
 
-            var keysLoaded = (Encryption.getKeys() != null);
+            var keysLoaded = (Keys.getKeys() != null);
             model.set("dropboxEnabled", Dropbox.client.isAuthenticated());
             model.set("keysLoaded", keysLoaded);
             model.set("displayAbout", displayAbout);
@@ -445,27 +446,27 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                 });
 
                 setupView.on("keys:create", function () {
-                    Encryption.createKeys();
+                    Keys.createKeys();
                     model.set("keysLoaded", true);
                 });
 
                 setupView.on("keys:remove", function () {
-                    Encryption.removeKeys();
+                    Keys.removeKeys();
                     model.set("keysLoaded", false);
                 });
                 setupView.on("keys:download", function () {
-                    var keys = Encryption.getEncodedKeys();
+                    var keys = Keys.getEncodedKeys();
                     var uri = "data:text/javascript;base64," + window.btoa(JSON.stringify(keys));
                     startDownload(uri, "encryb.keys");
                 });
                 setupView.on("keys:upload", function (keysString) {
                     var keys = JSON.parse(keysString);
-                    Encryption.saveKeys(keys['secretKey'], keys['publicKey'], keys['databaseKey']);
+                    Keys.saveKeys(keys['secretKey'], keys['publicKey'], keys['databaseKey']);
                     model.set("keysLoaded", true);
                 });
 
                 var saveKeysToDropbox = function(password) {
-                    var keys = Encryption.getEncodedKeys();
+                    var keys = Keys.getEncodedKeys();
                     var jsonKeys = JSON.stringify(keys);
                     var encKeys = Encryption.encrypt(password, "text/keys", jsonKeys, false);
                     Dropbox.uploadDropbox("encryb.keys", encKeys);
@@ -484,11 +485,11 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
 
                         // $LEGACY
                         if (!keys.hasOwnProperty('databaseKey')) {
-                            keys.databaseKey = JSON.stringify(Encryption.generateDatabaseKey());
+                            keys.databaseKey = JSON.stringify(Keys.generateDatabaseKey());
                             forceSave = true;
                         }
 
-                        Encryption.saveKeys(keys.secretKey, keys.publicKey, keys.databaseKey);
+                        Keys.saveKeys(keys.secretKey, keys.publicKey, keys.databaseKey);
                         if (forceSave) {
                             saveKeysToDropbox(password);
                         }
@@ -514,7 +515,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
             require(["app/views/profile"], function (ProfileView) {
                 var model = new Backbone.Model();
                 model.set("profile", profile);
-                model.set("publicKey", Encryption.getEncodedKeys().publicKey);
+                model.set("publicKey", Keys.getEncodedKeys().publicKey);
                 var profileView = new ProfileView({model: model});
                 App.main.show(profileView);
 
@@ -552,7 +553,7 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                             deferred.resolve();
                         });
                     }
-                    var publicKey = Encryption.getEncodedKeys().publicKey;
+                    var publicKey = Keys.getEncodedKeys().publicKey;
                     profile.set("publicKey", publicKey);
 
                     return deferreds;

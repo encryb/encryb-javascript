@@ -1,4 +1,4 @@
-define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
+define(["app/encryption/webworker/commonMainThread"], function (WorkerManager) {
 	"use strict";
 
 	var entropyAvailable = true;
@@ -38,7 +38,7 @@ define(["sjcl-worker/generalWorkerInclude"], function (WorkerManager) {
 		}
 	};
 
-	var workers = new WorkerManager("sjcl-worker/sjclWorker", 2, addEntropy);
+	var workers = new WorkerManager("../app/encryption/webworker/sjclWorker", 2, addEntropy);
 
 	var sjclWorker = {
 		sym: {

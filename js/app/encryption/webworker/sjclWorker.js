@@ -1,7 +1,7 @@
 define([
 	"sjcl",
 	"utils/encoding",
-	"utils/sjcl-convert"
+	"app/encryption/sjcl-convert"
 	],
 function (Sjcl, Encoding, SjclConvert) {
 	"use strict";

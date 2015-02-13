@@ -1,9 +1,9 @@
 "use strict";
 
-importScripts("../../../require.js");
+importScripts("../../../../require.js");
 
 requirejs.config({
-	baseUrl: '../../../js/lib',
+	baseUrl: '../../../../js/lib',
 
 	paths: {
 		app: '../app',

@@ -129,13 +129,12 @@ define([
             this.posts.remove(model);
         },
         onMyCommentAdded: function(comment) {
-
             var attr = _.extend(_.clone(comment.attributes), {commenter: this.myModel, myComment: true});
             var model = new Backbone.Model(attr);
             this.comments.add(model);
         },
         onMyCommentRemoved: function(comment) {
-            var model = this.comments.findWhere({postId: comment.get("postId"), commenter: this.myModel});
+            var model = this.comments.findWhere({id: comment.get("id"), commenter: this.myModel});
             this.comments.remove(model);
         },
         onMyUpvoteAdded: function(upvote) {
@@ -193,10 +192,12 @@ define([
             var model = new Backbone.Model();
             model.set("postId", upvote.postId);
             model.set("friend", friend);
+            model.set("ownerId", friend.get("userId"));
             this.upvotes.add(model);
         },
         removeFriendsUpvote: function(post, friend) {
-            var model = this.upvotes.findWhere({id: post.id, owenerId: friend.get('userId')});
+            console.log("Removing", post, friend.get("userId"));
+            var model = this.upvotes.findWhere({postId: post.postId, ownerId: friend.get("userId")});
             this.upvotes.remove(model);
         },
 
@@ -283,7 +284,7 @@ define([
                 post.removeMyUpvote();
             }
             else {
-                post.removeFriendsUpvote(upvote.get('userId'));
+                post.removeFriendsUpvote(upvote.get("ownerId"));
             }
             this.updateScore(upvote, -1);
         },
@@ -325,7 +326,7 @@ define([
                 comments: this.myComments.toJSON(),
                 friends: this.myFriends.toManifest(friend)
             }
-            return manifest;
+            return {manifest: manifest, archive: null};
         },
         createMyPost: function(postModel){
             var deferred = $.Deferred();

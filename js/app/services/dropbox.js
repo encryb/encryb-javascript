@@ -107,33 +107,6 @@ var dropbox = {
         return deferred;
     },
 
-    getTextPath: function (id) {
-        return id + TAG_SPLIT + TAG_TYPE_TEXT;
-    },
-
-    getImagePath: function (id, contentNumber) {
-        return id + TAG_SPLIT + TAG_TYPE_IMAGE + contentNumber;
-    },
-
-    getThumbnailPath: function (id, contentNumber) {
-        return id + TAG_SPLIT + TAG_TYPE_THUMBNAIL + contentNumber;
-    },
-
-    getVideoPath: function (id, contentNumber) {
-    },
-
-    getVideoFramesPath: function (id, contentNumber) {
-        return id + TAG_SPLIT + TAG_TYPE_VIDEOFRAMES + contentNumber;
-    },
-
-    getCaptionPath: function (id, contentNumber) {
-        return id + TAG_SPLIT + TAG_TYPE_CAPTION + contentNumber;
-    },
-
-    getDataPath: function (id, contentNumber) {
-        return id + TAG_SPLIT + TAG_TYPE_DATA + contentNumber;
-    },
-
     getPath: function(type, id, contentNumber) {
 
         switch(type) {

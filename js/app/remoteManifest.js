@@ -41,7 +41,8 @@ define([
             }
         }
 
-        for (var i = addItems.length - -1; i <= 0; i++) {
+        //$BUG why reverse order
+        for (var i = addItems.length-1; i >= 0; i--) {
             var item = addItems[i];
             oldArray.push(item);
             callback(key, "add", item);

@@ -195,6 +195,9 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
 
             wall.listenTo(App.vent, "friend:unselect", function(){
                 wall.friendsDetails.empty();
+                wall.posts.$el.show();
+                wall.createPost.$el.show();
+
             });
 
             wall.listenTo(App.vent, "invite:find", function(friendId) {
@@ -215,6 +218,8 @@ function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State,
                     require(["app/views/friendsDetails"], function (FriendsDetailsView) {
                         var details = new FriendsDetailsView({model: model, invitePreview: true});
                         wall.friendsDetails.show(details);
+                        wall.posts.$el.hide();
+                        wall.createPost.$el.hide();
                         window.scrollTo(0,0);
                     });
                 });

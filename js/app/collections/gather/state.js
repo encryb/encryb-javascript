@@ -143,7 +143,7 @@ define([
             this.upvotes.add(model);
         },
         onMyUpvoteRemoved: function(upvote) {
-            var model = this.upvotes.findWhere({postId: upvote.get("postId")});
+            var model = this.upvotes.findWhere({postId: upvote.get("postId"), myUpvote: true});
             this.upvotes.remove(model);
         },
 
@@ -313,7 +313,7 @@ define([
         },
 
         filterByUser: function(userId) {
-            this.filteredPosts.setFilter(function(post) { return post.get('userId') == userId});
+            this.filteredPosts.setFilter(function(post) { return post.get('userId') == userId });
         },
         unsetFilter: function() {
             this.filteredPosts.setFilter(false);

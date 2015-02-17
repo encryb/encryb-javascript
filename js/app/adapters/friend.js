@@ -359,7 +359,6 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                     friendAdapter.saveManifest(friend)
                         .then(friendAdapter.shareManifest.bind(null, notifyModel))
                         .done(function() {
-                            console.log("done and done");
                             notifyModel.set("lastUpdated", new Date().getTime());
                             notifyModel.save();
                         });

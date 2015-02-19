@@ -9,8 +9,8 @@ define([
     'autolinker',
     'app/app',
     'app/adapters/post',
-    'app/views/fileThumbnail',
-    'app/views/imageThumbnail',
+    'app/views/elements/fileThumbnail',
+    'app/views/elements/imageThumbnail',
     'utils/image',
     'utils/misc',
     'require-text!app/templates/postContent.html'

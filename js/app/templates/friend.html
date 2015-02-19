@@ -17,6 +17,12 @@
             <% if (invite == false) { %>
                 <span id="chatButton" class="glyphicon glyphicon-comment pointer-hand"></span>
             <% } %>
+            <% if (typeof error !== "undefined") { %>
+
+                <span data-toggle="tooltip" data-placement="bottom" title="<%- error %>"
+                      style="color: #ff2222" class="friendErrorButton glyphicon glyphicon-warning-sign pointer-hand"></span>
+            <% } %>
+
         </div>
     </div>
     <% if (invite == true) { %>

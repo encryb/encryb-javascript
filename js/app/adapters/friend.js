@@ -411,11 +411,11 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                             friendAdapter.updateCollection(friend, manifest);
                         }
                         catch (e) {
-                            console.error("Failed to parse " + friend.get("name") + "'s manifest:", e.message);
+                            friend.set("error", "Failed to parse " + friend.escape("name") + "'s manifest: " + e.message);
                         }
                     })
                     .fail (function(error) {
-                        console.error("Failed to decode " + friend.get("name") + "'s manifest:", error);
+                        friend.set("error", "Failed to decode " + friend.escape("name") + "'s manifest: " + error);
                     });
 
             });

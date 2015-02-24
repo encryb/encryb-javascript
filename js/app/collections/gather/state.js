@@ -333,6 +333,7 @@ define([
             var onSuccess = function() {
                 deferred.resolve();
             }
+            postModel.dropboxDatastore = this.myPosts.dropboxDatastore;
             this.myPosts.create(postModel, {wait:true, success: onSuccess});
             return deferred.promise();
         }

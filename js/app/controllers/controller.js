@@ -1,6 +1,7 @@
 define([
     'backbone',
     'marionette',
+    'bootstrap',
     'bootbox',
     'app/app',
     'app/adapters/friend',
@@ -24,7 +25,7 @@ define([
     'utils/collection-paged',
     'utils/data-convert'
     ],
-function (Backbone, Marionette, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
+function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
           Encryption, Keys, AppEngine, Dropbox, CollectionPaged, DataConvert) {
 

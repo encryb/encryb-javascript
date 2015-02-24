@@ -2,7 +2,6 @@ define([
     'jquery',
     'underscore',
     'backbone',
-    'bootstrap',
     'marionette',
     'cloudGrid',
     'jquery.swipebox',
@@ -14,7 +13,7 @@ define([
     'utils/image',
     'utils/misc',
     'require-text!app/templates/postContent.html'
-], function($, _, Backbone, Bootsrap, Marionette, CloudGrid, Swipebox, Autolinker, App, PostAdapter,
+], function($, _, Backbone, Marionette, CloudGrid, Swipebox, Autolinker, App, PostAdapter,
             FileThumbnailView, ImageThumbnailView,
             ImageUtils, MiscUtils, PostContentTemplate){
 

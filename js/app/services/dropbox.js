@@ -1,11 +1,9 @@
 define([
   'jquery',
   'underscore',
-  'dropbox',
   'backbone.dropboxDatastore',
   'app/constants',
-], function($, _, Dropbox, DropboxDatastore, Constants){
-
+], function($, _, DropboxDatastore, Constants){
 
 var dropboxClient = new Dropbox.Client({key: Constants.DROPBOX_APP_KEY});
 if (!dropboxClient.isAuthenticated()) dropboxClient.authenticate({interactive: false});

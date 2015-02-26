@@ -22,12 +22,11 @@ define([
     'app/encryption/keys',
     'app/services/appengine',
     'app/services/dropbox',
-    'utils/collection-paged',
     'utils/data-convert'
     ],
 function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
-          Encryption, Keys, AppEngine, Dropbox, CollectionPaged, DataConvert) {
+          Encryption, Keys, AppEngine, Dropbox, DataConvert) {
 
 
     function startDownload(uri, name) {
@@ -39,7 +38,6 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
 
 
     var Controller = Marionette.Controller.extend({
-
 
         _checkSettings: function() {
             var keysLoaded = (Keys.getKeys() != null);
@@ -106,11 +104,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
             App.main.show(wall);
 
             $.when(App.state.fetchAll()).done(function() {
-                var paged = new CollectionPaged(null,
-                    {limit: 3, collection: App.state.filteredPosts, comparator: App.state.posts.comparator});
-
                 var postsView = new PostsView({
-                    collection: paged
+                    collection: App.state.filteredPosts
                 });
                 wall.posts.show(postsView);
             });

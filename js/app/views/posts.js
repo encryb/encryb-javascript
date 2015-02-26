@@ -20,18 +20,15 @@ define([
             comments: "#comments"
         },
 
-        onRender: function () {
+        onShow: function () {
             this.setupChildren();
         },
         setupChildren: function () {
 
             var postModel = this.model.get("post");
-            //check what happens if this view gets destroyed before fetchPost completes
-            $.when(PostAdapter.fetchPost(postModel, false)).done(function() {
-                var postContentView = new PostContentView({model: postModel});
-                this.content.show(postContentView);
-            }.bind(this));
-
+            var postContentView = new PostContentView({model: postModel});
+            this.content.show(postContentView);
+            
             var upvotesModel = this.model.get("upvotes");
             var upvotesView = new UpvotesView({model: upvotesModel, collection: upvotesModel.get("friendUpvotes")});
             this.upvotes.show(upvotesView);
@@ -80,26 +77,7 @@ define([
     });
 
     var PostsView = Marionette.CollectionView.extend({
-        childView: PostView,
-
-
-        initialize:function() {
-            $(window).on("scroll",this.expandCollection.bind(this))
-        },
-
-        remove: function() {
-            $(window).off("scroll",this.expandCollection.bind(this));
-            Backbone.View.prototype.remove.apply(this, arguments);
-        },
-
-        expandCollection: function() {
-            // if user scrolls the bottom of the wall, add more posts to the wall
-            var postsBottom = $('#posts').prop("scrollHeight") + $("#posts").offset().top;
-            var pageBottom = $(window).scrollTop() + window.innerHeight;
-            if ( postsBottom <= pageBottom + 10) {
-                this.collection.increaseLimit(5);
-            }
-        }
+        childView: PostView
     });
     return PostsView;
 });

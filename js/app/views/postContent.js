@@ -46,10 +46,6 @@ define([
             postFiles: '.postFiles'
         },
 
-        modelEvents: {
-            'change': 'render'
-        },
-
         events: {
             "click .post-thumbnail": "clickedPosterPicture"
         },
@@ -60,22 +56,43 @@ define([
             this.listenTo(this.model.get("content"), "add", this.render);
             this.listenTo(this.model.get("content"), "remove", this.render);
 
-
-            var onResize = function() {
-                var postImagesElement = this.ui.postImages;
-                var postFilesElement = this.ui.postFiles;
-                if (postImagesElement) {
-                    postImagesElement.cloudGrid('reflowContent');
+            var reflowGrid = function() {
+                if (this.ui.postImages) {
+                    this.ui.postImages.cloudGrid('reflowContent');
                 }
-                if (postFilesElement) {
-                    postFilesElement.cloudGrid('reflowContent');
+                if (this.ui.postFiles) {
+                    this.ui.postFiles.cloudGrid('reflowContent');
                 }
             }.bind(this);
-            $(window).on('resize', onResize);
+            this.listenTo(App.vent, "resize", reflowGrid);
 
         },
 
-        onRender: function() {
+        onShow: function () {
+            var _this = this;
+            if (MiscUtils.isElementVisible(this.$el, 200)) {
+                $.when(PostAdapter.fetchPost(this.model, false)).done(function () {
+                    _this.render();
+                });
+            }
+            else {
+                var loadCheck = function () {
+                    var visible = MiscUtils.isElementVisible(this.$el, 200);
+                    if (visible) {
+                        this.stopListening(App.vent, "scroll", loadCheck);
+                        this.stopListening(App.vent, "resize", loadCheck);
+                        $.when(PostAdapter.fetchPost(this.model, false)).done(function () {
+                            _this.render();
+                        });
+                    }
+                }.bind(this);
+
+                this.listenTo(App.vent, "scroll", loadCheck);
+                this.listenTo(App.vent, "resize", loadCheck);
+            }
+        },
+
+        onRender: function () {
 
             var postImagesElement = this.ui.postImages;
             var postFilesElement = this.ui.postFiles;

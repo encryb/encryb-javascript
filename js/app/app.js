@@ -19,6 +19,18 @@ define([
             }
         });
 
+        $(document).ready(function () {
+            var scroll = _.throttle(function () {
+                App.vent.trigger("scroll")
+            }, 500, { leading: false }
+            );
+            var resize = _.debounce(function () {
+                App.vent.trigger("resize");
+            }, 200);
+
+            $(window).scroll(scroll);
+            $(window).resize(resize);
+        });
 
         App.getProfile = function() {
             if (App._profilePromise) {

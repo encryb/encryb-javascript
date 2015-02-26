@@ -41,7 +41,8 @@ define([
             }
         }
 
-        //$BUG why reverse order
+        // Add in reverse order so that newest elements are added first
+        // Older posts might not be fetched if they are not shown
         for (var i = addItems.length-1; i >= 0; i--) {
             var item = addItems[i];
             oldArray.push(item);

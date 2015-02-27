@@ -105,8 +105,20 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
 
             $.when(App.state.fetchAll()).done(function() {
                 var postsView = new PostsView({
-                    collection: App.state.filteredPosts
+                    collection: App.state.posts
                 });
+
+                App.vent.on("friend:selected", function (friendModel) {
+                    postsView.filter = function (child, index, collection) {
+                        return (child.get("userId") == friendModel.get("userId"));                     
+                    };
+                    postsView.render();
+                });
+                App.vent.on("friend:unselect", function () {
+                    postsView.filter = null;
+                    postsView.render();
+                });
+
                 wall.posts.show(postsView);
             });
 

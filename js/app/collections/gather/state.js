@@ -2,7 +2,6 @@ define([
     'backbone',
     'marionette',
     'underscore',
-    'backbone-filtered-collection',
     'app/app',
     'app/collections/persist/posts',
     'app/collections/persist/friends',
@@ -11,7 +10,7 @@ define([
     'app/collections/persist/invites',
     'app/models/postWrapper',
     'app/models/post'
-], function(Backbone, Marionette, _, FilteredCollection, App,
+], function(Backbone, Marionette, _, App,
             PostColl, FriendColl,  CommentColl, UpvoteColl, InviteColl,
             PostWrapper, Post) {
 
@@ -45,9 +44,6 @@ define([
                 return -post.get('post').get('created');
             };
 
-            this.filteredPosts = new FilteredCollection (null, {collection: this.posts});
-
-
             this.comments = new Backbone.Collection();
             this.listenTo(this.comments, "add", this.dispatchCommentAdd);
             this.listenTo(this.comments, "remove", this.dispatchCommentRemove);
@@ -70,12 +66,6 @@ define([
             this.myUpvotes.on("add", this.onMyUpvoteAdded.bind(this));
             this.myUpvotes.on("remove", this.onMyUpvoteRemoved.bind(this));
 
-            App.vent.on("friend:selected", function(friendModel){
-                App.state.filterByUser(friendModel.get('userId'));
-            });
-            App.vent.on("friend:unselect", function(){
-               App.state.unsetFilter();
-            });
         },
 
         fetchAll: function() {

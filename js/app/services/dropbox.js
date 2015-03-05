@@ -21,6 +21,7 @@ var TAG_TYPE_VIDEO = "video";
 var TAG_TYPE_CAPTION= "caption";
 var TAG_TYPE_DATA = "data";
 var TAG_SPLIT = "/";
+var TAG_PROFILE_PIC = "profilePic";
 
 
 var dropbox = {
@@ -122,6 +123,8 @@ var dropbox = {
                 return id + TAG_SPLIT + TAG_TYPE_CAPTION + contentNumber;
             case "data":
                 return id + TAG_SPLIT + TAG_TYPE_DATA + contentNumber;
+            case "profilePic":
+                return "profilePic-" + id;
             default:
                 throw "Unknown data type: " + type;
         }

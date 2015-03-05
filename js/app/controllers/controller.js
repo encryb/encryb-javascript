@@ -70,15 +70,13 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
 
 
         _setupState: function(profile) {
-
             if (!App.state) {
                 App.state = new State({profile: profile});
-                FriendAdapter.setFriendAdapter(App.state.myFriends);
+                FriendAdapter.addFriendsList(App.state.myFriends);
             }
-
-
         },
-        showWall: function() {
+        showWall: function () {
+            App.clearError();
             this._loadProfile(this._showWall.bind(this));
         },
 
@@ -425,7 +423,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
             });
         },
 
-        settings: function(displayAbout) {
+        settings: function (displayAbout) {
+            App.clearError();
             displayAbout = displayAbout || false;
             var controller = this;
             var model = new Backbone.Model();
@@ -518,7 +517,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
             });
         },
 
-        profile: function() {
+        profile: function () {
+            App.clearError();
             this._loadProfile(this._profile.bind(this));
         },
         _profile: function(profile) {
@@ -536,17 +536,6 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                     controller.settings();
                 });
 
-                profileView.on("key:cloudRefresh", function() {
-                    $.when(AppEngine.findProfile(Dropbox.client.dropboxUid())).done(function(profile){
-                        if(profile.publicKey) {
-                            model.set("publicKey", profile.publicKey);
-                        }
-                        else {
-                            model.set("publicKey", "none");
-                        }
-                    });
-                });
-
                 var changeProfile = function(changes, _profile) {
                     var deferreds = [];
                     if ('name' in changes) {
@@ -561,13 +550,23 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                         var deferred = new $.Deferred();
                         deferreds.push(deferred);
                         var picture = DataConvert.dataUriToTypedArray(resized);
-                        Dropbox.uploadDropbox("profilePic",  picture['data']).then(Dropbox.shareDropbox).done(function(url) {
-                            _profile.set('pictureUrl', url);
-                            deferred.resolve();
-                        });
+                        var pictureId = (new Date).getTime();
+                        Dropbox.uploadDropbox(Dropbox.getPath("profilePic", pictureId), picture["data"])
+                            .then(Dropbox.shareDropbox)
+                            .done(function (url) {
+                                // remove previous profile picture
+                                if (_profile.has("pictureId")) {
+                                    Dropbox.remove(Dropbox.getPath("profilePic", _profile.get("pictureId")));
+                                }
+                                _profile.set("pictureUrl", url);
+                                _profile.set("pictureId", pictureId);
+                                deferred.resolve();
+                            });
                     }
                     var publicKey = Keys.getEncodedKeys().publicKey;
-                    profile.set("publicKey", publicKey);
+                    if (_profile.get("publicKey") != publicKey) {
+                        _profile.set("publicKey", publicKey);
+                    }
 
                     return deferreds;
                 }
@@ -577,34 +576,56 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                     var deferreds = changeProfile(changes, profile);
                     $.when.apply($, deferreds).done(function() {
                         $.when(AppEngine.createProfile(profile)).done(function() {
-                            controller._setupState(profile);
-                            $.when(App.state.fetchAll()).done(function () {
-                                controller.showWall();
-                                App.appRouter.navigate("");
-                            });
+                            controller.showWall();
+                            App.appRouter.navigate("");
                         });
                     });
                 });
 
-                profileView.on('profile:updated', function(changes) {
+                profileView.on('profile:updated', function(changes, errorCallback) {
 
+                    var changeProfileFail = function () {
+                        App.showError("Could not upload profile picture");
+                        errorCallback();
+                    };
+                    var publishFail = function () {
+                        App.showError("Could not publish updated profile");
+                        errorCallback();
+                    };
+                    var saveFail = function () {
+                        App.showError("Could not save updated profile");
+                        errorCallback();
+                    }
+                
                     var deferreds = changeProfile(changes, profile);
-
-                    $.when.apply($, deferreds).done(function() {
+                    $.when.apply($, deferreds).fail(changeProfileFail).done(function () {
+                        var deferred = $.Deferred();
                         var profileChanges = profile.changedAttributes();
-                        controller.showWall();
-                        App.appRouter.navigate("");
-
-                        if (profileChanges) {
-                            controller._setupState(profile);
-                            $.when(App.state.fetchAll()).done(function() {
-                                FriendAdapter.sendUpdatedProfile(profileChanges);
-                                AppEngine.publishProfile(App.state.myId, profile);
-                                profile.save();
-                            });
+                        if (!profileChanges) {
+                            controller.showWall();
+                            App.appRouter.navigate("");
+                            return;
                         }
 
-                    });
+                        controller._setupState(profile);
+                        $.when(App.state.fetchAll()).done(function () {
+                            FriendAdapter.sendUpdatedProfile(profileChanges);
+                            $.when(AppEngine.publishProfile(profile)).fail(publishFail).done(function () {
+                                profile.save(null, {
+                                    success: function (model, response) {
+                                        controller.showWall();
+                                        App.appRouter.navigate("");
+                                    },
+                                    error: saveFail
+                                });
+                            });
+                        });
+                    });   
+                });
+
+                profileView.on("profile:cancel", function () {
+                    controller.showWall();
+                    App.appRouter.navigate("");
                 });
             });
         }

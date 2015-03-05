@@ -72,6 +72,7 @@ define([
             var _this = this;
             if (MiscUtils.isElementVisible(this.$el, 200)) {
                 $.when(PostAdapter.fetchPost(this.model, false)).done(function () {
+                    // by the time this returns, _this might be destroyed
                     _this.render();
                 });
             }

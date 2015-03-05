@@ -18,7 +18,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
         notifyMePromises: {},
         outgoingChatPromises: {},
 
-        setFriendAdapter: function(friends) {
+        addFriendsList: function(friends) {
             friends.on("add", this.attachFriend.bind(this));
             this.friends = friends;
         },

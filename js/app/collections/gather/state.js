@@ -25,6 +25,7 @@ define([
             this.myModel.set("userId", profile.get("userId"));
 
             this.myId = profile.get("userId");
+            this.myPassword = profile.get("password");
 
             this.listenTo(profile, "change:name", function(model){
                 this.myModel.set("name", model.get("name"));

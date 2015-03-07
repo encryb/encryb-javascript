@@ -19,7 +19,15 @@ define([
         encrypt: function(key, mimeType, data, isBinary) {
             var deferred = $.Deferred();
             SjclWorker.sym.encrypt(data, mimeType, key, isBinary, function(error, encrypted) {
-                deferred.resolve(encrypted.packedData);
+                if (error) {
+                    deferred.reject(error);
+                }
+                else if (encrypted.error) {
+                    deferred.reject(encrypted.error)
+                }
+                else {
+                    deferred.resolve(encrypted.packedData);
+                }
             });
             return deferred.promise();
         },

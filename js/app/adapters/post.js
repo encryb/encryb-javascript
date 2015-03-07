@@ -87,20 +87,15 @@ define([
     var createHelper = {
 
         getOrCreateFolder: function (model) {
-            var deferred = $.Deferred();
             if (model.has("folderId")) {
-                deferred.resolve(model.get("folderId"));
+                return model.get("folderId");
             }
-            else {
-                var folderId = MiscUtils.makeId();
-                model.set("folderId", folderId);
-                var folderPath = FOLDER_POSTS + folderId;
 
-                $.when(Storage.createFolder(folderPath)).done(function (stats) {
-                    deferred.resolve(stats);
-                });
-            }
-            return deferred.promise();
+            var folderId = MiscUtils.makeId();
+            model.set("folderId", folderId);
+            var folderPath = FOLDER_POSTS + folderId;
+
+            return Storage.createFolder(folderPath);
         },
 
         convertAssetToBuffer: function (asset) {
@@ -147,19 +142,17 @@ define([
             var deferred = $.Deferred();
             var asset = content[key];
             var path = Storage.getPath(key, folderPath, content["number"]);
-            $.when(this.convertAssetToBuffer(asset)).done(function(result) {
-                return EncryptionAsync.encrypt(password, result.mimeType, result.buffer, true)
-                    .then(Storage.uploadDropbox.bind(null, path))
-                    .then(Storage.shareDropbox)
-                    .then(function(url) {
-                        if (url) {
-                            content[key + "Url"] = url;
-                        }
-                    })
-                    .done(function() {
-                        deferred.resolve();
-                    });
-
+            $.when(this.convertAssetToBuffer(asset)).fail(deferred.reject).done(function(result) {
+                EncryptionAsync.encrypt(password, result.mimeType, result.buffer, true)
+                   .then(Storage.uploadDropbox.bind(null, path), deferred.reject)
+                   .then(Storage.shareDropbox, deferred.reject)
+                   .fail(deferred.reject)
+                   .done(function (url) {
+                       if (url) {
+                           content[key + "Url"] = url;
+                       }
+                       deferred.resolve();
+                   });
             });
             return deferred.promise();
         }
@@ -170,9 +163,12 @@ define([
         var uploads = FILED_CONTENT_FIELDS.map(function(type) {
             return createHelper.uploadAsset(content, type, folderPath, password);
         });
-        $.when.apply($, uploads).done(function() {
-            deferred.resolve();
-        });
+        $.when.apply($, uploads)
+            .fail(function(error) {
+                deferred.reject(error);
+            }).done(function () {
+                deferred.resolve();
+            });
         return deferred.promise();
     }
 
@@ -236,18 +232,22 @@ define([
         },
 
         uploadPost: function(post) {
-            var deferred = $.Deferred();
-
-            var password = Sjcl.random.randomWords(8,1);
-            var uploads = [];
-
+            
             var contentList = post.contentList;
             // we have nothing to upload
             if (!contentList || contentList.length == 0) {
                 return;
             }
+            var deferred = $.Deferred();
 
-            $.when(createHelper.getOrCreateFolder(post)).done( function () {
+            var password = Sjcl.random.randomWords(8, 1);
+            var uploads = [];
+
+            $.when(createHelper.getOrCreateFolder(post))
+                .fail(function(error){
+                    deferred.reject(error);
+                })
+                .done(function () {
                 var folderPath = FOLDER_POSTS + post.get("folderId");
                 if (contentList) {
                     for(var i=0; i<contentList.length; i++) {
@@ -258,10 +258,15 @@ define([
                     }
                 }
 
-                $.when.apply($, uploads).done(function () {
-                    post.set("password", Sjcl.codec.bytes.fromBits(password));
-                    deferred.resolve();
-                });
+                $.when.apply($, uploads)
+                    .fail(function (error) {
+                        deferred.reject(error);
+                    })
+                    .done(function () {
+                        post.set("password", Sjcl.codec.bytes.fromBits(password));
+                        deferred.resolve();
+                    });
+
             });
 
             return deferred;

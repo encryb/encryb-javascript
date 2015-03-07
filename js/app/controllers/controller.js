@@ -258,14 +258,18 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                 var postModel = new PostModel(postMeta);
                 postModel.contentList = contentList;
                 var upload = PostAdapter.uploadPost(postModel);
-                $.when(upload).done(function() {
+                $.when(upload)
+                    .fail(function (error) {
+                        App.showError(error);
+                        uiNotifyDeferred.reject();
+                    })
+                    .done(function() {
+                        var jsonContent = PostAdapter.removeNonPersistentFields(contentList);
+                        postModel.set("content", jsonContent);
 
-                    var jsonContent = PostAdapter.removeNonPersistentFields(contentList);
-                    postModel.set("content", jsonContent);
-
-                    $.when(App.state.createMyPost(postModel, contentList)).done(function(){
-                        FriendAdapter.saveManifests();
-                        uiNotifyDeferred.resolve();
+                        $.when(App.state.createMyPost(postModel, contentList)).done(function(){
+                            FriendAdapter.saveManifests();
+                            uiNotifyDeferred.resolve();
                     });
                 });
             });

@@ -53,13 +53,20 @@ function (Sjcl, Encoding, SjclConvert) {
         else {
             key = password;
         }
-		var encrypted = Sjcl.json._encrypt(key, data);
-		var encryptedData = SjclConvert.convertFromBits(encrypted);
-		encryptedData['mimeType'] = mimeType;
+	    try {
+	        var encrypted = Sjcl.json._encrypt(key, data);
+	        var encryptedData = SjclConvert.convertFromBits(encrypted);
+	        encryptedData['mimeType'] = mimeType;
 
-		var packedData = Encoding.encode(encryptedData);
 
-		return {value : {packedData: packedData}, transferable: [packedData]};
+	        var packedData = Encoding.encode(encryptedData);
+	        return { value: { packedData: packedData }, transferable: [packedData] };
+	    }
+	    catch (e) {
+	        return { value: { error: "Could not encrypt data " + e.message }, transferable: [] };
+	    }
+
+		
 	}
 
 	return function (event) {

@@ -32,8 +32,8 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.mkdir(path, function (error, stats) {
             if (error) {
-                deferred.fail();
-                console.log(error);
+                deferred.reject("Could not create directory \"" + path + "\"");
+                console.error("Could not create directory " + path, error);
             } else {
                 deferred.resolve(stats);
             }
@@ -45,7 +45,7 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.remove(path, function (error, stats) {
             if (error) {
-                deferred.fail();
+                deferred.reject();
                 console.log(error);
             } else {
                 deferred.resolve(stats);
@@ -59,7 +59,7 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.stat(path, {}, function (error, data, stats) {
             if (error) {
-                deferred.fail();
+                deferred.reject();
             } else {
                 deferred.resolve(stats);
             }
@@ -71,7 +71,7 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.readFile(path, {arrayBuffer: true}, function (error, data, stats) {
             if (error) {
-                deferred.fail();
+                deferred.reject();
                 console.log(error);
             } else {
                 deferred.resolve(data);
@@ -82,27 +82,35 @@ var dropbox = {
 
     uploadDropbox: function (path, data) {
         var deferred = $.Deferred();
-        dropboxClient.writeFile(path, data, function (error, stats) {
-            if (error) {
-                deferred.fail();
-                console.log(error);
-            } else {
-                deferred.resolve(stats);
-            }
-        });
+        try {
+            dropboxClient.writeFile(path, null, function (error, stats) {
+                if (error) {
+                    deferred.reject(error);
+                    console.log(error);
+                } else {
+                    deferred.resolve(stats);
+                }
+            }); 
+        } catch (e) {
+            deferred.reject("Could not upload file: " + path + ", " + e.message);
+        }
         return deferred;
     },
 
     shareDropbox: function (stats) {
         var deferred = $.Deferred();
-        dropboxClient.makeUrl(stats.path, {downloadHack: true}, function (error, resp) {
-            if (error) {
-                deferred.fail();
-                console.log(error);
-            } else {
-                deferred.resolve(resp.url);
-            }
-        });
+        try {
+            dropboxClient.makeUrl(stats.path, { downloadHack: true }, function (error, resp) {
+                if (error) {
+                    deferred.reject("Could not share file: " + path + ", " + error);
+                    console.log(error);
+                } else {
+                    deferred.resolve(resp.url);
+                }
+            });
+        } catch (e) {
+            deferred.reject("Could not share file: " + path + ", " + e.message);
+        }
         return deferred;
     },
 

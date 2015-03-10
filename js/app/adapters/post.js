@@ -144,8 +144,8 @@ define([
             var path = Storage.getPath(key, folderPath, content["number"]);
             $.when(this.convertAssetToBuffer(asset)).fail(deferred.reject).done(function(result) {
                 EncryptionAsync.encrypt(password, result.mimeType, result.buffer, true)
-                   .then(Storage.uploadDropbox.bind(null, path), deferred.reject)
-                   .then(Storage.shareDropbox, deferred.reject)
+                   .then(Storage.upload.bind(null, path), deferred.reject)
+                   .then(Storage.share, deferred.reject)
                    .fail(deferred.reject)
                    .done(function (url) {
                        if (url) {

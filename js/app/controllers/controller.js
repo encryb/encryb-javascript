@@ -132,7 +132,7 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                 collection: App.state.myFriends
             });
             wall.friends.show(friendsView);
-
+            
             var invitesView = new InvitesView({
                 collection: App.state.myInvites
             });
@@ -367,6 +367,12 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
             $.when(App.state.fetchAll()).done(function(){
                 this._processAccepts();
                 this._processInvites();
+
+                // If there are no friends, expand friends panel to show add friend element
+                if (App.state.myFriends.size() === 0) {
+                    $("#collapseFriends").removeClass("collapse");
+                }
+
             }.bind(this));
 
         },
@@ -435,6 +441,7 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
 
             var keysLoaded = (Keys.getKeys() != null);
             model.set("dropboxEnabled", Dropbox.client.isAuthenticated());
+            model.set("dropboxInfo", false);
             model.set("keysLoaded", keysLoaded);
             model.set("displayAbout", displayAbout);
 
@@ -443,6 +450,16 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                 var setupView = new SetupView({model: model});
                 App.main.show(setupView);
 
+                var getInfo = function (_model) {
+                    $.when(Dropbox.getInfo()).done(function (info) {
+                        _model.set("dropboxInfo", info);
+                    });
+                };
+
+                if (model.get("dropboxEnabled")) {
+                    getInfo(model);
+                }
+
                 setupView.on("dropbox:login", function () {
                     Dropbox.client.authenticate({}, function (error, client) {
                         if (error) {
@@ -450,6 +467,7 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                         }
                         else {
                             model.set("dropboxEnabled", true);
+                            getInfo(model);
                         }
                     });
 
@@ -458,7 +476,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                     Dropbox.client.signOut({}, function () {
                         window.location.href = "https://www.dropbox.com/logout";
                         model.set("dropboxEnabled", false);
-                    })
+                        model.set("dropboxInfo", false);
+                    });
                 });
 
                 setupView.on("keys:create", function () {
@@ -485,7 +504,7 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                     var keys = Keys.getEncodedKeys();
                     var jsonKeys = JSON.stringify(keys);
                     var encKeys = Encryption.encrypt(password, "text/keys", jsonKeys, false);
-                    Dropbox.uploadDropbox("encryb.keys", encKeys);
+                    Dropbox.upload("encryb.keys", encKeys);
                 }
 
 
@@ -494,7 +513,7 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                 });
 
                 setupView.on("keys:loadFromDropbox", function(password){
-                    $.when(Dropbox.downloadDropbox("encryb.keys")).done(function(encKeys){
+                    $.when(Dropbox.download("encryb.keys")).done(function(encKeys){
                         var jsonKeys = Encryption.decryptText(encKeys, password);
                         var keys = JSON.parse(jsonKeys);
                         var forceSave = false;
@@ -555,8 +574,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
                         deferreds.push(deferred);
                         var picture = DataConvert.dataUriToTypedArray(resized);
                         var pictureId = (new Date).getTime();
-                        Dropbox.uploadDropbox(Dropbox.getPath("profilePic", pictureId), picture["data"])
-                            .then(Dropbox.shareDropbox)
+                        Dropbox.upload(Dropbox.getPath("profilePic", pictureId), picture["data"])
+                            .then(Dropbox.share)
                             .done(function (url) {
                                 // remove previous profile picture
                                 if (_profile.has("pictureId")) {

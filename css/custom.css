@@ -154,7 +154,9 @@ ul.collection-list li {
 .padding-5 {
     padding: 5px;
 }
-
+.padding-2 {
+    padding: 2px;
+}
 .margin-right-10 {
     margin-right: 10px;
 }

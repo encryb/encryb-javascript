@@ -303,14 +303,14 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
 
             var tasks = [];
             if (manifestStats && !notifyModel.has("manifestUrl")) {
-                var shareManifest = Dropbox.shareDropbox(manifestStats).then(function (url) {
+                var shareManifest = Dropbox.share(manifestStats).then(function (url) {
                     notifyModel.set("manifestUrl", url);
                 });
                 tasks.push(shareManifest);
             }
 
             if (archiveStats && !notifyModel.has("archiveUrl")) {
-                var shareArchive = Dropbox.shareDropbox(archiveStats).then(function (url) {
+                var shareArchive = Dropbox.share(archiveStats).then(function (url) {
                     notifyModel.set("archiveUrl", url);
                 });
                 tasks.push(shareArchive);
@@ -378,7 +378,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
 
             var currentDeferred = $.Deferred();
             $.when(EncryptionAsync.encrypt(key, "plain/json", JSON.stringify(currentManifest), false)).done(function(encText){
-                Dropbox.uploadDropbox(friend.get("manifestFile"), encText).done(function (stats) {
+                Dropbox.upload(friend.get("manifestFile"), encText).done(function (stats) {
                     currentDeferred.resolve(stats);
                 });
             });
@@ -387,7 +387,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             if (manifest.archive) {
                 archiveDeferred = $.Deferred();
                 $.when(EncryptionAsync.encrypt(key, "plain/json", JSON.stringify(archiveManifest), false)).done(function (encText) {
-                    Dropbox.uploadDropbox(friend.get("archiveFile"), encText).done(function (stats) {
+                    Dropbox.upload(friend.get("archiveFile"), encText).done(function (stats) {
                         archiveDeferred.resolve(stats);
                     });
                 });

@@ -67,7 +67,7 @@ var dropbox = {
         return deferred;
     },
 
-    downloadDropbox: function (path) {
+    download: function (path) {
         var deferred = $.Deferred();
         dropboxClient.readFile(path, {arrayBuffer: true}, function (error, data, stats) {
             if (error) {
@@ -80,10 +80,10 @@ var dropbox = {
         return deferred;
     },
 
-    uploadDropbox: function (path, data) {
+    upload: function (path, data) {
         var deferred = $.Deferred();
         try {
-            dropboxClient.writeFile(path, null, function (error, stats) {
+            dropboxClient.writeFile(path, data, function (error, stats) {
                 if (error) {
                     deferred.reject(error);
                     console.log(error);
@@ -97,7 +97,7 @@ var dropbox = {
         return deferred;
     },
 
-    shareDropbox: function (stats) {
+    share: function (stats) {
         var deferred = $.Deferred();
         try {
             dropboxClient.makeUrl(stats.path, { downloadHack: true }, function (error, resp) {
@@ -160,6 +160,18 @@ var dropbox = {
         xhr.send();
 
         return deferred;
+    },
+    getInfo: function () {
+        var deferred = $.Deferred();
+        dropboxClient.getAccountInfo({},  function(error, accountInfo) {
+            if (error) {
+                deferred.reject(error);
+                return;
+            }
+            deferred.resolve(accountInfo);
+
+        }); 
+        return deferred.promise();
     }
 }
 

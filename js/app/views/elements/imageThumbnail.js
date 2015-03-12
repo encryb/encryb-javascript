@@ -26,9 +26,15 @@ define([
 
             }
             else if (this.model.has("videoFrames")) {
+                // preload images to remove flicker in chrome
+                for (var i = 0; i < this.model.get("videoFrames").length; i++) {
+                    new Image().src = this.model.get("videoFrames")[i];
+                }
+                
                 style += "background-image: url(" + this.model.get("videoFrames")[0] + ");";
                 style += "background-size: 100% auto; background-repeat: no-repeat;";
-
+                style += "transition: background 0.3s;"
+                
             }
             else {
                 style += "background-color: #ebebeb;";

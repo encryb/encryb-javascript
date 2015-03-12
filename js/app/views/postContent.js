@@ -120,8 +120,8 @@ define([
 
                         // we have this in case of error downloading thumbnail
                         if (!model.has("thumbnail")) {
-                            $.data(imageElement, 'grid-columns', 12);
-                            $.data(imageElement, 'grid-rows', 8);
+                            $.data(imageElement, 'grid-columns', 20);
+                            $.data(imageElement, 'grid-rows', 12);
                         }
                         else {
 

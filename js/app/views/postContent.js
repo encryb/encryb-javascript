@@ -120,8 +120,8 @@ define([
 
                         // we have this in case of error downloading thumbnail
                         if (!model.has("thumbnail")) {
-                            $.data(imageElement, 'grid-columns', 20);
-                            $.data(imageElement, 'grid-rows', 12);
+                            $.data(imageElement, 'grid-columns', 12);
+                            $.data(imageElement, 'grid-rows', 8);
                         }
                         else {
 
@@ -130,19 +130,11 @@ define([
                             (function(_imageElement) {
                                 $.when(ImageUtils.getNaturalSize(model.get("thumbnail"))).done(function(size) {
                                     var ratio = size.width / size.height;
-                                    var cols, rows;
-                                    if (ratio > 2) {
-                                        cols = 8;
-                                        rows = 4;
-                                    }
-                                    else if (ratio < 1) {
-                                        cols = 6;
-                                        rows = 8;
-                                    }
-                                    else {
-                                        cols = 7;
-                                        rows = 4;
-                                    }
+                                    var cols = 6 + Math.floor(ratio);
+
+                                    var rows = Math.round(cols / ratio);
+                                    console.log(cols, rows);
+
                                     if (collection.length == 1 && size.width > 300) {
                                         if (ratio >= 1) {
                                             cols = cols * 3;
@@ -198,7 +190,7 @@ define([
                     postImagesElement.cloudGrid({
                         children: imageChildren,
                         gridGutter: 3,
-                        gridSize: 17
+                        gridSize: 16
                     });
 
                     postFilesElement.cloudGrid({
@@ -217,7 +209,12 @@ define([
                     swipeboxArgs.push({href:content.getVideo(), video:true, title:content.get("caption")|| ""});
                 }
                 else {
-                    swipeboxArgs.push({href:content.getFullImage(), title:content.get("caption")|| ""});
+                    if (content.has("imageUrl")) {
+                        swipeboxArgs.push({ href: content.getFullImage(), title: content.get("caption") || "" });
+                    }
+                    else {
+                        swipeboxArgs.push({ href: content.get("thumbnail"), title: content.get("caption") || "" });
+                    }
                 }
             });
             $.swipebox(swipeboxArgs, {initialIndexOnArray:index});

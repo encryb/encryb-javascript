@@ -88,8 +88,10 @@ define([
                         return function () {
                             var resized = ImageUtil.resize(_image, 1920, 1440);
                             WindowUrl.revokeObjectURL(image.src);
-                            _content['thumbnail'] = resized.thumbnail;
-                            _content['image'] = resized.fullsize;
+                            _content["thumbnail"] = resized.thumbnail;
+                            if (resized.hasOwnProperty("fullsize")) {
+                                _content['image'] = resized.fullsize;
+                            }
                             _loadDeferred.resolve();
                         };
                     }(image, loadDeferred, content));

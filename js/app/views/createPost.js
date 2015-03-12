@@ -113,7 +113,7 @@ define([
 
                         createPostView.dropzoneView.dropzone.removeAllFiles();
 
-                        selectize.clear();
+                        //selectize.clear();
                 });
             });
         },

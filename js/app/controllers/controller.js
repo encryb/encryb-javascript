@@ -30,7 +30,8 @@ function (Backbone, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdap
 
 
     function startDownload(uri, name) {
-        var link = document.createElement("a");
+        var link = document.getElementById("downloadLink");
+
         link.download = name;
         link.href = uri;
         link.click();

@@ -14,6 +14,14 @@ define([
             return {
                 isRemovable: function () {
                     return removable;
+                },
+                formatTime: function (duration) {
+                    var mins = Math.floor(duration / 60);
+                    var seconds = Math.round(duration % 60);
+                    if (seconds < 10) {
+                        seconds = "0" + seconds;
+                    }
+                    return mins + ":" + seconds;
                 }
             }
         },

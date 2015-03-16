@@ -128,12 +128,14 @@ define([
                                     _content['videoFrames'] = frames;
                                     _loadDeferred.resolve();
                                 });
+                            _content['duration'] = _video.duration;
 
                         };
                     }(video, file, loadDeferred, content));
                 }
                 else {
                     content['data'] = file;
+                    content['size'] = file.size;
                     content['filename'] = file.name;
                     loadDeferred.resolve();
                 }

@@ -65,7 +65,7 @@ define([
                 var password = this.model.get("password");
                 var collection = this.model.get("content");
                 collection.each(function (model, index) {
-                    if (model.has("thumbnailUrl")) {
+                    if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
                         var imageView = new ImageThumbnailView({model: model, removable: true});
                         var imageElement = imageView.render().el;
 
@@ -75,7 +75,7 @@ define([
                         imageChildren.push(imageElement);
                     }
                     else if (model.has("filename")) {
-                        var fileView = new FileThumbnailView({model: model, removable: true});
+                        var fileView = new FileThumbnailView({model: model, removable: true, password: password});
                         var fileElement = fileView.render().el;
                         $.data(fileElement, 'grid-columns', 8);
                         $.data(fileElement, 'grid-rows', 3);

@@ -405,7 +405,7 @@ ul.collection-list li {
     bottom:0;
     left: 0;
     right: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.8);
     color: #FFFFFF;
     padding: 5px;
     max-height: 50%;
@@ -420,8 +420,9 @@ ul.collection-list li {
     font-weight: bold;
 }
 
+
 .border-file {
-    border: 2px solid #909090;
+    border: 3px solid #909090;
 }
 
 /* http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ */
@@ -450,7 +451,15 @@ ul.collection-list li {
     font-size: 4rem;
     padding: 0.5rem;
     background-color: rgba(0, 0, 0, 0.5);
+}
 
+.video-duration {
+    position: absolute;
+    top:3px;
+    right: 3px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #FFFFFF;
+    padding: 0.3rem;
 }
 
 .swipebox-warning {

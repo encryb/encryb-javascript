@@ -106,9 +106,15 @@ define([
                 var password = this.model.get("password");
                 var collection = this.model.get("content");
                 var isFirst = true;
-                collection.each(function (model, index) {
-                    if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
 
+                var thumbCount = 0;
+                collection.each(function (model, index) {
+                    
+                    if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
+                        if (thumbCount > 8) {
+                            return;
+                        }
+                        thumbCount++;
                         var imageView = new ImageThumbnailView({model: model});
                         var imageElement = imageView.render().el;
 
@@ -133,12 +139,11 @@ define([
                                     var cols = 6 + Math.floor(ratio);
 
                                     var rows = Math.round(cols / ratio);
-                                    console.log(cols, rows);
 
                                     if (collection.length == 1 && size.width > 300) {
                                         if (ratio >= 1) {
-                                            cols = cols * 3;
-                                            rows = rows * 3;
+                                            cols = cols * 2.5;
+                                            rows = rows * 2.5;
                                         }
                                         else {
                                             cols = cols * 2;
@@ -163,21 +168,9 @@ define([
                         imageChildren.push(imageElement);
                     }
                     else if (model.has("filename")) {
-                        var fileView = new FileThumbnailView({model: model});
+                        var fileView = new FileThumbnailView({model: model, password: password});
                         var fileElement = fileView.render().el;
-                        fileElement.click(function () {
-                            if (!model.has("data")) {
-                                fileElement.find(".downloadImage").addClass("hide");
-                                fileElement.find(".downloadLoadingImage").removeClass("hide");
-                            }
-                            App.vent.trigger("file:download", model, password);
-                        }.bind(this));
-
-                        this.listenTo(model, "change:data", function() {
-                            fileElement.find(".downloadLoadingImage").addClass("hide");
-                            fileElement.find(".downloadDoneImage").removeClass("hide");
-                        });
-
+                        
                         $.data(fileElement, 'grid-columns', 8);
                         $.data(fileElement, 'grid-rows', 3);
                         postFilesElement.append(fileElement);
@@ -190,7 +183,7 @@ define([
                     postImagesElement.cloudGrid({
                         children: imageChildren,
                         gridGutter: 3,
-                        gridSize: 16
+                        gridSize: 18
                     });
 
                     postFilesElement.cloudGrid({
@@ -209,7 +202,10 @@ define([
                     swipeboxArgs.push({href:content.getVideo(), video:true, title:content.get("caption")|| ""});
                 }
                 else {
-                    if (content.has("imageUrl")) {
+                    if (content.has("image")) {
+                        swipeboxArgs.push({ href: content.get("image"), title: content.get("caption") || "" });
+                    }
+                    else if (content.has("imageUrl")) {
                         swipeboxArgs.push({ href: content.getFullImage(), title: content.get("caption") || "" });
                     }
                     else {

@@ -82,7 +82,7 @@ define(function() {
             }
             else {
                 thumbHeight = Math.min(thumbMaxHeight, height);
-                thumbWidth = thumbHeigh * (width / height);
+                thumbWidth = thumbHeight * (width / height);
             }
             
             var canvasScale = 1;

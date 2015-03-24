@@ -35,15 +35,20 @@ define([
         decryptData: function(password, packedData) {
             var deferred = $.Deferred();
     
-            SjclWorker.sym.decrypt(packedData, true, password, function(error, decrypted) {
+            SjclWorker.sym.decrypt(packedData, true, password, function (error, decrypted) {
                 if (error) {
                     deferred.reject(error.message);
+                    return;
                 }
-                else {
-                    var blob = new Blob([decrypted.data], {type: decrypted.mimeType});
-                    var objectUrl = WindowUrl.createObjectURL(blob);
-                    deferred.resolve(objectUrl);
+                if (decrypted.error) {
+                    deferred.reject(decrypted.error);
+                    return;
                 }
+
+                var blob = new Blob([decrypted.data], {type: decrypted.mimeType});
+                var objectUrl = WindowUrl.createObjectURL(blob);
+                deferred.resolve(objectUrl);
+                
             });
     
             return deferred.promise();
@@ -56,6 +61,10 @@ define([
             SjclWorker.sym.decrypt(packedData, true, password, function(error, decrypted) {
                 if (error) {
                     deferred.reject(error.message);
+                    return;
+                }
+                if (decrypted.error) {
+                    deferred.reject(decrypted.error);
                     return;
                 }
     
@@ -84,7 +93,7 @@ define([
                     deferred.reject(error.message);
                 }
                 else if (decrypted.error) {
-                    deferred.reject(decrypted.error)
+                    deferred.reject(decrypted.error);
                 }
                 else {
                     deferred.resolve(decrypted.data);

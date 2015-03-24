@@ -8,7 +8,7 @@ function (Sjcl, Encoding, SjclConvert) {
 
 	function decrypt(packedData, isBinary, password) {
 		var data = Encoding.decode(packedData);
-		var encData = SjclConvert.convertToBits(data);
+		var encData = SjclConvert.convertToBits(data, true);
 		var key;
         if (password instanceof Array) {
 			key = Sjcl.codec.bytes.toBits(password);
@@ -20,10 +20,16 @@ function (Sjcl, Encoding, SjclConvert) {
         else {
             key = password;
         }
-		var ct = Sjcl.json._decrypt(key, encData);
+        var ct;
+	    try {
+	        var ct = Sjcl.json._decrypt(key, encData, { raw: 1 });
+	    }
+	    catch (e) {
+	        return { value: { error: "Could not decrypt data " + e.message }, transferable: [] };
+	    }
         var decrypted;
         if (isBinary) {
-            decrypted = Sjcl.codec.arrayBuffer.fromBits(ct);
+            decrypted = ct;// Sjcl.codec.arrayBuffer.fromBits(ct, false);
             return {value: {mimeType: data.mimeType, data: decrypted}, transferable: [decrypted]};
         }
         else {
@@ -38,13 +44,8 @@ function (Sjcl, Encoding, SjclConvert) {
 	}
 
 	function encrypt(content, mimeType, isBinary, password) {
-		var data;
-        if (isBinary) {
-            data = Sjcl.codec.bytes.toBits(new Uint8Array(content));
-        }
-        else {
-            data = content;
-        }
+		var data =  content;
+        
         var key;
         if (password.hasOwnProperty("publicKey")) {
             var publicKeyBits = Sjcl.codec.hex.toBits(password.publicKey);

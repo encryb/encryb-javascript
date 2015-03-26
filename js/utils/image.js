@@ -68,8 +68,8 @@ define(function() {
             canvasContext.drawImage(image, 0, 0, canvas.width, canvas.height);
             var fullsize =  canvas.toDataURL("image/jpeg");
 
-            var thumbMaxWidth = 400;
-            var thumbMaxHeight = 300;
+            var thumbMaxWidth = 500;
+            var thumbMaxHeight = 750;
 
             if (thumbMaxHeight >= height && thumbMaxWidth >= width) {
                 return { thumbnail: fullsize };

@@ -25,12 +25,12 @@ define([
                 }
             }
         },
-        className: "gridItem pointer-hand",
+        className: "pointer-hand",
         attributes: function () {
             var style = "";
             if (this.model.has("thumbnail")) {
                 style += "background-image: url(" + this.model.escape("thumbnail") + ");";
-                style += "background-size: 100% auto; background-repeat: no-repeat;";
+                style += "background-repeat: no-repeat;";
 
             }
             else if (this.model.has("videoFrames")) {
@@ -40,7 +40,7 @@ define([
                 }
                 
                 style += "background-image: url(" + this.model.get("videoFrames")[0] + ");";
-                style += "background-size: 100% auto; background-repeat: no-repeat;";
+                style += "background-repeat: no-repeat;";
                 style += "transition: background 0.3s;"
                 
             }

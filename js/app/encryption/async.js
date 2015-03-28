@@ -35,7 +35,7 @@ define([
         decryptData: function(password, packedData) {
             var deferred = $.Deferred();
     
-            SjclWorker.sym.decrypt(packedData, true, password, function (error, decrypted) {
+            SjclWorker.sym.decrypt(packedData, password, function (error, decrypted) {
                 if (error) {
                     deferred.reject(error.message);
                     return;
@@ -58,7 +58,7 @@ define([
         decryptArray: function(password, packedData) {
             var deferred = $.Deferred();
     
-            SjclWorker.sym.decrypt(packedData, true, password, function(error, decrypted) {
+            SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {
                 if (error) {
                     deferred.reject(error.message);
                     return;
@@ -88,7 +88,7 @@ define([
 
         decryptText: function(password, packedData) {
             var deferred = $.Deferred();
-            SjclWorker.sym.decrypt(packedData, false, password, function(error, decrypted) {
+            SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {
                 if (error) {
                     deferred.reject(error.message);
                 }
@@ -96,7 +96,8 @@ define([
                     deferred.reject(decrypted.error);
                 }
                 else {
-                    deferred.resolve(decrypted.data);
+                    var text = Sjcl.codec.utf8String.fromBits(Sjcl.codec.arrayBuffer.toBits(decrypted.data));
+                    deferred.resolve(text);
                 }
             });
             return deferred.promise();

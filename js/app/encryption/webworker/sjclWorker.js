@@ -6,7 +6,7 @@ define([
 function (Sjcl, Encoding, SjclConvert) {
 	"use strict";
 
-	function decrypt(packedData, isBinary, password) {
+	function decrypt(packedData, password) {
 		var data = Encoding.decode(packedData);
 		var encData = SjclConvert.convertToBits(data, true);
 		var key;
@@ -22,25 +22,13 @@ function (Sjcl, Encoding, SjclConvert) {
         }
         var ct;
 	    try {
-	        var ct = Sjcl.json._decrypt(key, encData, { raw: 1 });
+	        ct = Sjcl.json._decrypt(key, encData, {raw : 1 });
 	    }
 	    catch (e) {
 	        return { value: { error: "Could not decrypt data " + e.message }, transferable: [] };
 	    }
-        var decrypted;
-        if (isBinary) {
-            decrypted = ct;// Sjcl.codec.arrayBuffer.fromBits(ct, false);
-            return {value: {mimeType: data.mimeType, data: decrypted}, transferable: [decrypted]};
-        }
-        else {
-            try {
-                decrypted = Sjcl.codec.utf8String.fromBits(ct);
-                return {value: {data: decrypted}, transferable: []};
-            }
-            catch (e) {
-                return {value: {error: "Could not convert decrypted data to string " + e.message}, transferable: []};
-            }
-        }
+        return {value: {mimeType: data.mimeType, data: ct}, transferable: [ct]};
+        
 	}
 
 	function encrypt(content, mimeType, isBinary, password) {
@@ -79,7 +67,7 @@ function (Sjcl, Encoding, SjclConvert) {
 		if (event.data.encrypt) {
 			return encrypt(event.data.content, event.data.mimeType, event.data.isBinary, event.data.password);
 		} else if (event.data.decrypt) {
-			return decrypt(event.data.encryptedContent, event.data.isBinary, event.data.password);
+			return decrypt(event.data.encryptedContent, event.data.password);
 		}
 		return false;
 	};

@@ -56,6 +56,7 @@ define([
             this.listenTo(this.model.get("poster"), "change:pictureUrl", this.render);
             this.listenTo(this.model.get("content"), "add", this.render);
             this.listenTo(this.model.get("content"), "remove", this.render);
+            this.listenTo(this.model, "change:text", this.render);
         },
 
         onShow: function () {

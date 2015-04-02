@@ -23,7 +23,8 @@ define([
                 }
             }
         },
-        className: "gridItem border-file pos-relative",
+        tagName: 'tr',
+        className: 'fileThumb pointer-hand',
         modelEvents: {
             'change': 'render'
         },
@@ -50,12 +51,10 @@ define([
             App.vent.trigger("file:download", this.model, this.password);
         },
         removeFile: function () {
-            console.log("Remove!");
             this.model.set("deleted", true);
         },
 
         restoreFile: function () {
-            console.log("restore!");
             this.model.unset("deleted");
         }
     });

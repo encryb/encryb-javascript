@@ -68,38 +68,16 @@ define([
                     if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
                         var imageView = new ImageThumbnailView({model: model, removable: true});
                         var imageElement = imageView.render().el;
-
-                        $.data(imageElement, 'grid-columns', 6);
-                        $.data(imageElement, 'grid-rows', 4);
+                        $(imageElement).addClass("square square32");
                         editImagesElement.append(imageElement);
-                        imageChildren.push(imageElement);
                     }
                     else if (model.has("filename")) {
                         var fileView = new FileThumbnailView({model: model, removable: true, password: password});
                         var fileElement = fileView.render().el;
-                        $.data(fileElement, 'grid-columns', 8);
-                        $.data(fileElement, 'grid-rows', 3);
                         editFilesElement.append(fileElement);
-                        fileChildren.push(fileElement);
                     }
                 }, this);
             }
-
-            // TODO: stupid DOM and timeout requirement
-            setTimeout(function() {
-                editImagesElement.cloudGrid({
-                    children: imageChildren,
-                    gridGutter: 3,
-                    gridSize: 25
-                });
-
-                editFilesElement.cloudGrid({
-                    children: fileChildren,
-                    gridGutter: 3,
-                    gridSize: 25
-                });
-            }, 500);
-
         },
 
         permissionAdded: function(permission) {

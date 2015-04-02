@@ -1,35 +1,25 @@
-<div class="row">
-    <div class="downloadable pointer-hand">
-        <% if (!isRemovable()) { %>
-        <div class="col-xs-3">
-            <div>
-                <img class="downloadImage <% if (typeof data !== 'undefined') { %> hide <% } %>" src="img/download.png">
-                <img class="downloadLoadingImage hide" style="width: 32px; height: 32px" src="img/loading.gif">
-                <img class="downloadDoneImage <% if (typeof data === 'undefined') { %> hide <% } %>" src="img/downloaded.png">
-            </div>
-            <% if (typeof size !== 'undefined') { %>
-            <div class="small padding-5">Size:  <%- getSize() %></div>
-            <% } %>
-        </div>
-        <% } %>
+<td class="downloadable">
+    <img class="downloadImage <% if (typeof data !== 'undefined') { %> hide <% } %>" src="img/download.png">
+    <img class="downloadLoadingImage hide" style="width: 32px; height: 32px" src="img/loading.gif">
+    <img class="downloadDoneImage <% if (typeof data === 'undefined') { %> hide <% } %>" src="img/downloaded.png">
+</td>
 
-        <div class="col-xs-9 flex-center" style="height: 100%">
-            <div class="word-wrap text-center">
-                <span class="filename <% if (typeof deleted !== 'undefined') { %> strike <% } %>">
-                    <%- filename %>
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <% if (isRemovable()) { %>
-    <div class="col-xs-3 clearfix">
+<td style="width: 90%"class="word-wrap downloadable <% if (typeof deleted !== 'undefined') { %> strike <% } %>">
+    <%- filename %>
+</td>
+   
+<% if (typeof size !== 'undefined') { %>
+    <td class="downloadable">
+        <%- getSize() %>
+    </td>
+<% } %>
+   
+<% if (isRemovable()) { %>
+    <td>
         <% if (typeof deleted !== "undefined") { %>
-        <span class="restoreFile pull-right remove-icon-black glyphicon glyphicon-repeat"></span>
+            <span class="restoreFile align-right remove-icon-black glyphicon glyphicon-repeat"></span>
         <% } else { %>
-        <span class="removeFile pull-right remove-icon-black glyphicon glyphicon-trash"></span>
+            <span class="removeFile align-right remove-icon-black glyphicon glyphicon-trash"></span>
         <% } %>
-    </div>
-    <% } %>
-
-</div>
+    </td>
+<% } %>

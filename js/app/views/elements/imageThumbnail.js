@@ -92,7 +92,7 @@ define([
         },
 
         onRender: function () {
-            if (this.model.has("deleted")) {
+            if (this.model.has("deleted") && this.removable) {
                 this.$el.css("opacity", 0.5);
             }
             else {

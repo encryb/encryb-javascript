@@ -43,7 +43,9 @@ define([
 
         ui: {
             postImages: '.postImages',
-            postFiles: '.postFiles'
+            postFiles: '.postFiles',
+            fileTable: '.fileTable',
+            imageGrid: '.imageGrid'
         },
 
         events: {
@@ -98,17 +100,16 @@ define([
             var postImagesElement = this.ui.postImages;
             var postFilesElement = this.ui.postFiles;
             var imageChildren = [];
-            var fileChildren = [];
-
+          
             var imageDeferreds = [];
-            var fileDeferreds = [];
-
+            
             if (this.model.has("content")) {
                 var password = this.model.get("password");
                 var collection = this.model.get("content");
                 var isFirst = true;
 
                 var thumbCount = 0;
+                var fileCount = 0;
                 collection.each(function (model, index) {
                     
                     if (model.has("thumbnailUrl") || model.has("videoFramesUrl")) {
@@ -149,15 +150,19 @@ define([
                         
                     }
                     else if (model.has("filename")) {
+                        fileCount++;
                         var fileView = new FileThumbnailView({model: model, password: password});
-                        var fileElement = fileView.render().el;
-                        
-                        $.data(fileElement, 'grid-columns', 8);
-                        $.data(fileElement, 'grid-rows', 3);
+                        var fileElement = fileView.render().el;         
                         postFilesElement.append(fileElement);
-                        fileChildren.push(fileElement);
                     }
                 }, this);
+
+                if (thumbCount > 0) {
+                    this.ui.imageGrid.removeClass("hide");
+                }
+                if (fileCount > 0) {
+                    this.ui.fileTable.removeClass("hide");
+                }
             }
             
             $.when.apply($, imageDeferreds).done(function () {
@@ -200,13 +205,6 @@ define([
                     postImagesElement.append(element);
                 }
             });
-            setTimeout(function () {
-                postFilesElement.cloudGrid({
-                    children: fileChildren,
-                    gridGutter: 3,
-                    gridSize: 25
-                });
-            }, 0);
         },
 
         showImage: function(index){

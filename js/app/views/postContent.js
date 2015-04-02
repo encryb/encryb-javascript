@@ -3,7 +3,6 @@ define([
     'underscore',
     'backbone',
     'marionette',
-    'cloudGrid',
     'jquery.swipebox',
     'autolinker',
     'app/app',
@@ -13,7 +12,7 @@ define([
     'utils/image',
     'utils/misc',
     'require-text!app/templates/postContent.html'
-], function($, _, Backbone, Marionette, CloudGrid, Swipebox, Autolinker, App, PostAdapter,
+], function($, _, Backbone, Marionette, Swipebox, Autolinker, App, PostAdapter,
             FileThumbnailView, ImageThumbnailView,
             ImageUtils, MiscUtils, PostContentTemplate){
 
@@ -57,17 +56,6 @@ define([
             this.listenTo(this.model.get("poster"), "change:pictureUrl", this.render);
             this.listenTo(this.model.get("content"), "add", this.render);
             this.listenTo(this.model.get("content"), "remove", this.render);
-
-            var reflowGrid = function() {
-                if (this.ui.postImages) {
-                    this.ui.postImages.cloudGrid('reflowContent');
-                }
-                if (this.ui.postFiles) {
-                    this.ui.postFiles.cloudGrid('reflowContent');
-                }
-            }.bind(this);
-            //this.listenTo(App.vent, "resize", reflowGrid);
-
         },
 
         onShow: function () {

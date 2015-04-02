@@ -5,7 +5,6 @@ define([
     'bootbox',
     'dropzone',
     'marionette',
-    'cloudGrid',
     'selectize',
     'app/app',
     'app/adapters/post',
@@ -16,7 +15,7 @@ define([
     'compat/windowUrl',
     'utils/image',
     'require-text!app/templates/editPost.html'
-], function($, _, Backbone, Bootbox, Dropzone, Marionette, CloudGrid, Selectize, App,
+], function($, _, Backbone, Bootbox, Dropzone, Marionette, Selectize, App,
             PostAdapter, Post, FileThumbnailView, ImageThumbnailView, DropzoneView, WindowUrl, ImageUtil, EditPostTemplate){
 
 

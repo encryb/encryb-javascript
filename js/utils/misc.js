@@ -65,8 +65,9 @@ define([
         isElementVisible: function($elem, margin) {
             var $window = $(window);
 
-            var viewTop = $window.scrollTop() - margin;
-            var viewBottom = viewTop + $window.height() + margin;
+            var top = $window.scrollTop();
+            var viewTop = top -margin;
+            var viewBottom = top + $window.height() + margin;
 
             var elemTop = $elem.offset().top;
             var elemBottom = elemTop + $elem.height();

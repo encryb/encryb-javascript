@@ -228,7 +228,7 @@
                 var decryptKeys = function (onError, onSuccess) {
                      wrap(window.crypto.subtle.decrypt(
                             { name: config.rsaEncryptCipher, hash: config.rsaHash },
-                            key.privateKey,
+                            myEncryptPrivateKey,
                             dict.encryptedKeys
                      ),
                      onError,

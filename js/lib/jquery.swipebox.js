@@ -689,13 +689,7 @@ define(["jquery"], function($) {
 					    $this.loadMedia(media, isHostedVideo, function () {
 					        slide.removeClass('slide-loading');
 					        slide.html(this);
-					    }, function (errorMsg) {
-					        slide.removeClass('slide-loading');
-					        var button = $("<a class='swipebox-warning'> Your browser could not play the video. Click to download.</a>");
-					        button.on("click", function () { console.log("HELLO"); errorCallback() });
-					        button.on("touchend", function () { console.log("HELLO"); errorCallback() });
-					        slide.html(button);
-					    });
+					    }, errorCallback);
 					} else {
 						slide.removeClass('slide-loading');
 						slide.html($this.getVideo(media));
@@ -799,15 +793,32 @@ define(["jquery"], function($) {
 					img.attr( 'src', src );
 				}
 				else {
-				    var video = $('<video autoplay controls style="max-width:80%; max-height:80%">');
-                    video.on('loadedmetadata', function () {
-						callback.call( video );
-                    });
-                    video.on('error', function (msg) {
-                        errorCallback(msg);
-                    });
+				    var div = $("<div></div>");
+				    var video = $("<video controls></video>");
+				    
+				    var showDownloadButton = function () {
+				        var button = $("<div><button class='swipebox-warning'>Click to download.</button></div>");
+				        button.on("click touchend", function () { errorCallback(); });
+				        div.append(button);
+				    }
 
-					video.attr('src', src);
+				    var errorTimeout = setTimeout(showDownloadButton, 3000);
+
+				    video.on('error', function (msg) {
+				        clearTimeout(errorTimeout);
+				        showDownloadButton();
+				    });
+
+                    video.on('loadedmetadata', function () {
+                        clearTimeout(errorTimeout);
+                    });
+                    var source = $('<source>');
+                    source.attr('src', src);
+                    video.append(source);
+                    div.append(video);
+                    callback.call(div);
+                    video.get(0).play();
+
 				}
 			},
 			

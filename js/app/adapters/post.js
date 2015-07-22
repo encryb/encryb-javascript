@@ -1,6 +1,6 @@
 define([
     'backbone',
-    'sjcl',
+    'simpleCrypto',
     'app/services/dropbox',
     'app/encryption/async',
     'compat/windowUrl',
@@ -8,7 +8,7 @@ define([
     'utils/encoding',
     'utils/image',
     'utils/misc'
-], function (Backbone, Sjcl, Storage, EncryptionAsync, WindowUrl, DataConvert, Encoding, ImageUtils, MiscUtils) {
+], function (Backbone, SimpleCrypto, Storage, EncryptionAsync, WindowUrl, DataConvert, Encoding, ImageUtils, MiscUtils) {
 
     // $CONFIG
     var FOLDER_POSTS = "posts/";
@@ -16,60 +16,69 @@ define([
 
 
     var fetchHelper = {
-        fetchToUrlObject: function(model, key, objectType, password) {
-            if (!model.has(key) && model.has(key + "Url")) {
-                var url = model.get(key + "Url");
+        fetchToUrlObject: function(model, contentType, objectType, keys) {
+            if (!model.has(contentType) && model.has(contentType + "Url")) {
+                var url = model.get(contentType + "Url");
                 var decryptFunc;
                 if (objectType === "binary") {
-                    decryptFunc = EncryptionAsync.decryptData.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptData.bind(null, keys);
                 }
                 else if (objectType === "text"){
-                    decryptFunc = EncryptionAsync.decryptText.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptText.bind(null, keys);
                 }
                 else if (objectType === "array") {
-                    decryptFunc = EncryptionAsync.decryptArray.bind(null, password);
+                    decryptFunc = EncryptionAsync.decryptArray.bind(null, keys);
                 }
                 var deferred = Storage.downloadUrl(url)
                     .then(
                         decryptFunc,
-                        setError.bind(null, model, key + " download error")
+                        function(userAborted, error) {
+                            model.unset("progress");
+                            if (!userAborted) {
+                                setError(model, contentType + " download error");
+                            }
+                        }
                     )
                     .then(
-                        function(value) {
-                            if (value) {
-                                model.set(key, value);
+                        function(download, mimeType) {
+                            if (download) {
+                                model.set(contentType, download);
+                                model.set("mimeType", mimeType);
                             }
                         },
-                        setError.bind(null, model, key + " decryption error")
+                        setError.bind(null, model, contentType + " decryption error")
                     )
-                    .then(
-                        function () {
-                            var thumbnail;
-                            if (key === "thumbnail" && model.has("thumbnail")) {
-                                thumbnail = model.get("thumbnail");
-                            }
-                            else if (key === "videoFrames" && model.has("videoFrames") && model.get("videoFrames").length > 0) {
-                                thumbnail = model.get("videoFrames")[0];
-                            }
-                            else {
-                                return;
-                            }
-
-                            var deferred = $.Deferred();
-                            $.when(ImageUtils.getNaturalSize(thumbnail)).done(function (size) {
-                                model.set(key + "Size", size);
-                                deferred.resolve();
-                            });
-                            return deferred;
-
-                        }
-                    );
-                       
+                    .then(this._calculateImageSize.bind(null, contentType, model));
+                return deferred;
             }
+            else {
+                return this._calculateImageSize(contentType, model);
+            }
+        },
+        // precalculate thumbnail image dimensions. They are used when displaying image "collage"
+        _calculateImageSize: function(key, model) {
+            var thumbnail;
+            if (key === "thumbnail" && model.has("thumbnail")) {
+                thumbnail = model.get("thumbnail");
+            }
+            else if (key === "videoFrames" && model.has("videoFrames") && model.get("videoFrames").length > 0) {
+                thumbnail = model.get("videoFrames")[0];
+            }
+            else {
+                return;
+            }
+
+            var deferred = $.Deferred();
+            $.when(ImageUtils.getNaturalSize(thumbnail)).done(function (size) {
+                model.set(key + "Size", size);
+                deferred.resolve();
+            });
             return deferred;
+
+            
         },
 
-        getOrFetchToUrlObject: function (content, type, password) {
+        getOrFetchToUrlObject: function (content, type, keys) {
             var deferred = $.Deferred();
             if (content.has(type + "Cached")) {
                 return content.get(type + "Cached");
@@ -89,19 +98,30 @@ define([
             else {
                 url = content.get(type + "Url");
                 Storage.downloadUrl(url)
-                    .then(EncryptionAsync.decryptData.bind(null, password),
-                    setError.bind(null, content, type + " download error"))
-                    .done(function (data) {
+                    .then(EncryptionAsync.decryptData.bind(null, keys),
+                        function(userAborted, error) {
+                            content.unset("progress");
+                            if (!userAborted) {
+                                setError(content, type + " decryption error", error);
+                                deferred.reject(content.get("errors"));
+                            }
+                            else {
+                                deferred.reject("User canceled");
+                            }
+                        },
+                        function(progress, abortDownload) {
+                            content.set("progress", progress);
+                            content.set("abortDownload", abortDownload);
+                        }
+                    )
+                    .done(function (data, mimeType) {
                         if (!data) {
                             deferred.reject(content.get("errors"));
                             return;
                         }
+                        content.set("mimeType", mimeType);
                         content.set(type + "Cached", data);
                         deferred.resolve(data);
-                    })
-                    .fail(function(error) {
-                        setError(content, type + " decryption error", error);
-                        deferred.reject(content.get("errors"));
                     });
             }
             return deferred.promise();
@@ -158,25 +178,30 @@ define([
             }
             return deferred.promise();
         },
-        uploadAsset: function(content, key, folderPath, password) {
-            if (!content.hasOwnProperty(key)) {
+        uploadAsset: function(content, contentType, folderPath, encryptionKeys) {
+            if (!content.hasOwnProperty(contentType)) {
                 return null;
             }
 
             var deferred = $.Deferred();
-            var asset = content[key];
-            var path = Storage.getPath(key, folderPath, content["number"]);
-            $.when(this.convertAssetToBuffer(asset)).fail(deferred.reject).done(function(result) {
-                EncryptionAsync.encrypt(password, result.mimeType, result.buffer, true)
-                   .then(Storage.upload.bind(null, path), deferred.reject)
-                   .then(Storage.share, deferred.reject)
-                   .fail(deferred.reject)
-                   .done(function (url) {
-                       if (url) {
-                           content[key + "Url"] = url;
-                       }
-                       deferred.resolve();
-                   });
+            var asset = content[contentType];
+            var path = Storage.getPath(contentType, folderPath, content["number"]);
+            $.when(this.convertAssetToBuffer(asset))
+                .fail(deferred.reject)
+                .done(function(result) {
+                    EncryptionAsync.encrypt(encryptionKeys, result.mimeType, result.buffer, true)
+                       .then(Storage.upload.bind(null, path), deferred.reject)
+                       .then(Storage.share, deferred.reject)
+                       .fail(function() {
+                           console.log("FAIL", arguments);
+                           deferred.reject();
+                       })
+                       .done(function (url) {
+                           if (url) {
+                               content[contentType + "Url"] = url;
+                           }
+                           deferred.resolve();
+                       });
             });
             return deferred.promise();
         }
@@ -228,7 +253,9 @@ define([
         fetchPost: function(post) {
 
             var deferred = $.Deferred();
-            var password = post.get('password');
+            var aesKey = SimpleCrypto.util.stringToBytes(post.get('aesKey'));
+            var hmacKey = SimpleCrypto.util.stringToBytes(post.get('hmacKey'));
+            var keys = {aesKey: aesKey, hmacKey: hmacKey};
             var fetches = [];
 
             if (post.has("content")) {
@@ -236,15 +263,15 @@ define([
                 contentList.each(function (content) {
 
                     // automatic downloads
-                    fetches.push(fetchHelper.fetchToUrlObject(content, "caption", "text", password));
-                    fetches.push(fetchHelper.fetchToUrlObject(content, "videoFrames", "array", password));
-                    fetches.push(fetchHelper.fetchToUrlObject(content, "thumbnail", "binary", password));
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "caption", "text", keys));
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "videoFrames", "array", keys));
+                    fetches.push(fetchHelper.fetchToUrlObject(content, "thumbnail", "binary", keys));
 
 
                     //on demand downloads
-                    content.getFullImage = fetchHelper.getOrFetchToUrlObject.bind(null, content, "image", password);
-                    content.getVideo = fetchHelper.getOrFetchToUrlObject.bind(null, content, "video", password);
-                    content.getData = fetchHelper.getOrFetchToUrlObject.bind(null, content, "data", password);
+                    content.getFullImage = fetchHelper.getOrFetchToUrlObject.bind(null, content, "image", keys);
+                    content.getVideo = fetchHelper.getOrFetchToUrlObject.bind(null, content, "video", keys);
+                    content.getData = fetchHelper.getOrFetchToUrlObject.bind(null, content, "data", keys);
                 });
             }
 
@@ -264,35 +291,40 @@ define([
             }
             var deferred = $.Deferred();
 
-            var password = Sjcl.random.randomWords(8, 1);
-            var uploads = [];
-
-            $.when(createHelper.getOrCreateFolder(post))
-                .fail(function(error){
-                    deferred.reject(error);
-                })
-                .done(function () {
-                var folderPath = FOLDER_POSTS + post.get("folderId");
-                if (contentList) {
-                    for(var i=0; i<contentList.length; i++) {
-                        var content = contentList[i];
-                        content["number"] = i;
-                        var upload = _uploadContent(content, password, folderPath);
-                        uploads.push(upload);
-                    }
-                }
-
-                $.when.apply($, uploads)
-                    .fail(function (error) {
-                        deferred.reject(error);
-                    })
-                    .done(function () {
-                        post.set("password", Sjcl.codec.bytes.fromBits(password));
-                        deferred.resolve();
-                    });
-
-            });
-
+            SimpleCrypto.sym.generateKeys(
+                function () {
+                    console.error(arguments);
+                    deferred.reject();
+                },
+                function(keys) {
+                    var uploads = [];
+            
+                    $.when(createHelper.getOrCreateFolder(post))
+                        .fail(function(error){
+                            deferred.reject(error);
+                        })
+                        .done(function () {
+                            var folderPath = FOLDER_POSTS + post.get("folderId");
+                            if (contentList) {
+                                for(var i=0; i<contentList.length; i++) {
+                                    var content = contentList[i];
+                                    content["number"] = i;
+                                    var upload = _uploadContent(content, keys, folderPath);
+                                    uploads.push(upload);
+                                }
+                            }
+                            $.when.apply($, uploads)
+                                .fail(function (error) {
+                                    deferred.reject(error);
+                                })
+                                .done(function () {
+                                    post.set("aesKey", SimpleCrypto.util.bytesToString(keys.aesKey));
+                                    post.set("hmacKey", SimpleCrypto.util.bytesToString(keys.hmacKey));
+                                    deferred.resolve();
+                                });
+                        });
+                });
+                        
             return deferred;
         },
 
@@ -307,19 +339,37 @@ define([
         updatePost: function(model, changes, addedContent, removedContent) {
 
             var deferred = $.Deferred();
-            var password;
-            if (model.has("password")) {
-                password = Sjcl.codec.bytes.toBits(model.get("password"));
-            }
-            else {
-                password = Sjcl.random.randomWords(8, 1);
-                model.set("password", Sjcl.codec.bytes.fromBits(password));
-            }
-                
+            var keys;
             var setupTasks = [];
-            if (!model.has("folderId")) {
-                if (addedContent.length > 0) {
-                    setupTasks.push(createHelper.getOrCreateFolder(model));
+            
+            if (addedContent && addedContent.length > 0) {
+                if (model.has("aesKey") && model.has("hmacKey")) {
+                    keys = {aesKey: SimpleCrypto.util.stringToBytes(model.get("aesKey")), 
+                            hmacKey: SimpleCrypto.util.stringToBytes(model.get("hmacKey"))};
+                }
+                else {
+                    var generatePassword = $.Deferred();
+                    
+                    SimpleCrypto.sym.generateKeys(
+                        function () {
+                            console.error(arguments);
+                            generatePassword.reject();
+                        },
+                        function(generateKeys) {
+                            keys = generateKeys;
+                            model.set("aesKey", SimpleCrypto.util.bytesToString(keys.aesKey));
+                            model.set("hmacKey", SimpleCrypto.util.bytesToString(keys.hmacKey));
+                            generatePassword.resolve();
+                        }
+                    )
+                    
+                    setupTasks.push(generatePassword);
+                }
+                
+                if (!model.has("folderId")) {
+                    if (addedContent.length > 0) {
+                        setupTasks.push(createHelper.getOrCreateFolder(model));
+                    }
                 }
             }
             var i;
@@ -342,7 +392,7 @@ define([
                     for(i=0; i < addedContent.length; i++) {
                         var content = addedContent[i];
                         content["number"] = i + highestContentNumber;
-                        var upload = _uploadContent(content, password, FOLDER_POSTS + model.get("folderId"));
+                        var upload = _uploadContent(content, keys, FOLDER_POSTS + model.get("folderId"));
                         actions.push(upload);
                     }
                 }
@@ -352,11 +402,20 @@ define([
                     actions.push(remove);
                 }
 
-                $.when.apply($, actions).done(function() {
-                    deferred.resolve();
-                });
+                $.when.apply($, actions)
+                    .done(function() {
+                        deferred.resolve();
+                    })
+                    .fail(function(error) {
+                        deferred.reject(error)
+                    }
+                );
 
-            });
+            })
+            .fail(function() {
+                deferred.reject(arguments)
+                }
+            );
             return deferred;
         },
 

@@ -454,10 +454,12 @@ ul.collection-list li {
 }
 
 .swipebox-warning {
-    color: #ff0000;
     font-size: 2rem;
-    padding: 3rem;
+    margin-top: 1rem;
+    padding: 2rem;
     background-color: #f5f5f5;
+    line-height: 1rem;
+
 }
 
 .bottom-left {
@@ -545,5 +547,10 @@ ul.collection-list li {
 }
 
 .table {
+    margin-bottom: 5px;
+}
+
+.downloadprogress {
+    margin-top: 5px;
     margin-bottom: 5px;
 }

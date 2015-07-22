@@ -1,11 +1,9 @@
 define([
-    'sjcl',
-    'app/encryption/sjcl-convert',
-    'app/encryption/webworker/sjclMainThread',
+    'simplecrypto',
     'compat/windowUrl',
     'utils/data-convert',
     'utils/encoding'
-], function(Sjcl, SjclConvert, SjclWorker, WindowUrl, DataConvert, Encoding){
+], function(SimpleCrypto, WindowUrl, DataConvert, Encoding){
 
     var async = {
         /** Encrypt a binary array or a string.
@@ -16,90 +14,109 @@ define([
          * @return {ArrayBuffer} ArrayBuffer of encrypted data.
          */
 
-        encrypt: function(key, mimeType, data, isBinary) {
+        encrypt: function(keys, mimeType, data, isBinary) {
             var deferred = $.Deferred();
-            SjclWorker.sym.encrypt(data, mimeType, key, isBinary, function(error, encrypted) {
-                if (error) {
+            
+            if (!isBinary) {
+                data = SimpleCrypto.util.stringToBytes(data);
+            }
+            
+            SimpleCrypto.sym.encrypt(keys, data, 
+                function(error) {
                     deferred.reject(error);
+                },
+                function(result) {
+                    result.mimeType = SimpleCrypto.util.stringToBytes(mimeType).buffer;
+                    try {
+                        var encoded = SimpleCrypto.pack.encode(result);
+                        deferred.resolve(encoded);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
                 }
-                else if (encrypted.error) {
-                    deferred.reject(encrypted.error)
+            )
+            return deferred.promise();
+        },
+               
+        decryptData: function(keys, packedData) {
+            var deferred = $.Deferred();
+    
+            var decoded = SimpleCrypto.pack.decode(packedData);
+            SimpleCrypto.sym.decrypt(keys, decoded,
+                function(error) {
+                    deferred.reject(error);
+                },
+                function(decrypted) {
+                    try {
+                        var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
+                        var blob = new Blob([decrypted], {type: mimeType});
+                        var objectUrl = WindowUrl.createObjectURL(blob);
+                        deferred.resolve(objectUrl, mimeType);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
                 }
-                else {
-                    deferred.resolve(encrypted.packedData);
-                }
-            });
+            )
+    
             return deferred.promise();
         },
     
-        decryptData: function(password, packedData) {
+    
+        decryptArray: function(keys, packedData) {
             var deferred = $.Deferred();
     
-            SjclWorker.sym.decrypt(packedData, password, function (error, decrypted) {
-                if (error) {
-                    deferred.reject(error.message);
-                    return;
+            var decoded = SimpleCrypto.pack.decode(packedData);
+            SimpleCrypto.sym.decrypt(keys, decoded,
+                function(error) {
+                    deferred.reject(error);
+                },
+                function(decrypted) {
+                    try {
+                        var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
+                        var datas = Encoding.splitBuffers(decrypted);
+                        if (!datas) {
+                            deferred.reject("Could not split assets");
+                            return;
+                        }
+                        var objects =[];
+                        for(var i=0; i<datas.length; i++) {
+                            var data = datas[i];
+                            var blob = new Blob([data], {type: mimeType});
+                            var objectUrl = WindowUrl.createObjectURL(blob);
+                            objects.push(objectUrl);
+                        }
+                        deferred.resolve(objects, mimeType);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
                 }
-                if (decrypted.error) {
-                    deferred.reject(decrypted.error);
-                    return;
-                }
+            )    
+            return deferred.promise();
+        },
 
-                var blob = new Blob([decrypted.data], {type: decrypted.mimeType});
-                var objectUrl = WindowUrl.createObjectURL(blob);
-                deferred.resolve(objectUrl);
-                
-            });
-    
-            return deferred.promise();
-        },
-    
-    
-        decryptArray: function(password, packedData) {
+        decryptText: function(keys, packedData) {
             var deferred = $.Deferred();
-    
-            SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {
-                if (error) {
-                    deferred.reject(error.message);
-                    return;
+            
+            var decoded = SimpleCrypto.pack.decode(packedData);
+            SimpleCrypto.sym.decrypt(keys, decoded,
+                function(error) {
+                    deferred.reject(error);
+                },
+                function(decrypted) {
+                    try {
+                        var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
+                        var text = SimpleCrypto.util.bytesToString(decrypted);
+                        deferred.resolve(text, mimeType);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
                 }
-                if (decrypted.error) {
-                    deferred.reject(decrypted.error);
-                    return;
-                }
-    
-                var datas = Encoding.splitBuffers(decrypted.data);
-                if (!datas) {
-                    deferred.reject("Could not split assets");
-                    return;
-                }
-                var objects =[];
-                for(var i=0; i<datas.length; i++) {
-                    var data = datas[i];
-                    var blob = new Blob([data], {type: decrypted.mimeType});
-                    var objectUrl = WindowUrl.createObjectURL(blob);
-                    objects.push(objectUrl);
-                }
-                deferred.resolve(objects);
-            });
-    
-            return deferred.promise();
-        },
-
-        decryptText: function(password, packedData) {
-            var deferred = $.Deferred();
-            SjclWorker.sym.decrypt(packedData, password, function(error, decrypted) {
-                if (error) {
-                    deferred.reject(error.message);
-                }
-                else if (decrypted.error) {
-                    deferred.reject(decrypted.error);
-                }
-                else {
-                    var text = Sjcl.codec.utf8String.fromBits(Sjcl.codec.arrayBuffer.toBits(decrypted.data));
-                    deferred.resolve(text);
-                }
-            });
+            )
+            
             return deferred.promise();
         }
     }

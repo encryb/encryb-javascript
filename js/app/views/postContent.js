@@ -154,7 +154,7 @@ define([
                 var element = image.element;
                 if (len === 1) {
                     var size = image.size;
-                    if (size.width > size.height) {
+                    if (!size || (size.width > size.height)) {
                         $(element).addClass("square square100-land");
                     }
                     else {
@@ -193,10 +193,16 @@ define([
             var swipeboxArgs = [];
             this.model.get("content").each(function(content) {
                 if (content.has("videoUrl")) {
+
+
+
                     var errorCallback = function () {
                         App.vent.trigger("video:download", content);
                     }.bind(this);
-                    swipeboxArgs.push({href:content.getVideo(), errorCallback: errorCallback, video:true, title:content.get("caption")|| ""});
+                    swipeboxArgs.push({
+                        href: content.getVideo(), type: content.get("mimeType"),
+                        errorCallback: errorCallback, video: true, title: content.get("caption") || ""
+                    });
                 }
                 else {
                     if (content.has("image")) {

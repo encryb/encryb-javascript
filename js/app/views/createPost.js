@@ -76,7 +76,8 @@ define([
             setTimeout(this._createPost.bind(this), 0);
         },
 
-        _createPost: function() {
+        _createPost: function () {
+
             var createPostView = this;
 
             var selectize = this.ui.permissions[0].selectize;
@@ -93,8 +94,11 @@ define([
                 post['text'] = text;
             }
 
+            $.when(this.dropzoneView.getContent()).fail(function () {
+                App.showError("get content e");
+            })
+            .done(function(contentList) {
 
-            $.when(this.dropzoneView.getContent()).done(function(contentList) {
                 var creationDeferred = $.Deferred();
                 App.vent.trigger("post:created", post, contentList, creationDeferred);
 

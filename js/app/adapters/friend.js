@@ -3,13 +3,13 @@ define([
     'backbone',
     'marionette',
     'app/app',
-    'app/encryption/async',
+    'app/encryption/sync',
     'app/encryption/keys',
     'app/services/dropbox',
     'app/remoteManifest',
     'utils/misc'
 ],
-function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteManifest, MiscUtils) {
+function ($, Backbone, Marionette, App, EncryptionSync, Keys, Dropbox, RemoteManifest, MiscUtils) {
 
     var FriendAdapter = {
 
@@ -116,7 +116,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             App.vent.trigger("chat:received", friend);
             var textBuffer = chatLine.get("text").buffer;
             var key = {secretKey: Keys.getEncodedKeys().secretKey};
-            $.when(EncryptionAsync.decryptText(key, textBuffer)).done(function(text){
+            $.when(EncryptionSync.decryptText(key, textBuffer)).done(function(text){
                 var collection = App.state.chats[friend.get("userId")];
                 var lastChat = collection.last();
 
@@ -179,7 +179,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             var time = new Date().getTime();
             $.when(this._getOutgoingChatCollection(friend)).done(function(chats){
                 var key = {publicKey: friend.get("publicKey")};
-                $.when(EncryptionAsync.encrypt(key, "plain/json", text, false)).done(function(encText) {
+                $.when(EncryptionSync.encrypt(key, "plain/json", text, false)).done(function(encText) {
                     var encArray = new Uint8Array(encText);
                     chats.create({time: time, text: encArray});
                 });
@@ -381,7 +381,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             var key = {publicKey: friend.get("publicKey")};
 
             var currentDeferred = $.Deferred();
-            $.when(EncryptionAsync.encrypt(key, "plain/json", JSON.stringify(currentManifest), false)).done(function(encText){
+            $.when(EncryptionSync.encrypt(key, "plain/json", JSON.stringify(currentManifest), false)).done(function(encText){
                 Dropbox.upload(friend.get("manifestFile"), encText).done(function (stats) {
                     currentDeferred.resolve(stats);
                 });
@@ -390,7 +390,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             var archiveDeferred = null;
             if (manifest.archive) {
                 archiveDeferred = $.Deferred();
-                $.when(EncryptionAsync.encrypt(key, "plain/json", JSON.stringify(archiveManifest), false)).done(function (encText) {
+                $.when(EncryptionSync.encrypt(key, "plain/json", JSON.stringify(archiveManifest), false)).done(function (encText) {
                     Dropbox.upload(friend.get("archiveFile"), encText).done(function (stats) {
                         archiveDeferred.resolve(stats);
                     });
@@ -408,12 +408,12 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
 
             var friendAdapter = this;
             Dropbox.downloadUrl(friendsManifest)
-                .fail (function(error) {
+                .fail (function(userAborted, error) {
                     friend.set("error", "Failed to download " + friend.escape("name") + "'s manifest: " + error);
                 })
                 .done(function (data) {
                     var key = {secretKey: Keys.getEncodedKeys().secretKey};
-                    $.when(EncryptionAsync.decryptText(key, data)).done(function(decryptedData){
+                    $.when(EncryptionSync.decryptText(key, data)).done(function(decryptedData){
                             try {
                                 var manifest = JSON.parse(decryptedData);
                                 friendAdapter.updateCollection(friend, manifest);

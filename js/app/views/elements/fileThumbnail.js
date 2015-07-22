@@ -31,9 +31,9 @@ define([
         events: {
             'click .downloadable': 'download',
             'click .removeFile': 'removeFile',
-            'click .restoreFile': 'restoreFile'
+            'click .restoreFile': 'restoreFile',
+            'click .abortDownload': 'abortDownload'
         },
-
         initialize: function (options) {
             if (options.removable == true) {
                 this.removable = true;
@@ -43,11 +43,9 @@ define([
             }
         },
         download: function () {
-            if (!this.model.has("data") && !this.model.has("dataCached")) {
-                this.$el.find(".downloadImage").addClass("hide");
-                this.$el.find(".downloadLoadingImage").removeClass("hide");
+            if (!this.model.has("progress")) {
+                App.vent.trigger("file:download", this.model);
             }
-            App.vent.trigger("file:download", this.model);
         },
         removeFile: function () {
             this.model.set("deleted", true);
@@ -55,6 +53,10 @@ define([
 
         restoreFile: function () {
             this.model.unset("deleted");
+        },
+        abortDownload: function(event) {
+            this.model.get("abortDownload")();
+            return false;
         }
     });
 

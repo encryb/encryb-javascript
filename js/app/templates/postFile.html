@@ -1,11 +1,33 @@
 <td class="downloadable">
-    <img class="downloadImage <% if (typeof data !== 'undefined') { %> hide <% } %>" src="img/download.png">
-    <img class="downloadLoadingImage hide" style="width: 32px; height: 32px" src="img/loading.gif">
-    <img class="downloadDoneImage <% if (typeof data === 'undefined') { %> hide <% } %>" src="img/downloaded.png">
+
+    <% if (typeof data !== 'undefined' || typeof dataCached !== 'undefined') { %>
+        <img class="downloadDoneImage" src="img/downloaded.png">
+    <% } else if (typeof progress !== 'undefined') { %>
+        <img class="downloadLoadingImage" style="width: 32px; height: 32px" src="img/loading.gif">
+    <% } else { %>
+        <img class="downloadImage" src="img/download.png">
+    <% } %>
 </td>
 
-<td style="width: 90%"class="word-wrap downloadable <% if (typeof deleted !== 'undefined') { %> strike <% } %>">
-    <%- filename %>
+
+<td style="width: 90%" class="word-wrap downloadable <% if (typeof deleted !== 'undefined') { %> strike <% } %>">
+    <div>
+        <%- filename %>
+    </div>
+    <% if (typeof data === 'undefined' && typeof dataCached === 'undefined' && typeof progress !== 'undefined') { %>
+        <div class="row">
+            <div class="col-sm-11 col-xs-10">
+                <div class="progress progress-bar-striped active downloadprogress">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%- progress %>" aria-valuemin="0" aria-valuemax="100" 
+                        style="min-width: 2em; width: <%- progress %>%">
+                        <%- progress %>%
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-1 col-xs-2 downloadprogress">
+                <span class="abortDownload pull-right close-icon glyphicon glyphicon-remove"></span>
+            </div>
+    <% } %>
 </td>
    
 <% if (typeof size !== 'undefined') { %>

@@ -7,8 +7,9 @@ define([
     'marionette',
     'compat/windowUrl',
     'utils/image',
-    'require-text!app/templates/elements/dropzone.html'
-], function($, _, Backbone, Bootbox, Dropzone, Marionette, WindowUrl, ImageUtil, DropzoneTemplate) {
+    'require-text!app/templates/elements/dropzone.html',
+    'app/app'
+], function($, _, Backbone, Bootbox, Dropzone, Marionette, WindowUrl, ImageUtil, DropzoneTemplate, App) {
 
     var DropzoneView = Marionette.ItemView.extend({
         template: _.template(DropzoneTemplate),
@@ -77,8 +78,7 @@ define([
 
                 if (file.type.match(/image.*/)) {
                     var image = new Image();
-                    image.src = WindowUrl.createObjectURL(file);
-
+                    
                     image.onload = (function() {
                         var resized = ImageUtil.resize(image, 1920, 1440);
                         WindowUrl.revokeObjectURL(image.src);
@@ -88,30 +88,31 @@ define([
                         }
                         loadDeferred.resolve();
                     });
+                    image.src = WindowUrl.createObjectURL(file);
+
                 }
                 else if (file.type.match(/video.*/)) {
-                    var video = document.createElement('video');
-                    video.src = WindowUrl.createObjectURL(file);
-
+                    var video = $("<video muted/>");
                     var captureVideoFrame = function (sourceVideo, location) {
                         var deferred = $.Deferred();
-                        $(sourceVideo).one("seeked", function () {
-                            var frame = ImageUtil.captureFrame(video, 480, 360);
+                        sourceVideo.one("seeked", function () {
+                            var frame = ImageUtil.captureFrame(sourceVideo.get(0), 480, 360);
                             deferred.resolve(frame);
                         });
-                        sourceVideo.currentTime = sourceVideo.duration * location;
+                        sourceVideo.get(0).currentTime = sourceVideo.get(0).duration * location;
                         return deferred.promise();
                     }
 
-                    $(video).one("error", function () {
+                    video.one("error", function () {
+
                         content['data'] = file;
                         content['size'] = file.size;
                         content['filename'] = file.name;
                         loadDeferred.resolve();
                     });
 
-                    $(video).one("loadedmetadata", function () {
-                        
+                    video.one("loadedmetadata", function () {
+                    
                         // we can not parse the video properly. Store it as file.
                         if (video.videoHeight === 0 || video.videoWidth === 0) {
                             content['data'] = file;
@@ -141,6 +142,20 @@ define([
                         content['duration'] = video.duration;
 
                     });
+
+                    var source = $("<source>").attr("type", file.type).attr("src", WindowUrl.createObjectURL(file));
+
+                    video.append(source);
+                    $("#debug").append(video);
+                    try {
+                        // work around firefox android bug where loadedmeta is not called until video is played
+                        video.get(0).play();
+                        video.get(0).pause();
+                    } catch (e) {
+                        // do we reject here?
+                        console.log("VIDEO play failed", e);
+                    }
+
                 }
                 else {
                     content['data'] = file;

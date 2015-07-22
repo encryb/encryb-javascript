@@ -154,10 +154,28 @@ var dropbox = {
                 }
             }
         };
+        
+        var abortDownload = function() {
+            xhr.abort();
+        }
+        
+        xhr.onprogress = function(oEvent) {
+            if (oEvent.lengthComputable) {
+                var percentComplete = 100 * oEvent.loaded / oEvent.total;
+                deferred.notify(Math.floor(percentComplete), abortDownload);
+            }
+        };
+        
+        xhr.onabort = function() {
+            deferred.reject(true);    
+        };
+        
         xhr.onerror = function () {
-            deferred.reject(xhr.statusText);
+            deferred.reject(false, xhr.statusText);
         };
         xhr.send();
+        
+        deferred.notify(0, abortDownload);
 
         return deferred;
     },

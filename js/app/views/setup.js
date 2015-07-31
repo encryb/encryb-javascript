@@ -74,6 +74,7 @@ define([
                 ],
                 callback : function(values) {
                     view.trigger("keys:create");
+                    // TODO FIX Race condition
                     for (var i=0; i<values.length; i++) {
                         var value = values[i];
                         if (value == "keys:download") {

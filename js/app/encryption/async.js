@@ -118,8 +118,56 @@ define([
             )
             
             return deferred.promise();
+        },
+        asymEncryptText: function(key, mimeType, text) {
+          
+            var deferred = $.Deferred();
+            
+            var data = SimpleCrypto.util.stringToBytes(text);
+            
+            SimpleCrypto.asym.encrypt(key, data, 
+                function(error) {
+                    deferred.reject(error);
+                },
+                function(result) {
+                    result.mimeType = SimpleCrypto.util.stringToBytes(mimeType).buffer;
+                    try {
+                        var encoded = SimpleCrypto.pack.encode(result);
+                        deferred.resolve(encoded);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
+                }
+            )
+            return deferred.promise();
+        
+        },
+        asymDecryptText: function(jwk, packedData) {
+        
+            var deferred = $.Deferred();
+            var decoded = SimpleCrypto.pack.decode(packedData);
+            SimpleCrypto.asym.importEncryptPrivateKey(jwk,
+                deferred.reject,    
+                function(key) {
+                    SimpleCrypto.asym.decrypt(key, decoded,
+                        deferred.reject,
+                        function(decrypted) {
+                            try {
+                                var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
+                                var text = SimpleCrypto.util.bytesToString(decrypted);
+                                deferred.resolve(text, mimeType);
+                            }
+                            catch(e) {
+                                deferred.reject(e.message);
+                            }
+                        });
+                });
+            return deferred.promise();
+            
         }
     }
+    
 
     return async;
 });

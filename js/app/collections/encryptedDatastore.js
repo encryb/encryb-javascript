@@ -15,6 +15,7 @@ define([
 
     _.extend(EncryptedDatastore.prototype, Backbone.DropboxDatastore.prototype, {
 
+/*
         recordToJson: function(record) {
             var json = Backbone.DropboxDatastore.recordToJson(record);
 
@@ -27,7 +28,7 @@ define([
             var encryptedArray = json["_enc_"];
 
             try {
-                var modelString = Encryption.decryptText(encryptedArray.buffer, Keys.getKeys().databaseKey);
+                var modelString = Encryption.decryptText(encryptedArray.buffer, Keys.getDatabaseKey());
                 var decryptedJson = JSON.parse(modelString);
                 if (json.hasOwnProperty("id")) {
                     decryptedJson["id"] = json["id"];
@@ -63,7 +64,7 @@ define([
             var clone = _.omit(model.toJSON(), ["id"]);
             var modelString = JSON.stringify(clone);
 
-            var encryptionKey = Sjcl.codec.bytes.toBits(Keys.getKeys().databaseKey);
+            var encryptionKey = Sjcl.codec.bytes.toBits(Keys.getDatabaseKey());
 
             var encrypted = Encryption.encrypt(encryptionKey, null, modelString, false);
             var encryptedArray  = new Uint8Array(encrypted);
@@ -74,7 +75,8 @@ define([
             json["_enc_"] =  encryptedArray;
             return json;
         }
+        
+*/
     });
-
     return EncryptedDatastore;
 });

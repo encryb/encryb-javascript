@@ -675,6 +675,53 @@
             },
             
             /**
+             * Import RSA encryption keys. 
+             * 
+             * @method asym.importEncryptKey
+             * @param {Object} publicJwk - public (decrypt) JSON key
+             * @param {Object} privateJwk - private (encrypt) JSON key
+             * @param {function} onError - called with error details if import fails
+             * @param {function} onSuccess - called with {privateKey: CryptoKey, publicKey: CryptoKey, privateJwk: JWK, publicJwk: JWK} 
+             */
+            importEncryptKey: function (publicJwk, privateJwk, onError, onSuccess) {
+                _asym.importEncryptKey(privateJwk, ["decrypt"], onError.bind(null, "decrypt key"), function(privateKey) {
+                    _asym.importEncryptKey(publicJwk, ["encrypt"], onError.bind(null, "encrypt key"), function(publicKey) {
+                        onSuccess({privateKey: privateKey, publicKey: publicKey, 
+                                privateJwk: privateJwk, publicJwk: publicJwk});
+                   });    
+                });
+            },
+            
+            /**
+             * Import RSA private encryption keys. 
+             * 
+             * @method asym.importEncryptPrivateKey
+             * @param {Object} publicJwk - public (decrypt) JSON key
+             * @param {Object} privateJwk - private (encrypt) JSON key
+             * @param {function} onError - called with error details if import fails
+             * @param {function} onSuccess - called with privateKey CryptoKey
+             */
+            importEncryptPrivateKey: function (privateJwk, onError, onSuccess) {
+                _asym.importEncryptKey(privateJwk, ["decrypt"], onError.bind(null, "decrypt key"), function(privateKey) {
+                    onSuccess(privateKey);
+               });    
+            },
+            
+            /**
+             * Import RSA public encryption keys. 
+             * 
+             * @method asym.importEncryptPublicKey
+             * @param {Object} publicJwk - public (decrypt) JSON key
+             * @param {function} onError - called with error details if import fails
+             * @param {function} onSuccess - called with publicKey CryptoKey
+             */
+            importEncryptPublicKey: function(publicJwk, onError, onSuccess) {
+                _asym.importEncryptKey(publicJwk, ["encrypt"], onError.bind(null, "encrypt key"), function(publicKey) {
+                    onSuccess(publicKey);
+                });    
+            },
+
+            /**
              * Generate RSA encryption keys. Private CryptoKey is not exportable, and can be stored safely.
              * 
              * @method asym.generateEncryptKey
@@ -696,7 +743,6 @@
                  });
                 });
             },
-
 
             /**
              * Generate RSA signature keys. Private CryptoKey is not exportable, and can be stored safely.

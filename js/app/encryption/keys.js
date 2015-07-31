@@ -1,115 +1,121 @@
 define([
+    'jquery',
+    'simplecrypto',
     'sjcl'
-], function(Sjcl){
+], function($, SimpleCrypto, Sjcl){
 
     var keyCache = null;
-    var encodedKeyCache = null;
 
+/*
+                     onSuccess({privateKey: privateKey, publicKey: keys.publicKey, 
+                                privateJwk: privateJwk, publicJwk: publicJwk});
+*/
     var keys = {
-        createKeys: function () {
-            var keys = Sjcl.ecc.elGamal.generateKeys(384);
 
-            var publicKey = keys.pub.get();
-            var secretKey = keys.sec.get();
-
-            var publicKeyEncoded = Sjcl.codec.hex.fromBits(publicKey.x) + Sjcl.codec.hex.fromBits(publicKey.y);
-            var secretKeyEncoded = Sjcl.codec.hex.fromBits(secretKey);
-
-            var databaseKey = this.generateDatabaseKey();
-
-            var databaseKeyEncoded = JSON.stringify(databaseKey);
-            this.saveKeys(secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded);
-
-            keyCache = {'databaseKey': databaseKey, 'publicKey': publicKey, 'secretKey': secretKey};
-
+        createKeys: function() {
+            var deferred = $.Deferred();
+            SimpleCrypto.asym.generateEncryptKey(
+                deferred.reject,
+                function(encryptionKeys) {
+                    keyCache = encryptionKeys;
+                    keys.saveKeysToSecureStorage()
+                        .done(function(){
+                            deferred.resolve(encryptionKeys);    
+                        })
+                        .fail(deferred.reject);
+                }
+            );
+            return deferred.promise();
         },
-
-        generateDatabaseKey: function () {
-            return Sjcl.codec.bytes.fromBits(Sjcl.random.randomWords(8, 1));
+        
+        importKeys: function(publicJwk, privateJwk) {
+            var deferred = $.Deferred;            
+            SimpleCrypto.asym.importEncryptionKey(publicJwk, privateJwk, deferred.reject, deferred.resolve);
+            return deferred.promise();
         },
-
-        saveKeys: function (secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded) {
-            keyCache = null;
-            try {
-                localStorage.setItem("secretKey", secretKeyEncoded);
-                localStorage.setItem("publicKey", publicKeyEncoded);
-                localStorage.setItem("databaseKey", databaseKeyEncoded);
-            }
-            catch (e) {
-                console.error("Could not save keys to local storage", e);
-            }
-
-            encodedKeyCache = {
-                'databaseKey': databaseKeyEncoded, 'publicKey': publicKeyEncoded,
-                'secretKey': secretKeyEncoded
-            };
+        
+        saveKeysToSecureStorage: function () {
+            var deferred = $.Deferred();
+            SimpleCrypto.storage.put("encrypt.privateKey", keyCache.privateKey, 
+                deferred.reject,
+                function() {
+                    SimpleCrypto.storage.put("encrypt.publicKey", keyCache.publicKey,
+                        deferred.reject,
+                        function() {
+                           SimpleCrypto.storage.put("encrypt.publicJwk", keyCache.publicJwk,
+                                deferred.reject,
+                                deferred.resolve);                              
+                        });
+                });
+            return deferred.promise();
         },
-
-
-        removeKeys: function () {
-            keyCache = null;
-            encodedKeyCache = null;
-            localStorage.removeItem("secretKey");
-            localStorage.removeItem("publicKey");
-            localStorage.removeItem("databaseKey");
+        
+        hasKeys: function() {
+            var deferred = $.Deferred();
+            this.getKeys()
+                .done(function(keys) {
+                    deferred.resolve(true);
+                })
+                .fail(function() {
+                    deferred.resolve(false);
+                });
+            return deferred.promise();
+            
         },
-
-        publicHexToKey: function (publicKeyEncoded) {
-            var publicKeyBits = Sjcl.codec.hex.toBits(publicKeyEncoded);
-            var publicKey = new Sjcl.ecc.elGamal.publicKey(Sjcl.ecc.curves.c384, publicKeyBits);
-            return publicKey;
-        },
-
-        secretHexToKey: function (secretKeyEncoded) {
-            var secretKeyBits = new Sjcl.bn(secretKeyEncoded);
-            var secretKey = new Sjcl.ecc.elGamal.secretKey(Sjcl.ecc.curves.c384, secretKeyBits);
-            return secretKey;
-        },
-
-        getKeys: function () {
-
+        
+        getKeys: function() {
+            var deferred = $.Deferred();
             if (keyCache) {
-                return keyCache;
-            }
-
-            var secretKeyEncoded, publicKeyEncoded, databaseKeyEncoded;
-            if (encodedKeyCache) {
-                secretKeyEncoded = encodedKeyCache.secretKey;
-                publicKeyEncoded = encodedKeyCache.publicKey;
-                databaseKeyEncoded = encodedKeyCache.databaseKey;
+                deferred.resolve({publicKey: keyCache.publicKey, privateKey: keyCache.privateKey, publicJwk: keyCache.publicJwk});
             }
             else {
-                secretKeyEncoded = localStorage.getItem("secretKey");
-                publicKeyEncoded = localStorage.getItem("publicKey");
-                databaseKeyEncoded = localStorage.getItem("databaseKey");
+                SimpleCrypto.storage.get("encrypt.privateKey", 
+                    deferred.reject,
+                    function(privateKey) {
+                        if (typeof privateKey === "undefined") {
+                            deferred.reject("privateKey not found");
+                            return;
+                        }
+                        SimpleCrypto.storage.get("encrypt.publicKey",
+                            deferred.reject,
+                            function(publicKey) {
+                                if (typeof publicKey === "undefined") {
+                                    deferred.reject("publicKey not found");
+                                    return;
+                                }
+                                SimpleCrypto.storage.get("encrypt.publicJwk",
+                                    deferred.reject,
+                                    function(publicJwk) {
+                                        if (typeof publicKey === "undefined") {
+                                            deferred.reject("publicJwk not found");
+                                            return;
+                                        }
+                                        keyCache = {publicKey: publicKey, privateKey: privateKey, publicJwk: publicJwk};
+                                        deferred.resolve(keyCache);
+                                    });
+                            });
+                    });
             }
-
-            if (secretKeyEncoded === null || publicKeyEncoded === null || databaseKeyEncoded === null) {
-                return null;
-            }
-
-            return {
-                publicKey: this.publicHexToKey(publicKeyEncoded),
-                secretKey: this.secretHexToKey(secretKeyEncoded),
-                databaseKey: JSON.parse(databaseKeyEncoded)
-            };
+            
+            return deferred.promise();
         },
-
-        getEncodedKeys: function () {
-            if (encodedKeyCache) {
-                return encodedKeyCache;
-            }
-            var secretKeyEncoded = localStorage.getItem("secretKey");
-            var publicKeyEncoded = localStorage.getItem("publicKey");
-            var databaseKeyEncoded = localStorage.getItem("databaseKey");
-
-            encodedKeyCache = {
-                publicKey: publicKeyEncoded,
-                secretKey: secretKeyEncoded,
-                databaseKey: databaseKeyEncoded
-            };
-            return encodedKeyCache;
-        }
+        
+        removeKeys: function() {
+            var deferred = $.Deferred();
+            SimpleCrypto.storage.delete("privateEncrypt", 
+                deferred.reject,
+                function() {
+                    SimpleCrypto.storage.delete("publicEncrypt",
+                        deferred.reject,
+                        function() {
+                            SimpleCrypto.storage.delete("publicEncryptJWK",
+                                deferred.reject,
+                                deferred.resolve);
+                        })
+                });
+            return deferred.promise();  
+        },
+        
     };
     return keys;
 });

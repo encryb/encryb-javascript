@@ -12,6 +12,34 @@ define([
     var ProfileView = Marionette.ItemView.extend({
 
         template: _.template( ProfileTemplate ),
+        
+        templateHelpers: {
+            displayKey: function() {
+                if (typeof this.publicKey !== "undefined" && this.publicKey.hasOwnProperty("n")) {
+                    return this.publicKey.n;
+                }
+                return "invalid";
+            },
+            displayProfileKey: function() {
+                try { 
+                    var profileKey = JSON.parse(this.profile.get("publicKey"));
+                    if (typeof profileKey !== "undefined" && profileKey.hasOwnProperty("n")) {
+                        return profileKey.n;
+                    }
+                }
+                catch(e) {}
+                return "invalid";
+            },
+            keysEqual: function(){ 
+                try {
+                    var res =  _.isEqual(this.publicKey, JSON.parse(this.profile.get("publicKey")));
+                    return res;
+                }
+                catch (e) {
+                    return false;
+                };
+            }
+        },
 
         changes : {},
 

@@ -253,12 +253,19 @@ define([
         fetchPost: function(post) {
 
             var deferred = $.Deferred();
-            var aesKey = SimpleCrypto.util.stringToBytes(post.get('aesKey'));
-            var hmacKey = SimpleCrypto.util.stringToBytes(post.get('hmacKey'));
-            var keys = {aesKey: aesKey, hmacKey: hmacKey};
+
             var fetches = [];
 
             if (post.has("content")) {
+
+                var keys = {};
+                if (post.has("aesKey")) {
+                    keys["aesKey"] = SimpleCrypto.util.stringToBytes(post.get('aesKey'));
+                }
+                if (post.has("hmacKey")) {
+                    keys["hmacKey"] = SimpleCrypto.util.stringToBytes(post.get('hmacKey'));                   
+                }
+
                 var contentList = post.get("content");
                 contentList.each(function (content) {
 

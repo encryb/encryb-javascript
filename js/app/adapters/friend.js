@@ -3,13 +3,14 @@ define([
     'backbone',
     'marionette',
     'app/app',
+    'app/encryption/async',
     'app/encryption/sync',
     'app/encryption/keys',
     'app/services/dropbox',
     'app/remoteManifest',
     'utils/misc'
 ],
-function ($, Backbone, Marionette, App, EncryptionSync, Keys, Dropbox, RemoteManifest, MiscUtils) {
+function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, Dropbox, RemoteManifest, MiscUtils) {
 
     var FriendAdapter = {
 
@@ -412,20 +413,24 @@ function ($, Backbone, Marionette, App, EncryptionSync, Keys, Dropbox, RemoteMan
                     friend.set("error", "Failed to download " + friend.escape("name") + "'s manifest: " + error);
                 })
                 .done(function (data) {
-                    var key = {secretKey: Keys.getEncodedKeys().secretKey};
-                    $.when(EncryptionSync.decryptText(key, data)).done(function(decryptedData){
-                            try {
-                                var manifest = JSON.parse(decryptedData);
-                                friendAdapter.updateCollection(friend, manifest);
-                            }
-                            catch (e) {
-                                friend.set("error", "Failed to parse " + friend.escape("name") + "'s manifest: " + e.message);
-                            }
-                        })
-                        .fail (function(error) {
-                            friend.set("error", "Failed to decode " + friend.escape("name") + "'s manifest: " + error);
-                        });
-
+                    
+                    Keys.getKeys().done(function(keys) {
+                        // TODO check that we have keys.privateKey
+                        var key = key.privateKey;
+                        EncryptionAsync.asymDecryptText(key, data)
+                            .done(function(decryptedData){
+                                try {
+                                    var manifest = JSON.parse(decryptedData);
+                                    friendAdapter.updateCollection(friend, manifest);
+                                }
+                                catch (e) {
+                                    friend.set("error", "Failed to parse " + friend.escape("name") + "'s manifest: " + e.message);
+                                }
+                            })
+                            .fail (function(error) {
+                                friend.set("error", "Failed to decode " + friend.escape("name") + "'s manifest: " + error);
+                            });
+                    });
             });
         },
 

@@ -58,19 +58,19 @@
                             Public Key
                         </label>
                         <div id="currentKey" class="alert word-wrap" role="alert">
-                            <small><%- publicKey %></small>
+                            <small><%- displayKey() %></small>
                         </div>
                     </div>
                 </div>
 
-                <% if(profile.has("userId") && (profile.get('publicKey') != publicKey)) {%>
+                <% if(!keysEqual()) {%>
                     <div class="row">
                         <div class="col-xs-12 col-sm-10 alert alert-danger" role="alert">
                             <label for="publishedKey">
                                 Local key does not match the Cloud key.
                             </label>
                             <div id="publishedKey" class="word-wrap">
-                                <small><%- publicKey %></small>
+                                <small><%- displayProfileKey() %></small>
                             </div>
                             <div class="top-10">
                                 <button id="editKey" class="btn btn-default">

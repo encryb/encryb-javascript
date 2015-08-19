@@ -263,11 +263,24 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
 
 
         syncFriendsFeed: function(friend, notifyModel) {
-
-            friend.set("name", notifyModel.get("name"));
-            friend.set("intro", notifyModel.get("intro"));
-            friend.set("pictureUrl", notifyModel.get("pictureUrl"));
-            friend.set("publicKey", notifyModel.get("publicKey"));
+            
+            if (typeof notifyModel === "undefined") {
+                return;
+            }
+            if (notifyModel.has("name")) {
+                friend.set("name", notifyModel.get("name"));
+            }
+            if (notifyModel.has("intro")) {
+                friend.set("intro", notifyModel.get("intro"));
+            }
+            if (notifyModel.has("pictureUrl")) {
+                friend.set("pictureUrl", notifyModel.get("pictureUrl"));
+            }
+            
+            if (notifyModel.has('publicKey')) {
+                // $TODO if key changed, we need to do more work here
+                friend.set("publicKey", notifyModel.get("publicKey"));
+            }
             friend.save();
 
             this.getManifest(friend, notifyModel.get("manifestUrl"));
@@ -284,21 +297,28 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
 
         updateDatastoreProfile: function(friend) {
             var friendAdapter = this;
-            $.when(this._getModelUsedToNotifyFriend(friend), App.getProfile()).done(
-                function(notifyModel, profile) {
+            $.when(this._getModelUsedToNotifyFriend(friend), App.getProfile(), Keys.getKeys()).done(
+                function(notifyModel, profile, keys) {                                     
                     var changes = {
                         name: profile.get('name'),
                         intro: profile.get('intro'),
                         pictureUrl: profile.get('pictureUrl'),
-                        publicKey: Keys.getEncodedKeys().publicKey
+                        publicKey: JSON.stringify(keys.publicJwk)
                     };
-
+                    
+                    console.log("Updaterino", changes, notifyModel);
+                    
                     $.when(friendAdapter.saveManifest(friend))
-                        .then(friendAdapter.shareManifest.bind(null, notifyModel))
+                        .then(friendAdapter.shareManifest.bind(null, notifyModel), function() {console.error("AA", arguments)})
                         .done(function() {
+                            console.log("Actual updaterino")
                             changes["lastUpdated"] = new Date().getTime();
                             notifyModel.save(changes);
+                        })
+                        .fail(function(error) {
+                            console.log("Errorerino", error);
                         });
+                        
                 }
             );
         },
@@ -348,8 +368,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
             shared.fetch({success: function (collection, response, options) {
                 var model = collection.first();
                 if (!model) {
-                    model = new Backbone.Model();
-                    collection.add(model);
+                    model = collection.create({});
                 }
                 deferred.resolve(model);
             }});
@@ -379,30 +398,40 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
             var currentManifest = manifest.manifest;
             var archiveManifest = manifest.archive;
 
-            var key = {publicKey: friend.get("publicKey")};
+            var jwk = JSON.parse(friend.get("publicKey"));
 
             var currentDeferred = $.Deferred();
-            $.when(EncryptionSync.encrypt(key, "plain/json", JSON.stringify(currentManifest), false)).done(function(encText){
-                Dropbox.upload(friend.get("manifestFile"), encText).done(function (stats) {
-                    currentDeferred.resolve(stats);
-                });
-            });
+            $.when(EncryptionAsync.asymEncryptTextWithJwk(jwk, "plain/json", JSON.stringify(currentManifest)))
+                .done(function(encText){
+                    Dropbox.upload(friend.get("manifestFile"), encText)
+                        .done(function (stats) {
+                            currentDeferred.resolve(stats);
+                        })
+                        .fail(deferred.reject);
+                })
+                .fail(deferred.reject);
 
             var archiveDeferred = null;
             if (manifest.archive) {
                 archiveDeferred = $.Deferred();
-                $.when(EncryptionSync.encrypt(key, "plain/json", JSON.stringify(archiveManifest), false)).done(function (encText) {
-                    Dropbox.upload(friend.get("archiveFile"), encText).done(function (stats) {
-                        archiveDeferred.resolve(stats);
-                    });
-                });
+                $.when(EncryptionAsync.asymEncryptTextWithJwk(jwk, "plain/json", JSON.stringify(archiveManifest)))
+                    .done(function (encText) {
+                        Dropbox.upload(friend.get("archiveFile"), encText).done(function (stats) {
+                            archiveDeferred.resolve(stats);
+                        })
+                        .fail(deferred.reject);
+                })
+                .fail(deferred.reject);
             }
 
             $.when(currentDeferred, archiveDeferred).done(function(currentStats, archiveStats) {
                 deferred.resolve(currentStats, archiveStats);
+            }).fail(function(error) {
+                console.log("Error saving manifest", error);
+                deferred.reject();
             });
 
-            return deferred;
+            return deferred.promise();
         },
 
         getManifest: function(friend, friendsManifest) {
@@ -415,8 +444,8 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
                 .done(function (data) {
                     
                     Keys.getKeys().done(function(keys) {
-                        // TODO check that we have keys.privateKey
-                        var key = key.privateKey;
+                        // $TODO check that we have keys.privateKey
+                        var key = keys.privateKey;
                         EncryptionAsync.asymDecryptText(key, data)
                             .done(function(decryptedData){
                                 try {

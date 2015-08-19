@@ -979,6 +979,15 @@
                 });
             },
             
+            
+            /** Generate keys from password and encrypt
+             *
+             * @method sym.encryptWithPassword
+             * @param {string} password - Password used to generate AES and HMAC keys
+             * @param {Uint8Array | ArrayBuffer} data - Data to encrypt
+             * @param {function} onError - called with error details if key generation or encryption fail
+             * @param {function} onSuccess - called with {aesEncrypted: ArrayBuffer, hmac: {ArrayBuffer}
+             */
             encryptWithPassword: function(password, data, onError, onSuccess) {
                 simpleCrypto.pbkdf2.derive(password, 288, {}, onError.bind(null, "PBKDF2 error"), function(pbkdf2) {
                     var keys = new Uint8Array(pbkdf2.derived);
@@ -993,20 +1002,6 @@
                 });    
             },
             
-            decryptWithPassword: function(password, encrypted, onError, onSuccess) {
-                simpleCrypto.pbkdf2.derive(password, 288, {salt: encrypted.pbkdf2_salt, iterations: encrypted.pbkdf2_iter}, 
-                    onError.bind(null, "PBKDF2 error"), function(pbkdf2) {
-                        var keys = new Uint8Array(pbkdf2.derived);
-                        var aesKeyLenght = config.aesLength / 8;                        
-                        var aesKey = keys.subarray(0, aesKeyLenght);
-                        var hmacKey = keys.subarray(aesKeyLenght);
-                        simpleCrypto.sym.decrypt({aesKey: aesKey, hmacKey: hmacKey}, encrypted, onError, function(decrypted) {
-                            onSuccess(decrypted);
-                            
-                        });
-                    }
-                );
-            },
 
             /** Decrypt
              *  
@@ -1024,7 +1019,31 @@
                         });
                     });    
                 });
-            }
+            },
+            
+            
+            /** Decrypt with password (used to generate)
+             *  
+             * @method sym.decryptWithPassword
+             * @param {string} password - Password used to generate AES and HMAC keys
+             * @param {Uint8Array | ArrayBuffer} data - Data to encrypt
+             * @param {function} onError - called with error details if key generation or encryption fail
+             * @param {function} onSuccess - called with {aesEncrypted: ArrayBuffer, hmac: {ArrayBuffer}
+             */
+            decryptWithPassword: function(password, encrypted, onError, onSuccess) {
+                simpleCrypto.pbkdf2.derive(password, 288, {salt: encrypted.pbkdf2_salt, iterations: encrypted.pbkdf2_iter}, 
+                    onError.bind(null, "PBKDF2 error"), function(pbkdf2) {
+                        var keys = new Uint8Array(pbkdf2.derived);
+                        var aesKeyLenght = config.aesLength / 8;                        
+                        var aesKey = keys.subarray(0, aesKeyLenght);
+                        var hmacKey = keys.subarray(aesKeyLenght);
+                        simpleCrypto.sym.decrypt({aesKey: aesKey, hmacKey: hmacKey}, encrypted, onError, function(decrypted) {
+                            onSuccess(decrypted);
+                            
+                        });
+                    }
+                );
+            },
             
         },
         

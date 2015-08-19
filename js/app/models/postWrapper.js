@@ -10,7 +10,12 @@ define([
             var contentAttributes = contentArray[i];
             // $LEGACY
             if (typeof contentAttributes === "string") {
-                contentAttributes = JSON.parse(contentAttributes);
+                try {
+                    contentAttributes = JSON.parse(contentAttributes);
+                }
+                catch (e) {
+                    continue;
+                }
             }
             var model = new Backbone.Model(contentAttributes);
             collection.add(model);

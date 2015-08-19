@@ -143,25 +143,36 @@ define([
             return deferred.promise();
         
         },
-        asymDecryptText: function(jwk, packedData) {
+        
+        asymEncryptTextWithJwk: function(jwk, mimeType, packedData) {
+            
+            debugger;
+            var deferred = $.Deferred();
+            SimpleCrypto.asym.importEncryptPublicKey(jwk,
+                deferred.reject,
+                function(key) {
+                    async.asymEncryptText(key, mimeType, packedData).done(deferred.resolve).fail(deferred.reject);    
+                });
+            return deferred.promise();
+                
+        },
+        
+        asymDecryptText: function(key, packedData) {
         
             var deferred = $.Deferred();
+            
             var decoded = SimpleCrypto.pack.decode(packedData);
-            SimpleCrypto.asym.importEncryptPrivateKey(jwk,
-                deferred.reject,    
-                function(key) {
-                    SimpleCrypto.asym.decrypt(key, decoded,
-                        deferred.reject,
-                        function(decrypted) {
-                            try {
-                                var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
-                                var text = SimpleCrypto.util.bytesToString(decrypted);
-                                deferred.resolve(text, mimeType);
-                            }
-                            catch(e) {
-                                deferred.reject(e.message);
-                            }
-                        });
+            SimpleCrypto.asym.decrypt(key, decoded,
+                deferred.reject,
+                function(decrypted) {
+                    try {
+                        var mimeType = SimpleCrypto.util.bytesToString(decoded.mimeType);
+                        var text = SimpleCrypto.util.bytesToString(decrypted);
+                        deferred.resolve(text, mimeType);
+                    }
+                    catch(e) {
+                        deferred.reject(e.message);
+                    }
                 });
             return deferred.promise();
             

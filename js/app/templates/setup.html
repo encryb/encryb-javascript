@@ -101,7 +101,9 @@
             <% if (!keysLoaded) { %>
                 <button type="button" id="createNewKeysButton" class="btn btn-default">Create New Keys</button>
                 <span class="btn btn-default btn-file">Upload Keys<input id="uploadKeysInput" type="file" /></span>
-                <button type="button" id="loadKeysFromDropboxButton" class="btn btn-default">Load from Dropbox</button>
+                <% if (keysOnDropbox) { %>
+                    <button type="button" id="loadKeysFromDropboxButton" class="btn btn-default">Load from Dropbox</button>
+                <% } %>
             <% } else { %>
                 <button type="button" id="removeKeysButton" class="btn btn-default">Remove Keys</button>
                 <button type="button" id="downloadKeysButton" class="btn btn-default">Download Keys</button>

@@ -45,8 +45,7 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.remove(path, function (error, stats) {
             if (error) {
-                deferred.reject();
-                console.log(error);
+                deferred.reject(error);
             } else {
                 deferred.resolve(stats);
             }
@@ -71,8 +70,7 @@ var dropbox = {
         var deferred = $.Deferred();
         dropboxClient.readFile(path, {arrayBuffer: true}, function (error, data, stats) {
             if (error) {
-                deferred.reject();
-                console.log(error);
+                deferred.reject(error);
             } else {
                 deferred.resolve(data);
             }

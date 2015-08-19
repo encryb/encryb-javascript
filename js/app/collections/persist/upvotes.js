@@ -7,7 +7,7 @@ var Upvotes = Backbone.Collection.extend({
 
     model: Backbone.Model,
 
-    dropboxDatastore: new EncryptedDatastore('Upvotes_2'),
+    dropboxDatastore: new EncryptedDatastore('Upvotes_3'),
 
     initialize: function () {
         this.dropboxDatastore.syncCollection(this);

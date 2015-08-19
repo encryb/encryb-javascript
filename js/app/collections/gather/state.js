@@ -142,7 +142,7 @@ define([
         addFriendsPost: function(post, friend) {
             var wrapper = new PostWrapper();
 
-            var postModel = new Post(post);
+            var postModel = new Post(post, {parse: true});
 
             wrapper.setFriendsPost(postModel, friend);
             this.posts.add(wrapper);

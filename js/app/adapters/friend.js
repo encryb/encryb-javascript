@@ -95,7 +95,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
 
                 var chat = new ChatCollection();
                 chat.on("add", _.bind(function(chatLine){
-                    if (notifyModel.get("chatReceived") < chatLine.get("time")) {
+                    if ((notifyModel.get("chatReceived") || 0) < chatLine.get("time")) {
                         this._addChatLine(chatLine, friend);
                     }
                 },this));
@@ -116,19 +116,23 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
             //send trigger to controller to open a chat window if need be
             App.vent.trigger("chat:received", friend);
             var textBuffer = chatLine.get("text").buffer;
-            var key = {secretKey: Keys.getEncodedKeys().secretKey};
-            $.when(EncryptionSync.decryptText(key, textBuffer)).done(function(text){
-                var collection = App.state.chats[friend.get("userId")];
-                var lastChat = collection.last();
+            
+            Keys.getKeys().done(function(keys) {
+                var key = keys.privateKey;
+                EncryptionAsync.asymDecryptText(key, textBuffer)
+                    .done(function(text){
+                        var collection = App.state.chats[friend.get("userId")];
+                        var lastChat = collection.last();
 
-                if (lastChat && !lastChat.get("isMine") &&
-                    (chatLine.get("time") - lastChat.get("time") < 30000)) {
-                    lastChat.set("text", lastChat.get("text") + "\n" + text);
-                }
-                else {
-                    var newChat = new Backbone.Model({time: chatLine.get("time"), text: text});
-                    collection.add(newChat);
-                }
+                        if (lastChat && !lastChat.get("isMine") &&
+                            (chatLine.get("time") - lastChat.get("time") < 30000)) {
+                            lastChat.set("text", lastChat.get("text") + "\n" + text);
+                        }
+                        else {
+                            var newChat = new Backbone.Model({time: chatLine.get("time"), text: text});
+                            collection.add(newChat);
+                        }
+                });
             });
         },
 
@@ -179,11 +183,13 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
         sendChat: function(friend, text) {
             var time = new Date().getTime();
             $.when(this._getOutgoingChatCollection(friend)).done(function(chats){
-                var key = {publicKey: friend.get("publicKey")};
-                $.when(EncryptionSync.encrypt(key, "plain/json", text, false)).done(function(encText) {
-                    var encArray = new Uint8Array(encText);
-                    chats.create({time: time, text: encArray});
-                });
+                
+                var jwk = JSON.parse(friend.get("publicKey"));
+                EncryptionAsync.asymEncryptTextWithJwk(jwk, "plain/json", text)
+                    .done(function(encText){
+                        var encArray = new Uint8Array(encText);
+                        chats.create({time: time, text: encArray});
+                    });
             });
             var chat = new Backbone.Model({isMine: true, time:time, text: text});
 

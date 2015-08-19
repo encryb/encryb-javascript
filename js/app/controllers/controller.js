@@ -20,7 +20,6 @@ define([
     'app/views/invites',
     'app/views/chats',
     'app/encryption/async',
-    'app/encryption/sync',
     'app/encryption/keys',
     'app/services/appengine',
     'app/services/dropbox',
@@ -28,7 +27,7 @@ define([
     ],
 function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
-          AsyncEncryption, Encryption, Keys, AppEngine, Dropbox, DataConvert) {
+          AsyncEncryption, Keys, AppEngine, Dropbox, DataConvert) {
 
 
     function startDownload(uri, name) {

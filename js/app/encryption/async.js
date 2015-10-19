@@ -1,9 +1,10 @@
 define([
+    'jquery',
     'simplecrypto',
     'compat/windowUrl',
     'utils/data-convert',
     'utils/encoding'
-], function(SimpleCrypto, WindowUrl, DataConvert, Encoding){
+], function($, SimpleCrypto, WindowUrl, DataConvert, Encoding){
 
     var async = {
         /** Encrypt a binary array or a string.

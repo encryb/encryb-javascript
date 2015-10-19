@@ -1,19 +1,75 @@
 define([
+    'jquery',
     'backbone',
-    'sjcl',
     'app/services/dropbox',
-    'app/encryption/sync',
+    'app/encryption/async',
     'app/encryption/keys'
-], function(Backbone, Sjcl, Dropbox, Encryption, Keys){
+], function($, Backbone, Dropbox, Encryption, Keys){
 
     var EncryptedDatastore = function(name, options) {
         options = options || {};
-        this.name = name;
+        this.name = "encrypt-1-" + name;
         this.datastoreId = options.datastoreId || 'default';
         this._syncCollection = null;
     };
 
     _.extend(EncryptedDatastore.prototype, Backbone.DropboxDatastore.prototype, {
+
+        recordToJson: function(record) {
+            var deferred = $.Deferred();
+
+            var json = Backbone.DropboxDatastore.recordToJson(record);
+            
+            if (!json.hasOwnProperty("_enc_")) {
+                var errorJson = {};
+                if (json.hasOwnProperty("id")) {
+                    errorJson["id"] = json["id"];
+                }
+                errorJson["created"] = new Date().getTime();
+                errorJson["error"] = "Unencrypted data";
+                return errorJson;
+            }
+            else {
+                Keys.getKeys().done(function(keys) {
+                    var cipherdata = json._enc_.buffer;
+                    Encryption.decryptText(keys.db, cipherdata).done(function(modelString) {
+                        var decryptedJson = JSON.parse(modelString);
+                        if (json.hasOwnProperty("id")) {
+                            decryptedJson["id"] = json["id"];
+                        }
+                        deferred.resolve(decryptedJson);
+                    })
+                    .fail(function(error) {
+                        console.error("ERROR", error);
+                    });  
+                });
+            }
+            
+            return deferred.promise();
+        },
+        
+        modelToJson: function(model) {
+            var deferred = $.Deferred();
+            
+            var clone = _.omit(model.toJSON(), ["id"]);
+            var modelJson = JSON.stringify(clone);
+           
+            Keys.getKeys().done(function(keys) {
+                Encryption.encrypt(keys.db, "text/json", modelJson, false).done(function(cipherdata) {
+                    var json = {_enc_: new Uint8Array(cipherdata)};
+                    if (clone.hasOwnProperty("id")) {
+                        json["id"] = clone["id"];
+                    }
+                    deferred.resolve(json);
+                })
+                .fail(function(error) {
+                    console.error("ERROR", error);
+                });
+            });
+
+            
+            return deferred.promise();
+        }
 
 /*
         recordToJson: function(record) {

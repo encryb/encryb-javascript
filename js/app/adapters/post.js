@@ -383,8 +383,8 @@ define([
             $.when.apply($, setupTasks).done(function() {
                 var actions = [];
                 if (addedContent.length > 0) {
-                    var contentArray = model.get("content");
 
+                    var contentArray = model.get("content");
                     // find the highest current content number. We will use use
                     // that as starting point for added content
                     var highestContentNumber = 0;

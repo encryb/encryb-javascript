@@ -900,12 +900,15 @@
 
                 // generate random AES and HMAC keys
                 // export them in RAW format
+                // import them back as non-extractable keys, so that we can store in the database
                 _sym.generateKeyAES(onError.bind(null, "Could not generate AES key"), function(aesKeyObj){
                  _sym.generateKeyHMAC(onError.bind(null, "Could not generate HMAC key"), function(hmacKeyObj){
                   _sym.exportKey(aesKeyObj, onError.bind(null, "Could not export AES key"), function(aesKey) {
                    _sym.exportKey(hmacKeyObj, onError.bind(null, "Could not export HMAC key"), function(hmacKey) {
-                       onSuccess({aesKeyObj: aesKeyObj, hmacKeyObj: hmacKeyObj, aesKey: aesKey, hmacKey: hmacKey});    
-                   }); }); }); });
+                    _sym.importKeyAES(aesKey, onError.bind(null, "Could not import AES key"), function(aesKeyObjNotExtract) {
+                     _sym.importKeyHMAC(hmacKey, onError.bind(null, "Could not import HMAC key"), function(hmacKeyObjNotExtract) {
+                       onSuccess({aesKeyObj: aesKeyObjNotExtract, hmacKeyObj: hmacKeyObjNotExtract, aesKey: aesKey, hmacKey: hmacKey});    
+                     }); }); }); }); }); });
             },
             
             /** Convert raw AES and HMAC keys into WebCrypto CryptoKey objects
@@ -952,7 +955,7 @@
                 });
             },
             
-            /** Generate random AES and HMAC keys and encrypt data. This utility function combines generateKeys and encrypt
+            /** Encrypt data using keys
              *
              * @method sym.encrypt
              * @param {Object} keys - AES and HMAC keys. Also optional IV (otherwise random is generated)
@@ -970,6 +973,7 @@
                     else {
                         iv = window.crypto.getRandomValues(new Uint8Array(config.aesIvLength));
                     }
+
                     _sym.encrypt(keys.aesKeyObj, iv, data, onError.bind(null, "Could not AES Encrypt"), function(aesEncrypted){
                         _sym.signHMAC(keys.hmacKeyObj, aesEncrypted, onError.bind(null, "Could not HMAC sign"), function(hmac) {
                             var encrypted = { aesEncrypted: aesEncrypted, hmac: hmac };

@@ -119,19 +119,30 @@
     },
 
     _createWithTable: function(model, table) {
-      return table.insert(this.modelToJson(model));
+      var deferred = Backbone.$.Deferred();
+      
+      Backbone.$.when(this.modelToJson(model)).done(function(json) {
+        deferred.resolve(table.insert(json)); 
+      });
+      
+      return deferred.promise();
+      
     },
 
     _updateWithTable: function(model, table) {
+      var deferred = Backbone.$.Deferred();
+        
       var record = this._findWithTable(model, table);
-
-      if (record) {
-        record.update(this.modelToJson(model));
-      } else {
-        record = table.insert(this.modelToJson(model));
-      }
-
-      return record;
+      Backbone.$.when(this.modelToJson(model)).done(function(json) {
+        if (record) {
+          record.update(json);
+        } else {
+          record = table.insert(json);
+        }
+        deferred.resolve(record);
+      });
+      
+      return deferred.promise();
     },
 
     _findWithTable: function(model, table) {
@@ -152,8 +163,19 @@
     },
 
     _findAllWithTable: function(table) {
-      var result = _.map(table.query(), _.bind(this.recordToJson, this));
-      return result;
+      var deferred = Backbone.$.Deferred();
+      
+      var query = table.query();
+      
+      var deferreds = [];
+      for (var i=0; i<query.length; i++) {
+        deferreds.push(this.recordToJson(query[i]));
+      }
+      
+      Backbone.$.when.apply(null, deferreds).done(function () {
+        deferred.resolve(Backbone.$.makeArray(arguments));
+      });
+      return deferred;
     },
 
     _destroyWithTable: function(model, table) {
@@ -201,14 +223,13 @@
     },
 
     _onChangeRecords: function(changes) {
-      var changedRecords;
       if (this._syncCollection) {
-        changedRecords = Backbone.DropboxDatastore.getChangesForTable(this.name, changes,
-            _.bind(this.recordToJson, this));
-
-        // Update collection deferred to prevent double copy of same model in local collection
-        _.defer(Backbone.DropboxDatastore.updateCollectionWithChanges, this._syncCollection, changedRecords);
-      }
+        Backbone.DropboxDatastore.getChangesForTable(this.name, changes, _.bind(this.recordToJson, this))
+          .done(_.bind(function(changedRecords) {
+            // Update collection deferred to prevent double copy of same model in local collection
+            _.defer(Backbone.DropboxDatastore.updateCollectionWithChanges, this._syncCollection, changedRecords);
+          }, this));
+        }
     },
 
     recordToJson: function(record) {
@@ -323,20 +344,30 @@
     },
 
     getChangesForTable: function(tableName, changes, convertRecord) {
+      
+      var deferred = Backbone.$.Deferred();
+      
       var records = {
         toRemove: [],
         toAdd: []
       };
+      
+      var deferreds = [];
 
       _.each(changes.affectedRecordsForTable(tableName), function(changedRecord) {
         if (changedRecord.isDeleted()) {
           records.toRemove.push(changedRecord.getId());
         } else {
-          records.toAdd.push(convertRecord(changedRecord));
+          deferreds.push(convertRecord(changedRecord));
         }
       });
+      
+      Backbone.$.when.apply(null, deferreds).done(function () {
+        records.toAdd = Backbone.$.makeArray(arguments);
+        deferred.resolve(records);
+      });
 
-      return records;
+      return deferred;
     },
 
     updateCollectionWithChanges: function(syncCollection, changedRecords) {

@@ -77,7 +77,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     }
                     
                     Keys.getKeys().done(function(keys) {
-                        var publicKey = keys.publicJwk;
+                        var publicKey = keys.rsa.publicJwk;
                         
                         var profileInSync = true;
                         if (!profile.has("publicKey")) {
@@ -498,7 +498,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                             _model.set("dropboxInfo", info);
                         });
                         if (!keysLoaded) {
-                            Dropbox.exists("encryb.keys").done(function() {
+                            Dropbox.exists("encryb2.keys").done(function() {
                                 _model.set("keysOnDropbox", true);
                             }).fail(function() {
                                 _model.set("keysOnDropbox", false);
@@ -545,7 +545,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         Keys.getKeys().done(function(keys) {
                             var uri = "data:text/javascript;base64," 
                                 + window.btoa(JSON.stringify({privateKey: keys.privateJwk, publicKey: keys.publicJwk}));
-                            startDownload(uri, "encryb.keys");                                
+                            startDownload(uri, "encryb2.keys");                                
                         })
                         .fail(function(error) {
                             console.log("Error", error);
@@ -561,7 +561,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     var saveKeysToDropbox = function(password) {
                         Keys.serializeKeys(password)
                             .done(function(encoded){
-                                Dropbox.upload("encryb.keys", encoded);
+                                Dropbox.upload("encryb2.keys", encoded);
                             })
                             .fail(function(error) {
                                 console.error("Could not save keys", error);
@@ -574,7 +574,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     });
     
                     setupView.on("keys:loadFromDropbox", function(password){
-                        Dropbox.download("encryb.keys")
+                        Dropbox.download("encryb2.keys")
                         .fail(function(error) {
                             App.showError("Could not download key " + error);
                         })
@@ -624,7 +624,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                 Keys.getKeys().done(function(keys){
                     var model = new Backbone.Model();
                     model.set("profile", profile);
-                    model.set("publicKey", keys.publicJwk);
+                    model.set("publicKey", keys.rsa.publicJwk);
                     var profileView = new ProfileView({model: model});
                     App.main.show(profileView);
     
@@ -661,7 +661,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         }
                         
                         
-                        var publicKey = keys.publicJwk;
+                        var publicKey = keys.rsa.publicJwk;
                         var keyInSync;
                         try {
                             keyInSync = _.isEqual(publicKey, JSON.parse(profile.get("publicKey")));

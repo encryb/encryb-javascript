@@ -4,13 +4,12 @@ define([
     'marionette',
     'app/app',
     'app/encryption/async',
-    'app/encryption/sync',
     'app/encryption/keys',
     'app/services/dropbox',
     'app/remoteManifest',
     'utils/misc'
 ],
-function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, Dropbox, RemoteManifest, MiscUtils) {
+function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteManifest, MiscUtils) {
 
     var FriendAdapter = {
 
@@ -118,8 +117,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
             var textBuffer = chatLine.get("text").buffer;
             
             Keys.getKeys().done(function(keys) {
-                var key = keys.privateKey;
-                EncryptionAsync.asymDecryptText(key, textBuffer)
+                EncryptionAsync.asymDecryptText(keys.rsa.privateKey, textBuffer)
                     .done(function(text){
                         var collection = App.state.chats[friend.get("userId")];
                         var lastChat = collection.last();
@@ -309,7 +307,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
                         name: profile.get('name'),
                         intro: profile.get('intro'),
                         pictureUrl: profile.get('pictureUrl'),
-                        publicKey: JSON.stringify(keys.publicJwk)
+                        publicKey: JSON.stringify(keys.rsa.publicJwk)
                     };
                     
                     console.log("Updaterino", changes, notifyModel);
@@ -451,8 +449,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, EncryptionSync, Keys, D
                     
                     Keys.getKeys().done(function(keys) {
                         // $TODO check that we have keys.privateKey
-                        var key = keys.privateKey;
-                        EncryptionAsync.asymDecryptText(key, data)
+                        EncryptionAsync.asymDecryptText(keys.rsa.privateKey, data)
                             .done(function(decryptedData){
                                 try {
                                     var manifest = JSON.parse(decryptedData);

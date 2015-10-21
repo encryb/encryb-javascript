@@ -164,10 +164,18 @@ define([
             var deferred = $.Deferred();
             this.getKeys()
                 .done(function(keys) {
-                    deferred.resolve(true);
+                    if ("rsa" in keys && "privateKey" in keys.rsa && "publicKey" in keys.rsa && "publicJwk" in keys.rsa &&
+                        "db" in keys && "aesKeyObj" in keys.db && "hmacKeyObj" in keys.db) {
+                        var exportable = ("privateJwk" in keys.rsa && "aesKey" in keys.db && "hmacKey" in keys.db);
+                        deferred.resolve({keys: true, exportable: exportable}); 
+                    }
+                    else {
+                        deferred.resolve({keys: false});
+                    }
+                    
                 })
                 .fail(function() {
-                    deferred.resolve(false);
+                    deferred.resolve({keys: false});
                 });
             return deferred.promise();
             

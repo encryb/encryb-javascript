@@ -106,8 +106,12 @@
                 <% } %>
             <% } else { %>
                 <button type="button" id="removeKeysButton" class="btn btn-default">Remove Keys</button>
-                <button type="button" id="downloadKeysButton" class="btn btn-default">Download Keys</button>
-                <button type="button" id="saveKeysToDropboxButton" class="btn btn-default">Save to Dropbox</button>
+                
+                <% if(keysExportable) { %>
+                    <button type="button" id="downloadKeysButton" class="btn btn-default">Download Keys</button>
+                    <button type="button" id="saveKeysToDropboxButton" class="btn btn-default">Save to Dropbox</button>
+                <% } %>
+                
             <% } %>
         </div>
     </div>

@@ -59,7 +59,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                 callback(false);
             }
             Keys.hasKeys().done(function(keysLoaded) {
-                callback(keysLoaded);    
+                callback(keysLoaded.keys);    
             });
         },
 
@@ -486,7 +486,8 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
 
             Keys.hasKeys().done(function(keysLoaded) {
     
-                model.set("keysLoaded", keysLoaded);
+                model.set("keysLoaded", keysLoaded.keys);
+                model.set("keysExportable", keysLoaded.exportable)
 
                 require(["app/views/setup"], function(SetupView) {
     
@@ -533,12 +534,14 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     setupView.on("keys:create", function () {
                         Keys.createKeys().done(function(keys) {
                             model.set("keysLoaded", true);
+                            model.set("keysExportable", true);
                         });
                     });
     
                     setupView.on("keys:remove", function () {
                         Keys.removeKeys();
                         model.set("keysLoaded", false);
+                        model.set("keysExportable", false);
                     });
                     
                     setupView.on("keys:download", function () {
@@ -556,6 +559,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         var keys = JSON.parse(keysString);
                         Keys.importKeys(keys["publicKey"], keys["privateKey"]);
                         model.set("keysLoaded", true);
+                        model.set("keysExportable", true);
                     });
     
                     var saveKeysToDropbox = function(password) {
@@ -589,6 +593,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                                         .fail(function(error) { App.showError("Could not load keys: " + error); })
                                     .done(function() {
                                         model.set("keysLoaded", true);
+                                        model.set("keysExportable", true);
                         }); }); }); });
                         
                            /* 

@@ -39,10 +39,14 @@ define([
                 deferred.reject("Private Key not available");
             }
             else {
+                var aesKey = SimpleCrypto.util.bytesToString(keyCache.db.aesKey);
+                var hmacKey = SimpleCrypto.util.bytesToString(keyCache.db.hmacKey);
+                
                 var keys = {
                     rsa : {privateKey: keyCache.rsa.privateJwk, publicKey: keyCache.rsa.publicJwk},
-                    db: {aesKey: keyCache.db.aesKey, hmacKey: keyCache.db.hmacKey}
+                    db: {aesKey: aesKey, hmacKey: hmacKey}
                 };
+                
                 var privateKey = SimpleCrypto.util.stringToBytes(JSON.stringify(keys));
                 SimpleCrypto.sym.encryptWithPassword(password, privateKey, 
                     function(error) {
@@ -68,17 +72,22 @@ define([
                 encrypted = SimpleCrypto.pack.decode(encoded);
             }
             catch (e) {
-                deferred.reject("Could not unpack encrypted key", e.message);
+                deferred.reject("Could not unpack the encrypted key", e.message);
             }
             if (typeof encrypted !== "undefined") {
                 SimpleCrypto.sym.decryptWithPassword(password, encrypted, 
                     function(error) {
-                        deferred.reject("Could not decrypt private key", error);
+                        deferred.reject("Invalid data/password", error);
                     },
                     function(keyBuffer) {
                         try {
                             var keyString = SimpleCrypto.util.bytesToString(keyBuffer);
                             var keys = JSON.parse(keyString);
+                            
+                            keys.db.aesKey = SimpleCrypto.util.stringToBytes(keys.db.aesKey);
+                            keys.db.hmacKey = SimpleCrypto.util.stringToBytes(keys.db.hmacKey);
+                
+                            
                             deferred.resolve(keys);
                         }
                         catch (e) {
@@ -96,9 +105,13 @@ define([
             SimpleCrypto.asym.importEncryptKey(keys.rsa.publicKey, keys.rsa.privateKey,
                 deferred.reject,
                 function(rsa) {
-                    keyCache["rsa"] = rsa;
-                    keyCache["db"] = keys.db;
-                    deferred.resolve(keyCache);
+                    SimpleCrypto.sym.importKeys(keys.db,
+                        deferred.reject,
+                        function(db) {
+                            keyCache["rsa"] = rsa;
+                            keyCache["db"] = db;
+                            deferred.resolve(keyCache);
+                        });
                 });
             return deferred.promise();
         },
@@ -120,6 +133,14 @@ define([
         
         saveKeysToSecureStorage: function () {
             var deferred = $.Deferred();
+            
+            
+            if (!("rsa" in keyCache && "privateKey" in keyCache.rsa && "publicKey" in keyCache.rsa && "publicJwk" in keyCache.rsa
+                && "db" in keyCache && "aesKeyObj" in keyCache.db && "hmacKeyObj" in keyCache.db )) {
+                    deferred.reject("Invalid Key");
+                    return deferred.promise();
+            }
+            
             SimpleCrypto.storage.put("encrypt.privateKey", keyCache.rsa.privateKey, 
               deferred.reject,
               function() {

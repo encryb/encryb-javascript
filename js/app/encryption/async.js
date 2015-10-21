@@ -147,7 +147,6 @@ define([
         
         asymEncryptTextWithJwk: function(jwk, mimeType, packedData) {
             
-            debugger;
             var deferred = $.Deferred();
             SimpleCrypto.asym.importEncryptPublicKey(jwk,
                 deferred.reject,

@@ -41,7 +41,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
     function formatError(errorList) {
         var errorMsg = "";
         for (var i=0; i<errorList.length; i++) {
-            var arg = arguments[i];
+            var arg = errorList[i];
             if (arg.hasOwnProperty("msg")) {
                 errorMsg += " " + arg.msg;
             }
@@ -580,14 +580,16 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         })
                         .done(function(keys) {
                             Keys.unserializeKeys(password, keys)
-                            .then(Keys.importKeys)
-                            .then(Keys.saveKeysToSecureStorage)
-                            .then(function() {
-                                model.set("keysLoaded", true);
-                            }, function() {
-                                App.showError("Could not load keys: " + formatError(arguments)); 
-                            });
-                        })
+                                .fail(function(error) { App.showError("Could not parse keys: " + error); })
+                            .done(function(keyData) {
+                                Keys.importKeys(keyData)
+                                    .fail(function(error) { App.showError("Could not import keys: " + error); })
+                                .done(function(importedKeys) {
+                                    Keys.saveKeysToSecureStorage(importedKeys)
+                                        .fail(function(error) { App.showError("Could not load keys: " + error); })
+                                    .done(function() {
+                                        model.set("keysLoaded", true);
+                        }); }); }); });
                         
                            /* 
                             var forceSave = false;

@@ -935,7 +935,7 @@
                     keys["aesKeyObj"] = aesKeyObj;
                     _sym.importKeyHMAC(keys.hmacKey, onError.bind(null, "Could not import HMAC key"), function(hmacKeyObj) {
                         keys["hmacKeyObj"] = hmacKeyObj;
-                        onSuccess();
+                        onSuccess(keys);
                     });
                 });
             },
@@ -1043,7 +1043,6 @@
                         var hmacKey = keys.subarray(aesKeyLenght);
                         simpleCrypto.sym.decrypt({aesKey: aesKey, hmacKey: hmacKey}, encrypted, onError, function(decrypted) {
                             onSuccess(decrypted);
-                            
                         });
                     }
                 );

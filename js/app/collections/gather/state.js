@@ -187,7 +187,6 @@ define([
             this.upvotes.add(model);
         },
         removeFriendsUpvote: function(post, friend) {
-            console.log("Removing", post, friend.get("userId"));
             var model = this.upvotes.findWhere({postId: post.postId, ownerId: friend.get("userId")});
             this.upvotes.remove(model);
         },
@@ -297,7 +296,7 @@ define([
 
             var friend = this.myFriends.findWhere({userId: posterId});
             if (!friend) {
-                console.log("Friend does not exist", friend);
+                console.error("Friend does not exist", friend);
                 return;
             }
             friend.set("score", friend.get("score") + value);

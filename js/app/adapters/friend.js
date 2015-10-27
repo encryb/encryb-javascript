@@ -171,7 +171,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                     deferred.resolve(collection);
                 },
                 error: function(collection, response, options) {
-                    console.log("Fetch failed", friend, response);
+                    console.error("Fetch failed", friend, response);
                     deferred.reject();
                 }
             });
@@ -227,7 +227,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                     deferred.resolve(model);
                 },
                 error: function(collection, response, options) {
-                    console.log("Fetch failed", friend, response);
+                    console.error("Fetch failed", friend, response);
                     deferred.reject();
                 }
             });
@@ -310,17 +310,14 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                         publicKey: JSON.stringify(keys.rsa.publicJwk)
                     };
                     
-                    console.log("Updaterino", changes, notifyModel);
-                    
                     $.when(friendAdapter.saveManifest(friend))
                         .then(friendAdapter.shareManifest.bind(null, notifyModel), function() {console.error("AA", arguments)})
                         .done(function() {
-                            console.log("Actual updaterino")
                             changes["lastUpdated"] = new Date().getTime();
                             notifyModel.save(changes);
                         })
                         .fail(function(error) {
-                            console.log("Errorerino", error);
+                            console.error("Error saving friend manifest", friend, error);
                         });
                         
                 }
@@ -431,7 +428,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             $.when(currentDeferred, archiveDeferred).done(function(currentStats, archiveStats) {
                 deferred.resolve(currentStats, archiveStats);
             }).fail(function(error) {
-                console.log("Error saving manifest", error);
+                console.error("Error saving manifest", error);
                 deferred.reject();
             });
 

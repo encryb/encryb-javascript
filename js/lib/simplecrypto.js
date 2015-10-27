@@ -1192,7 +1192,7 @@
             request.onupgradeneeded = function (e) {
                 var db = e.target.result;
                 e.target.transaction.onerror = function (event) {
-                    console.log("transaction failure", event);
+                    console.error("transaction failure", event);
                 };
                 db.createObjectStore("keys");
             };

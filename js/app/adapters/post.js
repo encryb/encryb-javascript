@@ -193,7 +193,6 @@ define([
                        .then(Storage.upload.bind(null, path), deferred.reject)
                        .then(Storage.share, deferred.reject)
                        .fail(function() {
-                           console.log("FAIL", arguments);
                            deferred.reject();
                        })
                        .done(function (url) {

@@ -23,11 +23,12 @@ define([
     'app/encryption/keys',
     'app/services/appengine',
     'app/services/dropbox',
-    'utils/data-convert'
+    'utils/data-convert',
+    'compat/windowUrl'
     ],
 function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostAdapter, State, PermissionColl, FriendModel, PostModel,
           WallView, CreatePostView, EditPostView, PostsView, FriendsView, HeaderPanelView, InvitesView, ChatsView,
-          AsyncEncryption, Keys, AppEngine, Dropbox, DataConvert) {
+          AsyncEncryption, Keys, AppEngine, Dropbox, DataConvert, WindowUrl) {
 
 
     function startDownload(uri, name) {
@@ -498,7 +499,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         Dropbox.getInfo().done(function (info) {
                             _model.set("dropboxInfo", info);
                         });
-                        if (!keysLoaded) {
+                        if (!keysLoaded.keys) {
                             Dropbox.exists("encryb2.keys").done(function() {
                                 _model.set("keysOnDropbox", true);
                             }).fail(function() {
@@ -514,7 +515,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     setupView.on("dropbox:login", function () {
                         Dropbox.client.authenticate({}, function (error, client) {
                             if (error) {
-                                console.log("Dropbox Authentication Error", error);
+                                console.error("Dropbox Authentication Error", error);
                             }
                             else {
                                 model.set("dropboxEnabled", true);
@@ -531,10 +532,21 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         });
                     });
     
-                    setupView.on("keys:create", function () {
-                        Keys.createKeys().done(function(keys) {
-                            model.set("keysLoaded", true);
-                            model.set("keysExportable", true);
+                    setupView.on("keys:create", function (password, options) {
+                        Keys.createKeys().done(function() {
+                            Keys.serializeAndEncryptKeys(password).done(function(encryptedKeys) {
+                                if (options.download) {
+                                    var blob = new Blob([encryptedKeys], {type: "encryb/keys"});
+                                    var objectUrl = WindowUrl.createObjectURL(blob);
+                                    
+                                    startDownload(objectUrl, "encryb2.keys");
+                                }
+                                if (options.save) {
+                                    Dropbox.upload("encryb2.keys", encryptedKeys);
+                                }
+                                model.set("keysLoaded", true);
+                                model.set("keysExportable", true);
+                            });
                         });
                     });
     
@@ -544,28 +556,26 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                         model.set("keysExportable", false);
                     });
                     
-                    setupView.on("keys:download", function () {
-                        Keys.getKeys().done(function(keys) {
-                            var uri = "data:text/javascript;base64," 
-                                + window.btoa(JSON.stringify({privateKey: keys.privateJwk, publicKey: keys.publicJwk}));
-                            startDownload(uri, "encryb2.keys");                                
-                        })
-                        .fail(function(error) {
-                            console.log("Error", error);
-                        });
-
-                    });
-                    setupView.on("keys:upload", function (keysString) {
-                        var keys = JSON.parse(keysString);
-                        Keys.importKeys(keys["publicKey"], keys["privateKey"]);
-                        model.set("keysLoaded", true);
-                        model.set("keysExportable", true);
+                    setupView.on("keys:upload", function (password, encryptedKeys) {
+                        Keys.decryptAndUnserializeKeys(password, encryptedKeys)
+                            .fail(function(error) { App.showError("Could not parse keys: " + error); })
+                        .done(function(keyData) {
+                            Keys.importKeys(keyData)
+                                .fail(function(error) { App.showError("Could not import keys: " + error); })
+                            .done(function(importedKeys) {
+                                Keys.saveKeysToSecureStorage(importedKeys)
+                                    .fail(function(error) { App.showError("Could not load keys: " + error); })
+                                .done(function() {
+                                    model.set("keysLoaded", true);
+                                    model.set("keysExportable", true);
+                        }); }); });
+                        
                     });
     
                     var saveKeysToDropbox = function(password) {
-                        Keys.serializeKeys(password)
+                        Keys.serializeAndEncryptKeys(password)
                             .done(function(encoded){
-                                Dropbox.upload("encryb2.keys", encoded);
+                                
                             })
                             .fail(function(error) {
                                 console.error("Could not save keys", error);
@@ -583,7 +593,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                             App.showError("Could not download key " + error);
                         })
                         .done(function(keys) {
-                            Keys.unserializeKeys(password, keys)
+                            Keys.decryptAndUnserializeKeys(password, keys)
                                 .fail(function(error) { App.showError("Could not parse keys: " + error); })
                             .done(function(keyData) {
                                 Keys.importKeys(keyData)

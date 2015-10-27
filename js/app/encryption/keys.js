@@ -9,7 +9,7 @@ define([
                      onSuccess({privateKey: privateKey, publicKey: keys.publicKey, 
                                 privateJwk: privateJwk, publicJwk: publicJwk});
 */
-    var keys = {
+    var Keys = {
 
         createKeys: function() {
             keyCache = {};
@@ -22,7 +22,7 @@ define([
                         deferred.reject,
                         function(dbKeys) {
                             keyCache["db"] = dbKeys;
-                            keys.saveKeysToSecureStorage()
+                            Keys.saveKeysToSecureStorage()
                             .done(function(){
                                 deferred.resolve(keyCache);    
                             })
@@ -32,40 +32,64 @@ define([
             return deferred.promise();
         },
         
-        serializeKeys: function(password) {
-            var deferred = $.Deferred();
-            // $TODO fix
-            if (typeof keyCache === "undefined") {// || !keyCache.hasOwnProperty("privateJwk")) {
-                deferred.reject("Private Key not available");
+        serializeKeys: function() {
+            
+            
+            if (!("rsa" in keyCache && "privateJwk" in keyCache.rsa && "publicJwk" in keyCache.rsa
+                && "db" in keyCache && "aesKey" in keyCache.db && "hmacKey" in keyCache.db )) {
+                    return null;
             }
-            else {
-                var aesKey = SimpleCrypto.util.bytesToString(keyCache.db.aesKey);
-                var hmacKey = SimpleCrypto.util.bytesToString(keyCache.db.hmacKey);
-                
-                var keys = {
-                    rsa : {privateKey: keyCache.rsa.privateJwk, publicKey: keyCache.rsa.publicJwk},
-                    db: {aesKey: aesKey, hmacKey: hmacKey}
-                };
-                
-                var privateKey = SimpleCrypto.util.stringToBytes(JSON.stringify(keys));
-                SimpleCrypto.sym.encryptWithPassword(password, privateKey, 
-                    function(error) {
-                        deferred.reject("Could not encrypt private key", error);
-                    },
-                    function(encrypted) {
-                        try {
-                            var encoded = SimpleCrypto.pack.encode(encrypted);
-                            deferred.resolve(encoded);
-                        }
-                        catch (e) {
-                            deferred.reject("Could not pack encrypted key", e.message);
-                        }
-                    });
+
+            var aesKey = SimpleCrypto.util.bytesToString(keyCache.db.aesKey);
+            var hmacKey = SimpleCrypto.util.bytesToString(keyCache.db.hmacKey);
+            
+            var keys = {
+                rsa : {privateKey: keyCache.rsa.privateJwk, publicKey: keyCache.rsa.publicJwk},
+                db: {aesKey: aesKey, hmacKey: hmacKey}
+            };
+            
+            return JSON.stringify(keys);            
+        },
+        
+        serializeAndEncryptKeys: function(password) {
+            var deferred = $.Deferred();
+            
+            
+            var keys = Keys.serializeKeys();
+            
+            if (keys == null) {
+                deferred.reject("Private Key not available")
+                return deferred.promise();
             }
             
+            var privateKey = SimpleCrypto.util.stringToBytes(keys);
+            SimpleCrypto.sym.encryptWithPassword(password, privateKey, 
+                function(error) {
+                    deferred.reject("Could not encrypt private key", error);
+                },
+                function(encrypted) {
+                    try {
+                        var encoded = SimpleCrypto.pack.encode(encrypted);
+                        deferred.resolve(encoded);
+                    }
+                    catch (e) {
+                        deferred.reject("Could not pack encrypted key", e.message);
+                    }
+                });
+        
             return deferred.promise();
         },
-        unserializeKeys: function(password, encoded) {
+        
+        unserializeKeys: function(encodedKeys) {
+            var keys = JSON.parse(encodedKeys);
+                            
+            keys.db.aesKey = SimpleCrypto.util.stringToBytes(keys.db.aesKey);
+            keys.db.hmacKey = SimpleCrypto.util.stringToBytes(keys.db.hmacKey);
+                
+            return keys;
+        },
+        
+        decryptAndUnserializeKeys: function(password, encoded) {
             var deferred = $.Deferred();
             var encrypted;
             try {
@@ -81,13 +105,8 @@ define([
                     },
                     function(keyBuffer) {
                         try {
-                            var keyString = SimpleCrypto.util.bytesToString(keyBuffer);
-                            var keys = JSON.parse(keyString);
-                            
-                            keys.db.aesKey = SimpleCrypto.util.stringToBytes(keys.db.aesKey);
-                            keys.db.hmacKey = SimpleCrypto.util.stringToBytes(keys.db.hmacKey);
-                
-                            
+                            var keyString = SimpleCrypto.util.bytesToString(keyBuffer);                            
+                            var keys  = Keys.unserializeKeys(keyString);
                             deferred.resolve(keys);
                         }
                         catch (e) {
@@ -277,5 +296,5 @@ define([
         },
         
     };
-    return keys;
+    return Keys;
 });

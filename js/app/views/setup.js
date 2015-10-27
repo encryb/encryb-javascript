@@ -24,9 +24,9 @@ define([
         },
 
         events: {
-            "change #uploadKeysInput": "keysUpload",
-            "click #removeKeysButton": "keysRemove",
-            "click #createNewKeysButton": "keysCreate",
+            "change #uploadKeysInput": "uploadKey",
+            "click #removeKeysButton": "removeKey",
+            "click #createNewKeysButton": "createKey",
             "click #saveKeysToDropboxButton": "saveKeyToDropbox",
             "click #loadKeysFromDropboxButton" : "loadKeyFromDropbox"
 
@@ -43,17 +43,7 @@ define([
             this.model.on('change', this.render);
         },
 
-        keysUpload: function(event) {
-            var reader = new FileReader();
-
-            var view = this;
-            reader.onload = (function(e) {
-                view.trigger("keys:upload", reader.result);
-            });
-
-            reader.readAsText(event.target.files[0]);
-        },
-        keysRemove: function() {
+        removeKey: function() {
             var view = this;
 
 
@@ -63,49 +53,74 @@ define([
                 }
             });
         },
-        keysCreate: function() {
+        createKey: function() {
             var view = this;
             Bootbox.prompt({
                 title    : "Keys Created! To ensure proper access to your friends post, please backup your key. Options are: ",
                 inputType : 'checkbox',
                 inputOptions : [
-                    { text : 'Save to your computer (Safer option)', value: 'keys:download', name: 'file'},
-                    { text : 'Save to Dropbox (Simpler option, but less secure)', value: 'keys:saveToDropbox', name: 'dropbox'}
+                    { text : 'Save to your computer', value: 'keys:download', name: 'file'},
+                    { text : 'Save to Dropbox', value: 'keys:saveToDropbox', name: 'dropbox'}
                 ],
                 callback : function(values) {
-                    view.trigger("keys:create");
-                    // TODO FIX Race condition
+                    var download = false;
+                    var save = false;
+                    
+                    if (values == null) {
+                        return;
+                    }
+                    
                     for (var i=0; i<values.length; i++) {
                         var value = values[i];
+                        
                         if (value == "keys:download") {
-                            view.trigger(value);
+                            download = true;
                         }
                         else if (value =="keys:saveToDropbox") {
-                            view.saveKeyToDropbox();
+                            save = true;
                         }
                     }
-
-                }
-            });
-        },
-        saveKeyToDropbox: function() {
-            var view = this;
-            $.when(this._passwordDialog()).done(function(password){
-                view.trigger("keys:saveToDropbox", password);
+                    view._passwordDialog().done(function(password) {
+                        view.trigger("keys:create", password, {download: download, save: save});    
+                    });                 
+                }                    
+                
+                
             });
         },
         loadKeyFromDropbox: function() {
             var view = this;
-            $.when(this._passwordDialog()).done(function(password){
+            this._passwordDialog(false).done(function(password){
                 view.trigger("keys:loadFromDropbox", password);
             });
         },
 
-        _passwordDialog: function() {
+
+        uploadKey: function(event) {
+            var reader = new FileReader();
+
+            var view = this;
+            reader.onload = (function(e) {
+                view._passwordDialog(false).done(function(password){
+                    view.trigger("keys:upload", password, reader.result);
+                });
+            });
+
+            reader.readAsArrayBuffer(event.target.files[0]);
+        },
+
+        _passwordDialog: function(verify) {
+            var title;
+            if (verify) {
+                title = "Enter password. Keep this password safe, as it is not stored on Encryb, and you will not be able\
+                    to recover the encryption keys without it"
+            }
+            else {
+                title = "Enter password";
+            }
             var deferred = $.Deferred();
-            Bootbox.dialog({
-                title: "Enter password. Keep this password safe, as it is not stored on Encryb, and you will not be able\
-                    to recover the encryption keys without it",
+            var dialog = Bootbox.dialog({
+                title: title,
                 message: PasswordTemplate,
                 buttons: {
                     success: {
@@ -126,12 +141,13 @@ define([
                                 return false;
                             }
                             deferred.resolve(password1);
-
-
                         }
                     }
                 }
             });
+            dialog.bind("shown.bs.modal", function() {
+                $("#passwordDialog1").focus();
+            } )
             return deferred;
         }
     });

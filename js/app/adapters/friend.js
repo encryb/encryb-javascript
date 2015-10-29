@@ -27,7 +27,7 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
             var friendAdapter = this;
             var deferred = $.Deferred();
 
-            var manifestFile = "manifests" + "/" + MiscUtils.makeId();
+            var manifestFile = "manifests" + "/" +  MiscUtils.makeId();
             var attrs = {
                 userId: inviteModel.get("userId"),
                 name: inviteModel.get("name"),
@@ -43,9 +43,9 @@ function ($, Backbone, Marionette, App, EncryptionAsync, Keys, Dropbox, RemoteMa
                 attrs["invite"] = true;
             }
 
-            $.when(Backbone.DropboxDatastore.createSharedDatastore()).then(function (datastore) {
+            Backbone.DropboxDatastore.createSharedDatastore().done(function (datastore) {
                 attrs["myDatastoreId"] = datastore.getId();
-                friendAdapter.friends.create(attrs, {
+                friendAdapter.friends.create(attrs, { wait: true,  
                     success: function (model) {
                         deferred.resolve(model);
                     }

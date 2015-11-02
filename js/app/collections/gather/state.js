@@ -232,21 +232,21 @@ define([
 
         dispatchCommentAdd: function(comment) {
             var postId = comment.get("postId");
-            var model = this.posts.findWhere({postId: postId});
+            var post = this.posts.findWhere({postId: postId});
             // we might not have this post yet.
-            if (!model) {
+            if (!post) {
                 return;
             }
-            model.addComment(comment);
+            post.addComment(comment);
         },
         dispatchCommentRemove: function(comment) {
             var postId = comment.get("postId");
-            var model = this.posts.findWhere({postId: postId});
+            var post = this.posts.findWhere({postId: postId});
             // post might have been removed.
-            if (!model) {
+            if (!post) {
                 return;
             }
-            model.removeComment(comment.get("id"));
+            post.removeComment(comment.get("id"));
         },
         dispatchUpvoteAdd: function(upvote) {
             var postId = upvote.get("postId");

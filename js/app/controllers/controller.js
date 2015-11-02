@@ -247,7 +247,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                     showFriend(friendModel);
                     return;
                 }
-                $.when(AppEngine.findProfile(friendId)).done(function(profile){
+                AppEngine.findProfile(friendId).done(function(profile){
                     var model = new Backbone.Model();
 
                     model.set("userId", profile.id);
@@ -267,7 +267,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
             });
 
             wall.listenTo(App.vent, "invite:send", function(inviteModel) {
-                $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
+                FriendAdapter.createFriend(inviteModel).done(function(friendModel) {
                     AppEngine.invite(friendModel);
                     // hide the invite details from the wall
                     wall.friendsDetails.reset();
@@ -277,7 +277,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
 
 
             wall.listenTo(App.vent, "invite:accept", function(inviteModel){
-                $.when(FriendAdapter.createFriend(inviteModel)).done(function(friendModel) {
+                FriendAdapter.createFriend(inviteModel).done(function(friendModel) {
                     AppEngine.acceptInvite(friendModel);
                     FriendAdapter.updateDatastoreProfile(friendModel);
                     inviteModel.destroy();
@@ -384,8 +384,10 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
                 FriendAdapter.saveManifests();
             });
             wall.listenTo(App.vent, "comment:created", function(postId, comment) {
-                App.state.myComments.addComment(postId, comment['text'], comment['date']);
-                FriendAdapter.saveManifests();
+                var onSuccess = function() {
+                    FriendAdapter.saveManifests();
+                }
+                App.state.myComments.create({postId: postId, text: comment['text'], date: comment['date']}, {wait:true, success: onSuccess});
             });
             wall.listenTo(App.vent, "comment:deleted", function(commentId) {
                 var comment = App.state.myComments.findWhere({id: commentId});
@@ -422,7 +424,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
             if (!App.state.myFriends.findWhere({invite: true})) {
                 return;
             }
-            $.when(AppEngine.getAccepts()).done(function(accepts) {
+            AppEngine.getAccepts().done(function(accepts) {
 
                 for (var i = 0; i < accepts.length; i++) {
                     var acceptEntity = accepts[i];
@@ -444,7 +446,7 @@ function (Backbone, _, Marionette, Bootstrap, Bootbox, App, FriendAdapter, PostA
 
         _processInvites: function() {
 
-            $.when(AppEngine.getInvites()).done(function(invites) {
+            AppEngine.getInvites().done(function(invites) {
                 for (var i = 0; i < invites.length; i++) {
                     var inviteEntity = invites[i];
 

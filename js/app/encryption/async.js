@@ -98,11 +98,11 @@ define([
             return deferred.promise();
         },
 
-        decryptText: function(keys, packedData) {
+        decryptText: function(decryptKeys, packedData) {
             var deferred = $.Deferred();
             
             var decoded = SimpleCrypto.pack.decode(packedData);
-            SimpleCrypto.sym.decrypt(keys, decoded,
+            SimpleCrypto.sym.decrypt(decryptKeys, decoded,
                 function(error) {
                     deferred.reject(error);
                 },

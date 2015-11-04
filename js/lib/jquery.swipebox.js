@@ -793,7 +793,7 @@ define(["jquery"], function($) {
 					img.attr( 'src', src );
 				}
 				else {
-				    var div = $("<div></div>");
+				    var div = $("<div class='hosted-video'></div>");
 				    var video = $("<video controls></video>");
 				    
 				    var showDownloadButton = function () {
